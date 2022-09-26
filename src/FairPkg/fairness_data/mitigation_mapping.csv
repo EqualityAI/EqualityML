@@ -1,0 +1,31 @@
+﻿Fairness Metric,Mitigation Method,Available
+Statistical Parity,Reduction Approach,FALSE
+Statistical Parity,Fairness Constraints,FALSE
+Statistical Parity,Resampling,TRUE
+Statistical Parity,Reweighting,TRUE
+Conditional Statistical Parity,Disparate Impact Remover,FALSE
+Equal Opportunity,Reduction Approach,FALSE
+Equal Opportunity,Fairness without Disparate Mistreatment,FALSE
+Equal Opportunity,Empirical Risk Minimization,FALSE
+Equalized Odds,Reduction Approach,FALSE
+Equalized Odds,Unfairness Penalization,FALSE
+Predictive Equality,Fairness without Disparate Mistreatment,FALSE
+Balance for Positive Class,Reduction Approach,FALSE
+Balance for Positive Class,Empirical Risk Minimization,FALSE
+Balance for Negative Class,Reduction Approach,FALSE
+Overall Balance,Reduction Approach,FALSE
+Conditional Use Accuracy Equality,,FALSE
+Predictive Parity,Fairness without Disparate Mistreatment,FALSE
+Negative Predictive Parity,Fairness without Disparate Mistreatment,FALSE
+Calibration,,FALSE
+Well-Calibration,,FALSE
+Overall Accuracy Equality,Reduction Approach,FALSE
+Treatment Equality,,FALSE
+Total Fairness,,FALSE
+Total Effect,,FALSE
+Effect of Treatment on Treated,,FALSE
+No Unresolved Discrimination,,FALSE
+No Proxy Discrimination,,FALSE
+Counterfactual Fairness,,FALSE
+Causal Discrimination,,FALSE
+Fairness Through Awareness,Fairness Through Awareness,FALSE

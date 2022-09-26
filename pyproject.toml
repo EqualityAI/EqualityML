@@ -3,12 +3,12 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rigaku_phase_identification"
+name = "Fairness Package Python"
 version = "0.0.1"
 authors = [
-  { name="James Ng", email="ngja@tcd.ie" },
+  { name="", email="" },
 ]
-description = "Simulation and phase identification"
+description = ""
 readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.7"
