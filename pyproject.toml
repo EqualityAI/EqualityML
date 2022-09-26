@@ -8,6 +8,13 @@ version = "0.0.1"
 authors = [
   { name="", email="" },
 ]
+include-package-data = true
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mypkg = ["*.yaml", "*.csv"]
+
 description = ""
 readme = "README.md"
 license = { file="LICENSE" }
