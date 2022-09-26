@@ -1,0 +1,12 @@
+LICENSE
+README.md
+pyproject.toml
+src/FairPkg/__init__.py
+src/FairPkg/bias_mitigation.py
+src/FairPkg/fairness_evaluation.py
+src/FairPkg/fairness_recommendation.py
+src/FairPkg/fairness_data/__init__.py
+src/Fairness_Package_Python.egg-info/PKG-INFO
+src/Fairness_Package_Python.egg-info/SOURCES.txt
+src/Fairness_Package_Python.egg-info/dependency_links.txt
+src/Fairness_Package_Python.egg-info/top_level.txt

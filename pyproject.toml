@@ -3,17 +3,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "Fairness Package Python"
+name = "Fairness_Package_Python"
 version = "0.0.1"
-authors = [
-  { name="", email="" },
-]
-include-package-data = true
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-data]
-mypkg = ["*.yaml", "*.csv"]
 
 description = ""
 readme = "README.md"
@@ -24,4 +15,10 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mypkg = ["*.yaml", "*.csv"]
 
