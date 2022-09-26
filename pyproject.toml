@@ -17,7 +17,7 @@ classifiers = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["src/FairPkg"]
+where = ["src"]
 
 [tool.setuptools.package-data]
 fairness_data = ["*.yaml", "*.csv"]
