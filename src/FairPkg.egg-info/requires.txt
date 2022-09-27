@@ -2,3 +2,4 @@ aif360~=0.2.3
 dalex~=1.5.0
 fairlearn~=0.7.0
 pandas~=1.3.5
+numba==0.48
