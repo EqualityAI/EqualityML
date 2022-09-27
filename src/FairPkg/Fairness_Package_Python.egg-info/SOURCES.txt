@@ -1,0 +1,14 @@
+LICENSE
+README.md
+pyproject.toml
+src/FairPkg/Fairness_Package_Python.egg-info/PKG-INFO
+src/FairPkg/Fairness_Package_Python.egg-info/SOURCES.txt
+src/FairPkg/Fairness_Package_Python.egg-info/dependency_links.txt
+src/FairPkg/Fairness_Package_Python.egg-info/top_level.txt
+src/FairPkg/Fairness_Package_Python.egg-info/PKG-INFO
+src/FairPkg/Fairness_Package_Python.egg-info/SOURCES.txt
+src/FairPkg/Fairness_Package_Python.egg-info/dependency_links.txt
+src/FairPkg/Fairness_Package_Python.egg-info/top_level.txt
+src/FairPkg/fairness_data/config_variables.yaml
+src/FairPkg/fairness_data/fairness_tree.csv
+src/FairPkg/fairness_data/mitigation_mapping.csv
