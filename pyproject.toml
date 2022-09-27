@@ -20,7 +20,9 @@ classifiers = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-fairness_data = ["*.yaml", "*.csv"]
+fairness_data = ["fairness_data/config_variables.yaml.yaml",
+    "fairness_data/fairness_tree.csv",
+    "fairness_data/mitigation_mapping.csv"]
 
 dependencies = [
     "aif360 ~= 0.2.3",
