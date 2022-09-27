@@ -20,7 +20,7 @@ classifiers = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-fairness_data = ["FairPkg/fairness_data/config_variables.yaml",
+FairPkg = ["FairPkg/fairness_data/config_variables.yaml",
     "FairPkg/fairness_data/fairness_tree.csv",
     "FairPkg/fairness_data/mitigation_mapping.csv"]
 
