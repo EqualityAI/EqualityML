@@ -5,6 +5,8 @@ src/FairPkg/__init__.py
 src/FairPkg/bias_mitigation.py
 src/FairPkg/fairness_evaluation.py
 src/FairPkg/fairness_recommendation.py
+src/FairPkg/fairness_tree.csv
+src/FairPkg/mitigation_mapping.csv
 src/FairPkg.egg-info/PKG-INFO
 src/FairPkg.egg-info/SOURCES.txt
 src/FairPkg.egg-info/dependency_links.txt
