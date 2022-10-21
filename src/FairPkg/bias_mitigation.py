@@ -1,3 +1,6 @@
+"""
+Apply mitigation method
+"""
 import pandas as pd
 import dalex as dx
 from dalex.fairness import resample
@@ -6,25 +9,32 @@ from aif360.datasets import BinaryLabelDataset
 from aif360.algorithms.preprocessing import Reweighing
 from aif360.algorithms.preprocessing import DisparateImpactRemover
 from fairlearn.preprocessing import CorrelationRemover
-# import logging
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-def mitigation_methods(data_input, target_var, mitigation_method, param_mitigation_method):
+def mitigation_methods(
+        data_input: pd.Dataframe,
+        target_var: str,
+        mitigation_method: str,
+        param_mitigation_method: dict) -> dict:
     """
     Apply a mitigation method to data to make in more balanced.
 
-    :param mitigation_method:
+    Args:
+        data_input (pd.Dataframe):
+            Input data comprising 'training' and 'testing' data in dictionary format
+        target_var (str):
+            Target variable in the input data
+        mitigation_method (str):
              Name of the mitigation method. Accepted values:
              "resampling"
              "resampling-preferential"
              "reweighting"
              "disparate-impact-remover"
              "correlation-remover"
-    :param data_input:
-            Input data comprising 'training' and 'testing' data in dictionary format
-    :param target_var:
-            Target variable in the input data
-    :param param_mitigation_method:
+        param_mitigation_method (dict):
             Parameters for the mitigation method.
             param_mitigation_method  = {
                                         'protected_var' : protected_var,
@@ -34,8 +44,8 @@ def mitigation_methods(data_input, target_var, mitigation_method, param_mitigati
                                         'unfavorable_classes': unfavorable_classes,
                                         'model': ml_output['model']
                                        }
-    :return:
-        mitigation_output:
+    Returns:
+        dict:
             Data after mitigation and corresponding transforms/indexes
             Notes:
             'mitigation_output' key is mitigation method. Mitigated data and corresponding transform is stored as
@@ -54,7 +64,7 @@ def mitigation_methods(data_input, target_var, mitigation_method, param_mitigati
 
     mitigated_dataset = {}
     if "resampling" in mitigation_method:
-        mitigated_dataset = resampling_data(mitigation_method, data_input, target_var, param_mitigation_method)
+        mitigated_dataset = resampling_data(data_input, target_var, mitigation_method, param_mitigation_method)
     elif mitigation_method == "correlation-remover":
         mitigated_dataset = cr_removing_data(data_input, target_var, param_mitigation_method)
     elif mitigation_method == "reweighting":
@@ -66,18 +76,24 @@ def mitigation_methods(data_input, target_var, mitigation_method, param_mitigati
     return mitigation_output
 
 
-def resampling_data(mitigation_method, data_input, target_var, param_mitigation_method):
+def resampling_data(
+        data_input: pd.Dataframe,
+        target_var: str,
+        mitigation_method: str,
+        param_mitigation_method: dict) -> dict:
     """
     Resample the data using dalex module functions.
 
-    :param mitigation_method: Name of the mitigation method. Accepted values:
+    Args:
+        data_input (pd.Dataframe): Input data comprising 'training' and 'testing' data in dictionary format
+        target_var (str): Target variable in the input data
+        mitigation_method (str): Name of the mitigation method. Accepted values:
             "resampling",
             "resampling-uniform",
             "resampling-preferential"
-    :param data_input: Input data comprising 'training' and 'testing' data in dictionary format
-    :param target_var: Target variable in the input data
-    :param param_mitigation_method: Parameters for the mitigation method.
-    :return: mitigated_dataset - Data after resampling and corresponding indexes
+        param_mitigation_method (dict): Parameters for the mitigation method.
+    Returns:
+        dict: Data after resampling and corresponding indexes
     """
 
     assert mitigation_method in ["resampling-uniform", "resampling", "resampling-preferential"], \
@@ -110,13 +126,16 @@ def resampling_data(mitigation_method, data_input, target_var, param_mitigation_
     return mitigated_dataset
 
 
-def cr_removing_data(data_input, target_var, param_mitigation_method):
+def cr_removing_data(data_input: pd.Dataframe, target_var: str, param_mitigation_method: dict) -> dict:
     """
     correlation-remover (FairLearn)
-    :param data_input: Input data comprising 'training' and 'testing' data in dictionary format
-    :param target_var: Target variable in the input data
-    :param param_mitigation_method: Parameters for the mitigation method.
-    :return: mitigated_dataset - Data after removing some samples and corresponding CorrelationRemover object
+
+    Args:
+        data_input (pd.Dataframe): Input data comprising 'training' and 'testing' data in dictionary format
+        target_var (str): Target variable in the input data
+        param_mitigation_method (dict): Parameters for the mitigation method.
+    Returns:
+        dict: Data after removing some samples and corresponding CorrelationRemover object
     """
     mitigated_dataset = {}
     # Extracting parameters for the mitigation method
@@ -128,7 +147,7 @@ def cr_removing_data(data_input, target_var, param_mitigation_method):
         cr_coeff = 1
     else:
         # The default value is 1, the alpha range is from 0 to 1
-        # The alpha parameter is use to control the level of filtering between the sensitive and non-sensitive features
+        # The alpha parameter is used to control the level of filtering between the sensitive and non-sensitive features
         cr_coeff = param_mitigation_method['cr_coeff']
 
     # remove the outcome variable and sensitive variable
@@ -149,13 +168,15 @@ def cr_removing_data(data_input, target_var, param_mitigation_method):
     return mitigated_dataset
 
 
-def reweighting_data(data_input, target_var, param_mitigation_method):
+def reweighting_data(data_input: pd.Dataframe, target_var: str, param_mitigation_method: dict) -> dict:
     """
-    reweighting"(AIF360)
-    :param data_input: Input data comprising 'training' and 'testing' data in dictionary format
-    :param target_var: Target variable in the input data
-    :param param_mitigation_method: Parameters for the mitigation method.
-    :return: mitigated_dataset - Data after reweighting data and corresponding Reweighing object
+    reweighting(AIF360)
+    Args:
+        data_input (pd.Dataframe): Input data comprising 'training' and 'testing' data in dictionary format
+        target_var (str): Target variable in the input data
+        param_mitigation_method (dict): Parameters for the mitigation method.
+    Returns:
+        dict: Data after removing some samples and corresponding Reweighing object
     """
 
     mitigated_dataset = {}
@@ -197,13 +218,15 @@ def reweighting_data(data_input, target_var, param_mitigation_method):
     return mitigated_dataset
 
 
-def disp_removing_data(data_input, target_var, param_mitigation_method):
+def disp_removing_data(data_input: pd.Dataframe, target_var: str, param_mitigation_method: dict) -> dict:
     """
     disparate-impact-remover (AIF360)
-    :param data_input: Input data comprising 'training' and 'testing' data in dictionary format
-    :param target_var: Target variable in the input data
-    :param param_mitigation_method: Parameters for the mitigation method.
-    :return: mitigated_dataset - Data after removing some samples and corresponding DisparateImpactRemover object
+    Args:
+        data_input (pd.Dataframe): Input data comprising 'training' and 'testing' data in dictionary format
+        target_var (str): Target variable in the input data
+        param_mitigation_method (dict): Parameters for the mitigation method.
+    Returns:
+        dict: Data after removing some samples and corresponding  DisparateImpactRemover object
     """
 
     mitigated_dataset = {}

@@ -1,57 +1,59 @@
+"""
+FAIRNESS EVALUATION METRICS
+"""
+
+import pandas as pd
 from aif360.datasets import BinaryLabelDataset
 from aif360.metrics import ClassificationMetric
 import dalex as dx
 import logging
 
+logger = logging.getLogger(__name__)
 
-# ===========================================================================================
-#                         FAIRNESS EVALUATION METRICS
-# ===========================================================================================
-def fairness_metrics(data_input, target_var, metric_name, param_fairness_metric):
-    """Fairness metric evaluation using protected variable, privileged class, etc. """
-    # 
-    # INPUT
-    # data_input (DataFrame             : input data (e.g. testing data) for the evaluation of fairness metric
-    # target_var  (string)              : target variable
-    # metric_name (string)              : fairness metric name   
-    #                                            Fairness Metrics: 
-    #                                               1. 'treatment_equality_ratio':
-    #                                               2. 'treatment_equality_diff': 
-    #                                               3. 'balance_positive_class': Balance for positive class
-    #                                               4. 'balance_negative_class': Balance for negative class
-    #                                               5. 'equal_opportunity_ratio': Equal opportunity ratio
-    #                                               6. 'accuracy_equality_ratio': Accuracy equality ratio
-    #                                               7. 'predictive_parity_ratio':  Predictive parity ratio
-    #                                               8. 'predictive_equality_ratio': Predictive equality ratio
-    #                                               9. 'statistical_parity_ratio': Statistical parity ratio 
-    # 
-    # param_fairness_metric (dictionary): parameters that are required for the evaluation of fairness metric
-    #                                           e.g. param_fairness_metric = {
-    # 'pred_prob_data' : ml_output['probability'],
-    # 'pred_class_data': ml_output['class'],
-    # 'protected_var': protected_var,
-    # 'privileged_classes': privileged_classes,
-    # 'unprivileged_classes' : unprivileged_classes,
-    # 'favorable_classes' : favorable_classes,
-    # 'unfavorable_classes': unfavorable_classes,
-    # 'model':  ml_output['model']
-    # }
-    # 
-    # OUTPUT
-    # fairness_metric_score (dictionary): fairness metric value
+
+def fairness_metrics(data_input: pd.DataFrame, target_var: str, metric_name: str, param_fairness_metric: dict) -> dict:
+    """
+    Fairness metric evaluation using protected variable, privileged class, etc.
+
+    Args:
+        data_input (pd.DataFrame): input data (e.g. testing data) for the evaluation of fairness metric
+        target_var (str): target variable
+        metric_name (str): fairness metric name. Available options are:
+                       1. 'treatment_equality_ratio':
+                       2. 'treatment_equality_diff':
+                       3. 'balance_positive_class': Balance for positive class
+                       4. 'balance_negative_class': Balance for negative class
+                       5. 'equal_opportunity_ratio': Equal opportunity ratio
+                       6. 'accuracy_equality_ratio': Accuracy equality ratio
+                       7. 'predictive_parity_ratio':  Predictive parity ratio
+                       8. 'predictive_equality_ratio': Predictive equality ratio
+                       9. 'statistical_parity_ratio': Statistical parity ratio
+                       10. 'all'
+        param_fairness_metric (dict): parameters that are required for the evaluation of fairness metric
+            e.g. param_fairness_metric = {
+                     'pred_prob_data' : ml_output['probability'],
+                     'pred_class_data': ml_output['class'],
+                     'protected_var': protected_var,
+                     'privileged_classes': privileged_classes,
+                     'unprivileged_classes' : unprivileged_classes,
+                     'favorable_classes' : favorable_classes,
+                     'unfavorable_classes': unfavorable_classes,
+                     'model':  ml_output['model']
+                    }
+
+    Returns:
+        dict: fairness metric value
+    """
 
     # Extracting parameters to evaluate fairness metrics
     model_ml = param_fairness_metric['model']  # trained machine learning model object
     pred_prob_data = param_fairness_metric['pred_prob_data']  # predicted probability of the input data
     pred_class_data = param_fairness_metric['pred_class_data']  # predicted class of the input data
     protected_var = param_fairness_metric['protected_var']  # protected variable
-    privileged_classes = param_fairness_metric['privileged_classes'][0]  # privileged classes of the protected variable
-    unprivileged_classes = param_fairness_metric['unprivileged_classes'][0]  # unprivileged classes of the protected
-    # variable
+    privileged_classes = param_fairness_metric['privileged_classes'][0]  # privileged classes of the protected_var
+    unprivileged_classes = param_fairness_metric['unprivileged_classes'][0]  # unprivileged classes of the protected_var
     favorable_classes = param_fairness_metric['favorable_classes'][0]
     unfavorable_classes = param_fairness_metric['unfavorable_classes'][0]
-
-    metric_name = metric_name.lower()
 
     #  PACKAGE: AIF360  
     aif360_list = ['treatment_equality_ratio', 'treatment_equality_diff', 'balance_positive_class',
@@ -59,6 +61,10 @@ def fairness_metrics(data_input, target_var, metric_name, param_fairness_metric)
     #  PACKAGE: DALEX
     dalex_list = ['equal_opportunity_ratio', 'accuracy_equality_ratio', 'predictive_parity_ratio',
                   'predictive_equality_ratio', 'statistical_parity_ratio']
+
+    metric_name = metric_name.lower()
+    assert metric_name in aif360_list or metric_name in dalex_list or metric_name == 'all', \
+        "Provided invalid metric name"
 
     fairness_metric_score = {}
 
@@ -119,11 +125,11 @@ def fairness_metrics(data_input, target_var, metric_name, param_fairness_metric)
             cutoff = 0.5
         else:
             cutoff = param_fairness_metric['cutoff']
-        logging.critical('Machine learning model threshold: {}'.format(cutoff))
+        logger.critical('Machine learning model threshold: {}'.format(cutoff))
 
-        fobject = exp.model_fairness(protected=protected_vec, privileged=privileged_classes, cutoff=cutoff)
+        fairness_object = exp.model_fairness(protected=protected_vec, privileged=privileged_classes, cutoff=cutoff)
 
-        fairness_result = fobject.result
+        fairness_result = fairness_object.result
         if (metric_name == 'equal_opportunity_ratio') or (metric_name == 'all'):
             # NOTE: check index location for different values of privileged class
             # TEST: Does location is dependent on the value of the privileged class?
