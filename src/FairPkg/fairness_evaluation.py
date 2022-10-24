@@ -9,6 +9,8 @@ import dalex as dx
 import logging
 
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler())
+logger.setLevel(logging.INFO)
 
 
 def fairness_metrics(data_input: pd.DataFrame, target_var: str, metric_name: str, param_fairness_metric: dict) -> dict:
@@ -54,6 +56,9 @@ def fairness_metrics(data_input: pd.DataFrame, target_var: str, metric_name: str
     unprivileged_classes = param_fairness_metric['unprivileged_classes'][0]  # unprivileged classes of the protected_var
     favorable_classes = param_fairness_metric['favorable_classes'][0]
     unfavorable_classes = param_fairness_metric['unfavorable_classes'][0]
+
+    assert isinstance(favorable_classes, (float, int))
+    assert isinstance(unfavorable_classes, (float, int))
 
     #  PACKAGE: AIF360  
     aif360_list = ['treatment_equality_ratio', 'treatment_equality_diff', 'balance_positive_class',
@@ -144,3 +149,21 @@ def fairness_metrics(data_input: pd.DataFrame, target_var: str, metric_name: str
             fairness_metric_score['statistical_parity_ratio'] = fairness_result['STP'][1]
 
     return fairness_metric_score
+
+
+if __name__ == "__main__":
+    data_input = pd.read_csv("fairness_data/diabetes_training.csv")
+    target_var = "gender"
+    metric_name = "treatment_equality_ratio"
+    param_fairness_metric = {
+        'pred_prob_data': None,
+        'pred_class_data': None,
+        'protected_var': 'time_in_hospital',
+        'privileged_classes': 'Male',
+        'unprivileged_classes': 'Female',
+        'favorable_classes': [1],
+        'unfavorable_classes': [0],
+        'model': None
+    }
+    fairness_metric_score = fairness_metrics(data_input, target_var, metric_name, param_fairness_metric)
+
