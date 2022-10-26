@@ -54,7 +54,7 @@ def fairness_tree_metric(ftree_df: pd.DataFrame) -> dict:
         if pd.isna(possible_answers):
             possible_answers = ""
 
-        user_answer = ger_user_answer(question, example, possible_answers)
+        user_answer = get_user_answer(question, example, possible_answers)
 
         # Update node value
         node_data = node_data[node_data['Answer'].str.lower() == user_answer]
@@ -66,7 +66,7 @@ def fairness_tree_metric(ftree_df: pd.DataFrame) -> dict:
     return results
 
 
-def ger_user_answer(question: str, example: str, possible_answers: str) -> str:
+def get_user_answer(question: str, example: str, possible_answers: str) -> str:
     """
     Ask user to insert its answer to a specific question.
     Args:
