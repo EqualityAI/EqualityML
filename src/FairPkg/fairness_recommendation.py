@@ -161,7 +161,9 @@ def mitigation_mapping_method(mitigation_mapping_info: pd.DataFrame, fairness_me
 
 if __name__ == "__main__":
     ftree_df = pd.read_csv("fairness_data/fairness_tree.csv")
-    #results = fairness_tree_metric(ftree_df)
+    results = fairness_tree_metric(ftree_df)
+    print(results)
 
     mitigation_mapping_info = pd.read_csv("fairness_data/mitigation_mapping.csv")
     mitigation_method = mitigation_mapping_method(mitigation_mapping_info, 'Statistical Parity')
+    print(mitigation_method)

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def mitigation_methods(
-        data_input: pd.Dataframe,
+        data_input: pd.DataFrame,
         target_var: str,
         mitigation_method: str,
         param_mitigation_method: dict) -> dict:
@@ -23,7 +23,7 @@ def mitigation_methods(
     Apply a mitigation method to data to make in more balanced.
 
     Args:
-        data_input (pd.Dataframe):
+        data_input (pd.DataFrame):
             Input data comprising 'training' and 'testing' data in dictionary format
         target_var (str):
             Target variable in the input data
@@ -77,7 +77,7 @@ def mitigation_methods(
 
 
 def resampling_data(
-        data_input: pd.Dataframe,
+        data_input: pd.DataFrame,
         target_var: str,
         mitigation_method: str,
         param_mitigation_method: dict) -> dict:
@@ -85,7 +85,7 @@ def resampling_data(
     Resample the data using dalex module functions.
 
     Args:
-        data_input (pd.Dataframe): Input data comprising 'training' and 'testing' data in dictionary format
+        data_input (pd.DataFrame): Input data comprising 'training' and 'testing' data in dictionary format
         target_var (str): Target variable in the input data
         mitigation_method (str): Name of the mitigation method. Accepted values:
             "resampling",
@@ -126,12 +126,12 @@ def resampling_data(
     return mitigated_dataset
 
 
-def cr_removing_data(data_input: pd.Dataframe, target_var: str, param_mitigation_method: dict) -> dict:
+def cr_removing_data(data_input: pd.DataFrame, target_var: str, param_mitigation_method: dict) -> dict:
     """
     correlation-remover (FairLearn)
 
     Args:
-        data_input (pd.Dataframe): Input data comprising 'training' and 'testing' data in dictionary format
+        data_input (pd.DataFrame): Input data comprising 'training' and 'testing' data in dictionary format
         target_var (str): Target variable in the input data
         param_mitigation_method (dict): Parameters for the mitigation method.
     Returns:
@@ -168,11 +168,11 @@ def cr_removing_data(data_input: pd.Dataframe, target_var: str, param_mitigation
     return mitigated_dataset
 
 
-def reweighting_data(data_input: pd.Dataframe, target_var: str, param_mitigation_method: dict) -> dict:
+def reweighting_data(data_input: pd.DataFrame, target_var: str, param_mitigation_method: dict) -> dict:
     """
     reweighting(AIF360)
     Args:
-        data_input (pd.Dataframe): Input data comprising 'training' and 'testing' data in dictionary format
+        data_input (pd.DataFrame): Input data comprising 'training' and 'testing' data in dictionary format
         target_var (str): Target variable in the input data
         param_mitigation_method (dict): Parameters for the mitigation method.
     Returns:
@@ -218,11 +218,11 @@ def reweighting_data(data_input: pd.Dataframe, target_var: str, param_mitigation
     return mitigated_dataset
 
 
-def disp_removing_data(data_input: pd.Dataframe, target_var: str, param_mitigation_method: dict) -> dict:
+def disp_removing_data(data_input: pd.DataFrame, target_var: str, param_mitigation_method: dict) -> dict:
     """
     disparate-impact-remover (AIF360)
     Args:
-        data_input (pd.Dataframe): Input data comprising 'training' and 'testing' data in dictionary format
+        data_input (pd.DataFrame): Input data comprising 'training' and 'testing' data in dictionary format
         target_var (str): Target variable in the input data
         param_mitigation_method (dict): Parameters for the mitigation method.
     Returns:
@@ -257,3 +257,38 @@ def disp_removing_data(data_input: pd.Dataframe, target_var: str, param_mitigati
     mitigated_dataset['transform'] = DIR
 
     return mitigated_dataset
+
+
+if __name__ == "__main__":
+    from sklearn.ensemble import RandomForestClassifier
+    # First train a Machine Learning model with the training data
+
+    # Read training and testing data.
+    target_var = "HOS"
+    training_data = pd.read_csv("fairness_data/data_train.csv")
+    X_train = training_data.drop(columns=target_var)
+    y_train = training_data[target_var]
+    testing_data = pd.read_csv("fairness_data/data_test.csv")
+    X_test = testing_data.drop(columns=target_var)
+
+    # Train a Random Forest model
+    param_ml = {
+        "n_estimators": 500,  # Number of trees in the forest
+        "min_samples_split": 6,  # Minimum number of samples required  to split an internal node
+        "random_state": 0
+    }
+    mdl_clf = RandomForestClassifier(**param_ml)
+    mdl_clf.fit(X_train, y_train)
+
+    # Choose a mitigation-method and its parameters
+    mitigation_method = "correlation-remover"
+    # "resampling-preferential", "reweighting", "disparate-impact-remover", "correlation-remover"
+    param_mitigation_method = {
+        'protected_var': 'RACERETH',
+        'privileged_classes': [1],
+        'unprivileged_classes': [2],
+        'favorable_classes': [1],
+        'unfavorable_classes': [0],
+        'model': mdl_clf
+    }
+    mitigation_res = mitigation_methods(training_data, target_var, mitigation_method, param_mitigation_method)
