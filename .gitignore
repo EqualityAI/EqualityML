@@ -11,9 +11,9 @@ __pycache__/
 .vscode/
 
 .eggs/
-src/FairPkg.egg-info
+/src/FairPkg.egg-info/
 build/
-dist/
+/dist/
 
 .coverage*
 coverage.txt
