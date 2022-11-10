@@ -281,7 +281,7 @@ if __name__ == "__main__":
     mdl_clf.fit(X_train, y_train)
 
     # Choose a mitigation-method and its parameters
-    mitigation_method = "correlation-remover"
+    mitigation_method = "reweighting"
     # "resampling-preferential", "reweighting", "disparate-impact-remover", "correlation-remover"
     param_mitigation_method = {
         'protected_var': 'RACERETH',

@@ -418,8 +418,6 @@ if __name__ == "__main__":
     # Fairness metric
     fairness_metric_score = fair_ml.fairness_metrics(testing_data)
     print(fairness_metric_score)
-    fairness_metric_score = fair_ml.fairness_metrics(training_data)
-    print(fairness_metric_score)
 
     # Bias mitigation
     mitigation_method = "correlation-remover"
