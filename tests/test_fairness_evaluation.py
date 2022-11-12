@@ -1,8 +1,12 @@
 import pandas as pd
+import os
 from sklearn.ensemble import RandomForestClassifier
 import pytest
 
 from src.FairPkg.fairness_evaluation import FairnessMetric
+
+TESTS_PATH = os.path.dirname(os.path.abspath(__file__))
+PACKAGE_PATH = os.path.abspath(os.path.join(TESTS_PATH, os.pardir))
 
 
 expected_metric_scores = {
@@ -17,13 +21,17 @@ expected_metric_scores = {
     "statistical_parity_ratio": 0.40,
 }
 
-def get_training_data():
+
+@pytest.fixture()
+def default_fairness_metric():
     # Read training and testing data.
     target_var = "HOS"
-    training_data = pd.read_csv("fairness_data/data_train.csv")
+    train_path = os.path.join(PACKAGE_PATH, 'src', 'FairPkg', 'fairness_data', 'data_train.csv')
+    training_data = pd.read_csv(train_path)
     X_train = training_data.drop(columns=target_var)
     y_train = training_data[target_var]
-    testing_data = pd.read_csv("fairness_data/data_test.csv")
+    test_path = os.path.join(PACKAGE_PATH, 'src', 'FairPkg', 'fairness_data', 'data_test.csv')
+    testing_data = pd.read_csv(test_path)
 
     # Train Random Forest
     param_ml = {
@@ -31,19 +39,21 @@ def get_training_data():
         "min_samples_split": 6,  # Minimum number of samples required  to split an internal node
         "random_state": 0
     }
-    mdl_clf = RandomForestClassifier(**param_ml)
-    mdl_clf.fit(X_train, y_train)
-    return mdl_clf, testing_data, target_var
+    ml_model = RandomForestClassifier(**param_ml)
+    ml_model.fit(X_train, y_train)
+
+    fairness_metric = FairnessMetric(ml_model=ml_model, data=testing_data,
+                                     target_attribute=target_var,
+                                     protected_attribute='RACERETH', privileged_class=1)
+    return fairness_metric
 
 # =======================================================
 
-def test_fairness_score(get_training_data):
 
+def test_fairness_score(default_fairness_metric):
     # Compute Fairness score
     metric_name = "all"
-    fairness_metric = FairnessMetric(ml_model=mdl_clf, data=testing_data, target_attribute=target_var,
-                                     protected_attribute='RACERETH', privileged_class=1)
-    fairness_metric_score = fairness_metric.fairness_score(metric_name)
+    fairness_metric_score = default_fairness_metric.fairness_score(metric_name)
 
     assert round(fairness_metric_score['treatment_equality_ratio'], 2) == 0.91
     assert round(fairness_metric_score['treatment_equality_difference'], 2) == -0.93
@@ -57,9 +67,6 @@ def test_fairness_score(get_training_data):
 
 
 @pytest.mark.parametrize("metric_name", expected_metric_scores.keys())
-def test_generated_metrics_smoke(metric_name):
-    fairness_metric = FairnessMetric(ml_model=mdl_clf, data=testing_data, target_attribute=target_var,
-                                     protected_attribute='RACERETH')
-    fairness_metric_score = fairness_metric.fairness_score(metric_name)
-    assert fairness_metric_score == pytest.approx(expected_metric_scores[metric_name])
-
+def test_generated_metrics_smoke(default_fairness_metric, metric_name):
+    fairness_metric_score = default_fairness_metric.fairness_score(metric_name)
+    assert fairness_metric_score[metric_name] == pytest.approx(expected_metric_scores[metric_name])
