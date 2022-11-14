@@ -23,7 +23,7 @@ logger.setLevel(logging.INFO)
 
 class BiasMitigation:
     """
-    Bias mitigation class. Apply a mitigation method to data to make it more balanced.
+    Bias mitigation class. Apply a mitigation method to make a Dataset more balanced.
 
     Parameters
     ----------
@@ -87,9 +87,9 @@ class BiasMitigation:
         self.unprivileged_groups = [{self.protected_attribute: [self.unprivileged_class]}]
         self.privileged_groups = [{self.protected_attribute: [self.privileged_class]}]
 
-    def fit_transform(self, mitigation_method, cr_coeff=1, repair_level=0.8):
+    def fit_transform(self, mitigation_method, alpha=1.0, repair_level=0.8):
         """
-        Apply a mitigation method to data to make in more balanced.
+        Apply a mitigation method to data to make it more balanced.
 
         Parameters
         ----------
@@ -100,32 +100,33 @@ class BiasMitigation:
              "reweighing"
              "disparate-impact-remover"
              "correlation-remover"
-        cr_coeff : float, default=1
-            Correlation coefficient
+        alpha : float, default=1.0
+            parameter to control how much to filter, for alpha=1.0 we filter out
+            all information while for alpha=0.0 we don't apply any.
         repair_level : float, default=0.8
-            Correlation coefficient
+            Repair amount. 0.0 is no repair while 1.0 is full repair.
         Returns
         ----------
         T : dictionary-like of shape
-            Data after mitigation and corresponding transforms/indexes
+            Mitigated data/weights and corresponding transforms/indexes
             Notes:
-            'mitigation_output' key is mitigation method. Mitigated data and corresponding transform is stored as
-            dictionary
-            'mitigation_output' method key shouldn't have both 'data' and 'model' i.e. if method only changes data then
-             key is 'data' and if method changes machine learning model than 'model' is in key
+            Mitigated data and corresponding transform is stored as dictionary
+            'mitigation_output' method key shouldn't have both 'data' and 'weights' i.e. if method only changes data then
+             key is 'data' and if method changes machine learning model weights then 'weight' is in key
 
         """
 
         assert mitigation_method in ["resampling-uniform", "resampling", "resampling-preferential",
                                      "correlation-remover",
                                      "reweighing", "disparate-impact-remover"], "Incorrect mitigation method."
-        # TODO check cr_coeff and repair_level values
+        assert 0.0 <= alpha <= 1.0, "'alpha' must be between 0.0 and 1.0."
+        assert 0.0 <= repair_level <= 1.0, "'repair_level' must be between 0.0 and 1.0."
 
         mitigated_dataset = {}
         if "resampling" in mitigation_method:
             mitigated_dataset = self._resampling_data(mitigation_method)
         elif mitigation_method == "correlation-remover":
-            mitigated_dataset = self._cr_removing_data(cr_coeff)
+            mitigated_dataset = self._cr_removing_data(alpha)
         elif mitigation_method == "reweighing":
             mitigated_dataset = self._reweighing_model()
         elif mitigation_method == "disparate-impact-remover":
@@ -135,7 +136,7 @@ class BiasMitigation:
 
     def _resampling_data(self, mitigation_method):
         """
-        Resample the data using dalex module functions.
+        Resample the input data using dalex module functions.
 
         Parameters
         ----------
@@ -147,9 +148,8 @@ class BiasMitigation:
         Returns
         ----------
         T : dictionary-like of shape
-            Data after resampling and corresponding indexes
+            Mitigated data and corresponding indexes
         """
-
 
         mitigated_dataset = {}
 
@@ -175,17 +175,18 @@ class BiasMitigation:
 
         return mitigated_dataset
 
-    def _cr_removing_data(self, cr_coeff=1):
+    def _cr_removing_data(self, alpha=1.0):
         """
-        correlation-remover (FairLearn)
+        Filters out sensitive correlations in a dataset using 'CorrelationRemover' function from fairlearn package.
         Parameters
         ----------
-        cr_coeff : float, default=1
-            Correlation coefficient
+        alpha : float, default=1.0
+            Parameter to control how much to filter, for alpha=1.0 we filter out
+            all information while for alpha=0.0 we don't apply any.
         Returns
         ----------
         T : dictionary-like of shape
-            Data after removing some samples and corresponding CorrelationRemover object
+            Mitigated data and corresponding 'CorrelationRemover' object.
         """
         mitigated_dataset = {}
 
@@ -195,7 +196,7 @@ class BiasMitigation:
         # remove the outcome variable and sensitive variable
         train_data_rm = self.data.drop([self.protected_attribute, self.target_attribute], axis=1)
         train_data_rm_cols = list(train_data_rm.columns)
-        cr = CorrelationRemover(sensitive_feature_ids=[self.protected_attribute], alpha=cr_coeff)
+        cr = CorrelationRemover(sensitive_feature_ids=[self.protected_attribute], alpha=alpha)
         train_data_cr = cr.fit_transform(self.data.drop([self.target_attribute], axis=1))
         train_data_cr = pd.DataFrame(train_data_cr, columns=train_data_rm_cols)
 
@@ -212,11 +213,11 @@ class BiasMitigation:
 
     def _reweighing_model(self):
         """
-        reweighing(AIF360)
+        Obtain weights for model training using 'Reweighing' function from aif360 package.
         Returns
         ----------
         T : dictionary-like of shape
-            Data after removing some samples and corresponding Reweighing object
+            Balanced model weights and corresponding 'Reweighing' object.
         """
 
         mitigated_dataset = {}
@@ -239,26 +240,23 @@ class BiasMitigation:
         # train_data_std_m.instance_weights - mitigated data weights for machine learning model
 
         # data after mitigation
-        mitigated_dataset['model'] = train_data_std_m.instance_weights
+        mitigated_dataset['weights'] = train_data_std_m.instance_weights
         # transform as an object
         mitigated_dataset['transform'] = RW
-
-        #mport pdb
-        #pdb.set_trace()
 
         return mitigated_dataset
 
     def _disp_removing_data(self, repair_level=0.8):
         """
-        disparate-impact-remover (AIF360)
+        Transforming input using the 'DisparateImpactRemover' from aif360 pacakge.
         Parameters
         ----------
         repair_level : float, default=0.8
-            Correlation coefficient
+            Repair amount. 0.0 is no repair while 1.0 is full repair.
         Returns
         ----------
         T : dictionary-like of shape
-            Data after removing some samples and corresponding  DisparateImpactRemover object
+            Mitigated data and corresponding 'DisparateImpactRemover' object
         """
 
         mitigated_dataset = {}
@@ -280,75 +278,3 @@ class BiasMitigation:
         mitigated_dataset['transform'] = DIR
 
         return mitigated_dataset
-
-
-if __name__ == "__main__":
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.metrics import accuracy_score, roc_auc_score
-
-    # First train a Machine Learning model with the training data
-
-    # Read training and testing data.
-    target_var = "HOS"
-    training_data = pd.read_csv("fairness_data/data_train.csv")
-    X_train = training_data.drop(columns=target_var)
-    y_train = training_data[target_var]
-    testing_data = pd.read_csv("fairness_data/data_test.csv")
-    X_test = testing_data.drop(columns=target_var)
-    y_test = testing_data[target_var]
-
-    # Train Random Forest
-    param_ml = {
-        "n_estimators": 500,  # Number of trees in the forest
-        "min_samples_split": 6,  # Minimum number of samples required  to split an internal node
-        "random_state": 0
-    }
-    mdl_clf = RandomForestClassifier(**param_ml)
-    mdl_clf.fit(X_train, y_train)
-    # Estimate prediction probability and predicted class of training data (Put empty dataframe for testing in order to
-    # estimate this)
-    pred_class = mdl_clf.predict(X_test)
-    pred_prob = mdl_clf.predict_proba(X_test)
-    pred_prob = pred_prob[:, 1]  # keep probabilities for positive outcomes only
-
-    # Evaluate some scores
-    auc = roc_auc_score(y_test, pred_prob)  # Area under a curve
-    print(f"AUC = {auc}")
-
-    accuracy = accuracy_score(y_test, pred_class)  # classification accuracy
-    print(f"Accuracy = {accuracy}")
-
-    # Create the BiasMitigation object to perform a bias mitigation
-    bias_mitigation = BiasMitigation(ml_model=mdl_clf, data=training_data, target_attribute=target_var,
-                                     protected_attribute='RACERETH', privileged_class=1)
-
-    mitigation_method = "disparate-impact-remover"
-    # "resampling-uniform", "resampling", "resampling-preferential", "correlation-remover", "reweighing",
-    # "disparate-impact-remover"
-
-    # For mitigation_method = reweighing, the result is model weights on data. How to solve that???
-    mitigation_res = bias_mitigation.fit_transform(mitigation_method=mitigation_method)
-
-    if mitigation_method != "reweighing":
-        mitigated_data = mitigation_res['data']
-        X_train = mitigated_data.drop(columns=target_var)
-        y_train = mitigated_data[target_var]
-
-        # ReTrain Random Forest based on mitigated data
-        mdl_clf = RandomForestClassifier(**param_ml)
-        mdl_clf.fit(X_train, y_train)
-    else:
-        mitigated_weights = mitigation_res['model']
-        mdl_clf.fit(X_train, y_train, sample_weight=mitigated_weights)
-    # Estimate prediction probability and predicted class of training data (Put empty dataframe for testing in order to
-    # estimate this)
-    pred_class = mdl_clf.predict(X_test)
-    pred_prob = mdl_clf.predict_proba(X_test)
-    pred_prob = pred_prob[:, 1]  # keep probabilities for positive outcomes only
-
-    # re-evaluate the scores
-    new_auc = roc_auc_score(y_test, pred_prob)  # Area under a curve
-    print(f"New AUC = {new_auc}")
-
-    new_accuracy = accuracy_score(y_test, pred_class)  # classification accuracy
-    print(f"New accuracy = {new_accuracy}")
