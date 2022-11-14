@@ -15,11 +15,6 @@ from fairlearn.preprocessing import CorrelationRemover
 # Ignore warnings
 warnings.filterwarnings("ignore")
 
-# Add a custom logger for debugging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.INFO)
-
 
 class BiasMitigation:
     """
@@ -59,7 +54,6 @@ class BiasMitigation:
         super(BiasMitigation, self).__init__()
 
         # Check input arguments
-        # TODO check ml_model object
         assert all(np.issubdtype(dtype, np.number) for dtype in data.dtypes)
         assert target_attribute in data.columns
         assert protected_attribute in data.columns
@@ -80,7 +74,6 @@ class BiasMitigation:
         if unprivileged_class is None:
             _unprivileged_classes = list(set(data[protected_attribute]).difference([privileged_class]))
             self.unprivileged_class = _unprivileged_classes[0]  # just use one unprivileged class
-            logger.debug(f"Computed unprivileged class {self.unprivileged_class}")
         else:
             self.unprivileged_class = unprivileged_class
 

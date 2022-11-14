@@ -11,11 +11,6 @@ from dalex import Explainer
 # Ignore warnings
 warnings.filterwarnings("ignore")
 
-# Add a custom logger for debugging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.INFO)
-
 
 class FairnessMetric:
     """
@@ -61,7 +56,6 @@ class FairnessMetric:
         super(FairnessMetric, self).__init__()
 
         # Check input arguments
-        # TODO check ml_model object
         assert all(np.issubdtype(dtype, np.number) for dtype in data.dtypes)
         assert target_attribute in data.columns
         assert protected_attribute in data.columns
@@ -83,22 +77,27 @@ class FairnessMetric:
             _unprivileged_classes = list(set(data[protected_attribute]).difference([privileged_class]))
             assert len(_unprivileged_classes) == 1, "Only available to use one unprivileged class"
             self.unprivileged_class = _unprivileged_classes[0]
-            logger.debug(f"Computed unprivileged class {self.unprivileged_class}")
         else:
             self.unprivileged_class = unprivileged_class
 
         # Compute predicted classes in case input argument 'pred_class' is None
         if pred_class is None:
-            _features = self.data.drop(columns=target_attribute)
-            self.pred_class = ml_model.predict(_features)
+            try:
+                _features = self.data.drop(columns=target_attribute)
+                self.pred_class = ml_model.predict(_features)
+            except:
+                raise Exception("Not possible to predict classes using the input machine learning model")
         else:
             self.pred_class = pred_class
 
         # Compute probability estimates in case input argument 'pred_prob' is None
         if pred_prob is None:
-            _features = self.data.drop(columns=target_attribute)
-            self.pred_prob = ml_model.predict_proba(_features)
-            self.pred_prob = self.pred_prob[:, 1]  # keep probabilities for positive outcomes only
+            try:
+                _features = self.data.drop(columns=target_attribute)
+                self.pred_prob = ml_model.predict_proba(_features)
+                self.pred_prob = self.pred_prob[:, 1]  # keep probabilities for positive outcomes only
+            except:
+                raise Exception("Not possible to predict estimates using the input machine learning model")
         else:
             self.pred_prob = pred_prob
 
@@ -124,7 +123,7 @@ class FairnessMetric:
                9. 'statistical_parity_ratio': Statistical parity ratio
                10. 'all'
         cutoff : float, default=0.5
-            Threshold value used for the machine learning classifier
+            Cutoff for predictions in classification models. Needed for measures like recall, precision, acc, f1
 
         Returns
         ----------
@@ -143,8 +142,7 @@ class FairnessMetric:
         assert metric_name in aif360_list or metric_name in dalex_list or metric_name == 'all', \
             "Provided invalid metric name"
 
-        # TODO check cutoff value
-        logger.debug('Machine learning model threshold: {}'.format(cutoff))
+        assert cutoff >= 0.0, "Cutoff value shall be positive."
 
         fairness_metric_score = {}
 

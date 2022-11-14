@@ -3,7 +3,7 @@ import os
 from sklearn.ensemble import RandomForestClassifier
 import pytest
 
-from fairml.fairness_evaluation import FairnessMetric
+from fairml import FairnessMetric
 
 TESTS_PATH = os.path.dirname(os.path.abspath(__file__))
 PACKAGE_PATH = os.path.abspath(os.path.join(TESTS_PATH, os.pardir))
