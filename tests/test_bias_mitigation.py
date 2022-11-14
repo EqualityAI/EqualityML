@@ -4,17 +4,17 @@ import os
 from sklearn.ensemble import RandomForestClassifier
 import pytest
 
-from src.FairPkg.bias_mitigation import BiasMitigation
+from fairml.bias_mitigation import BiasMitigation
 
 TESTS_PATH = os.path.dirname(os.path.abspath(__file__))
 PACKAGE_PATH = os.path.abspath(os.path.join(TESTS_PATH, os.pardir))
 
 
 @pytest.fixture()
-def train_default_ml():
+def train_ml_model():
     # Read training and testing data.
     target_var = "HOS"
-    train_path = os.path.join(PACKAGE_PATH, 'src', 'FairPkg', 'fairness_data', 'data_train.csv')
+    train_path = os.path.join(PACKAGE_PATH, 'data', 'data_train.csv')
     training_data = pd.read_csv(train_path)
     X_train = training_data.drop(columns=target_var)
     y_train = training_data[target_var]
@@ -30,16 +30,16 @@ def train_default_ml():
     return {"ml_model": ml_model, "training_data": training_data, "target_var": target_var}
 
 
-def test_bias_mitigation(train_default_ml):
+def test_bias_mitigation(train_ml_model):
 
     # Create the BiasMitigation object to perform a bias mitigation
     protected_attribute = 'RACERETH'
-    bias_mitigation = BiasMitigation(ml_model=train_default_ml["ml_model"], data=train_default_ml["training_data"],
-                                     target_attribute=train_default_ml["target_var"],
+    bias_mitigation = BiasMitigation(ml_model=train_ml_model["ml_model"], data=train_ml_model["training_data"],
+                                     target_attribute=train_ml_model["target_var"],
                                      protected_attribute=protected_attribute, privileged_class=1)
 
     mitigation_method = "correlation-remover"
     # "resampling-preferential", "reweighing", "disparate-impact-remover", "correlation-remover"
     mitigation_res = bias_mitigation.fit_transform(mitigation_method=mitigation_method)
 
-    assert np.all(mitigation_res["data"][protected_attribute] == train_default_ml["training_data"][protected_attribute])
+    assert np.all(mitigation_res["data"][protected_attribute] == train_ml_model["training_data"][protected_attribute])

@@ -19,7 +19,7 @@ logger.setLevel(logging.INFO)
 
 class FairnessMetric:
     """
-    Fairness metric class to evaluate fairness of a Machine Learning application (dataset or model).
+    Fairness metric class to evaluate fairness of a Machine Learning application.
 
     Parameters
     ----------
@@ -90,14 +90,14 @@ class FairnessMetric:
         # Compute predicted classes in case input argument 'pred_class' is None
         if pred_class is None:
             _features = self.data.drop(columns=target_attribute)
-            self.pred_class = mdl_clf.predict(_features)
+            self.pred_class = ml_model.predict(_features)
         else:
             self.pred_class = pred_class
 
         # Compute probability estimates in case input argument 'pred_prob' is None
         if pred_prob is None:
             _features = self.data.drop(columns=target_attribute)
-            self.pred_prob = mdl_clf.predict_proba(_features)
+            self.pred_prob = ml_model.predict_proba(_features)
             self.pred_prob = self.pred_prob[:, 1]  # keep probabilities for positive outcomes only
         else:
             self.pred_prob = pred_prob
@@ -114,7 +114,7 @@ class FairnessMetric:
         metric_name : str
             fairness metric name. Available options are:
                1. 'treatment_equality_ratio':
-               2. 'treatment_equality_diff':
+               2. 'treatment_equality_difference':
                3. 'balance_positive_class': Balance for positive class
                4. 'balance_negative_class': Balance for negative class
                5. 'equal_opportunity_ratio': Equal opportunity ratio
@@ -133,7 +133,7 @@ class FairnessMetric:
         """
 
         #  PACKAGE: AIF360
-        aif360_list = ['treatment_equality_ratio', 'treatment_equality_diff', 'balance_positive_class',
+        aif360_list = ['treatment_equality_ratio', 'treatment_equality_difference', 'balance_positive_class',
                        'balance_negative_class']
         #  PACKAGE: DALEX
         dalex_list = ['equal_opportunity_ratio', 'accuracy_equality_ratio', 'predictive_parity_ratio',
@@ -215,45 +215,3 @@ class FairnessMetric:
                 fairness_metric_score['statistical_parity_ratio'] = fairness_result['STP'][1]
 
         return fairness_metric_score
-
-
-if __name__ == "__main__":
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.metrics import accuracy_score, roc_auc_score
-
-    # First train a Machine Learning model with the training data
-
-    # Read training and testing data.
-    target_var = "HOS"
-    training_data = pd.read_csv("fairness_data/data_train.csv")
-    X_train = training_data.drop(columns=target_var)
-    y_train = training_data[target_var]
-    testing_data = pd.read_csv("fairness_data/data_test.csv")
-    X_test = testing_data.drop(columns=target_var)
-    y_test = testing_data[target_var]
-
-    # Train Random Forest
-    param_ml = {
-        "n_estimators": 500,  # Number of trees in the forest
-        "min_samples_split": 6,  # Minimum number of samples required  to split an internal node
-        "random_state": 0
-    }
-    mdl_clf = RandomForestClassifier(**param_ml)
-    mdl_clf.fit(X_train, y_train)
-
-    # Estimate prediction probability and predicted class of training data (Put empty dataframe for testing in order to estimate this)
-    pred_class = mdl_clf.predict(X_test)
-    pred_prob = mdl_clf.predict_proba(X_test)
-    pred_prob = pred_prob[:, 1]  # keep probabilities for positive outcomes only
-
-    auc = roc_auc_score(y_test, pred_prob)  # Area under a curve
-    print(f"AUC = {auc}")
-
-    accuracy = accuracy_score(y_test, pred_class)  # classification accuracy
-    print(f"Accuracy = {accuracy}")
-
-    metric_name = "all"
-    fairness_metric = FairnessMetric(ml_model=mdl_clf, data=testing_data, target_attribute=target_var,
-                                     protected_attribute='RACERETH', privileged_class=1)
-    fairness_metric_score = fairness_metric.fairness_score(metric_name)
-    print(fairness_metric_score)

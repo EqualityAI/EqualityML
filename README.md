@@ -42,7 +42,7 @@ Check out the example below to see how FairML can be used to evaluate the fairne
 ```python
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from src.FairPkg.fairness_evaluation import fairness_metrics
+from fairml.FairPkg.fairness_evaluation import fairness_metrics
 
 # Read training and testing data.
 target_var = "HOS"
@@ -84,10 +84,11 @@ fairness_metric_score = fairness_metrics(testing_data, target_var, metric_name, 
 In case the model is unfair in terms of checked fairness metric score, FairML provides a range of methods to try to
 mitigate bias in Machine Learning models. For example, we can use 'correlation-remover' to perform mitigation on 
 training dataset.
+
 ```python
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from src.FairPkg.bias_mitigation import mitigation_methods
+from fairml.FairPkg.bias_mitigation import mitigation_methods
 
 # Read training data.
 target_var = "HOS"

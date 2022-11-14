@@ -3,34 +3,34 @@ import os
 from sklearn.ensemble import RandomForestClassifier
 import pytest
 
-from src.FairPkg.fairness_evaluation import FairnessMetric
+from fairml.fairness_evaluation import FairnessMetric
 
 TESTS_PATH = os.path.dirname(os.path.abspath(__file__))
 PACKAGE_PATH = os.path.abspath(os.path.join(TESTS_PATH, os.pardir))
 
-
 expected_metric_scores = {
-    "treatment_equality_ratio": 0.91,
-    "treatment_equality_difference": -0.93,
-    "balance_negative_class": 0.77,
-    "balance_positive_class": 0.91,
-    "equal_opportunity_ratio": 0.53,
-    "accuracy_equality_ratio": 1.07,
-    "predictive_parity_ratio": 0.75,
-    "predictive_equality_ratio": 0.65,
-    "statistical_parity_ratio": 0.40,
+    "treatment_equality_ratio": 0.914,
+    "treatment_equality_difference": -0.933,
+    "balance_negative_class": 0.773,
+    "balance_positive_class": 0.914,
+    "equal_opportunity_ratio": 0.535,
+    "accuracy_equality_ratio": 1.072,
+    "predictive_parity_ratio": 0.753,
+    "predictive_equality_ratio": 0.647,
+    "statistical_parity_ratio": 0.400,
 }
 
 
 @pytest.fixture()
-def default_fairness_metric():
+def train_ml_model():
+    # TODO Review dataset to use for fairness testing
     # Read training and testing data.
     target_var = "HOS"
-    train_path = os.path.join(PACKAGE_PATH, 'src', 'FairPkg', 'fairness_data', 'data_train.csv')
+    train_path = os.path.join(PACKAGE_PATH, 'data', 'data_train.csv')
     training_data = pd.read_csv(train_path)
     X_train = training_data.drop(columns=target_var)
     y_train = training_data[target_var]
-    test_path = os.path.join(PACKAGE_PATH, 'src', 'FairPkg', 'fairness_data', 'data_test.csv')
+    test_path = os.path.join(PACKAGE_PATH, 'data', 'data_test.csv')
     testing_data = pd.read_csv(test_path)
 
     # Train Random Forest
@@ -42,31 +42,28 @@ def default_fairness_metric():
     ml_model = RandomForestClassifier(**param_ml)
     ml_model.fit(X_train, y_train)
 
-    fairness_metric = FairnessMetric(ml_model=ml_model, data=testing_data,
-                                     target_attribute=target_var,
-                                     protected_attribute='RACERETH', privileged_class=1)
-    return fairness_metric
+    return {"ml_model": ml_model, "testing_data": testing_data, "target_var": target_var}
+
 
 # =======================================================
 
 
-def test_fairness_score(default_fairness_metric):
+def test_fairness_score_smoke(train_ml_model):
+    fairness_metric = FairnessMetric(ml_model=train_ml_model["ml_model"], data=train_ml_model["testing_data"],
+                                     target_attribute=train_ml_model["target_var"],
+                                     protected_attribute='RACERETH', privileged_class=1)
     # Compute Fairness score
     metric_name = "all"
-    fairness_metric_score = default_fairness_metric.fairness_score(metric_name)
+    fairness_metric_score = fairness_metric.fairness_score(metric_name)
 
-    assert round(fairness_metric_score['treatment_equality_ratio'], 2) == 0.91
-    assert round(fairness_metric_score['treatment_equality_difference'], 2) == -0.93
-    assert round(fairness_metric_score['balance_negative_class'], 2) == 0.77
-    assert round(fairness_metric_score['balance_positive_class'], 2) == 0.91
-    assert round(fairness_metric_score['equal_opportunity_ratio'], 2) == 0.53
-    assert round(fairness_metric_score['accuracy_equality_ratio'], 2) == 1.07
-    assert round(fairness_metric_score['predictive_parity_ratio'], 2) == 0.75
-    assert round(fairness_metric_score['predictive_equality_ratio'], 2) == 0.65
-    assert round(fairness_metric_score['statistical_parity_ratio'], 2) == 0.40
+    res = {key: round(fairness_metric_score[key], 3) for key in fairness_metric_score}
+    assert res == expected_metric_scores
 
 
 @pytest.mark.parametrize("metric_name", expected_metric_scores.keys())
-def test_generated_metrics_smoke(default_fairness_metric, metric_name):
-    fairness_metric_score = default_fairness_metric.fairness_score(metric_name)
-    assert fairness_metric_score[metric_name] == pytest.approx(expected_metric_scores[metric_name])
+def test_fairness_scores(train_ml_model, metric_name):
+    fairness_metric = FairnessMetric(ml_model=train_ml_model["ml_model"], data=train_ml_model["testing_data"],
+                                     target_attribute=train_ml_model["target_var"],
+                                     protected_attribute='RACERETH', privileged_class=1)
+    fairness_metric_score = fairness_metric.fairness_score(metric_name)
+    assert fairness_metric_score[metric_name] == pytest.approx(expected_metric_scores[metric_name], abs=1e-3)
