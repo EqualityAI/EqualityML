@@ -1,7 +1,10 @@
 import pandas as pd
 import numpy as np
 import logging
-import warnings
+
+# Ignore warnings from aif360
+logger = logging.getLogger()
+logger.setLevel(logging.ERROR)
 
 # Import library with bias mitigation methods
 from dalex import Explainer
@@ -11,9 +14,6 @@ from aif360.datasets import BinaryLabelDataset
 from aif360.algorithms.preprocessing import Reweighing
 from aif360.algorithms.preprocessing import DisparateImpactRemover
 from fairlearn.preprocessing import CorrelationRemover
-
-# Ignore warnings
-warnings.filterwarnings("ignore")
 
 
 class BiasMitigation:

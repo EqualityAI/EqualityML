@@ -1,15 +1,15 @@
 import pandas as pd
 import numpy as np
 import logging
-import warnings
+
+# Ignore warnings from aif360
+logger = logging.getLogger()
+logger.setLevel(logging.ERROR)
 
 # Import library with fairness metrics methods
 from aif360.datasets import BinaryLabelDataset
 from aif360.metrics import ClassificationMetric
 from dalex import Explainer
-
-# Ignore warnings
-warnings.filterwarnings("ignore")
 
 
 class FairnessMetric:
@@ -188,7 +188,7 @@ class FairnessMetric:
             # features
             X_data = self.data.drop(columns=self.target_attribute)
             # target variable
-            y_data = self.data[[self.target_attribute]]
+            y_data = self.data[self.target_attribute]
 
             # create an explainer
             exp = Explainer(self.ml_model, X_data, y_data, verbose=False)
