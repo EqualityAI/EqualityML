@@ -14,7 +14,7 @@ from dalex import Explainer
 
 class FairnessMetric:
     """
-    Fairness metric class to evaluate fairness of a Machine Learning application.
+    Fairness metric class to evaluate fairness of a binary classifiation Machine Learning application.
 
     Parameters
     ----------
@@ -27,10 +27,10 @@ class FairnessMetric:
     protected_attribute : str
         Data attribute for which fairness is desired.
     privileged_class : float
-        Subgroup that is suspected to have the most privilege.
+        Subgroup that is suspected to have the most privilege class.
         It needs to be a value present in `protected_attribute` vector.
     unprivileged_class : float, default=None
-        Subgroup that is suspected to have the least privilege.
+        Subgroup that is suspected to have the least privilege class.
         It needs to be a value present in `protected_attribute` vector.
     favorable_label : float, default=1
         Label value which is considered favorable (i.e. "positive").
@@ -60,7 +60,7 @@ class FairnessMetric:
         assert target_attribute in data.columns
         assert protected_attribute in data.columns
         assert isinstance(privileged_class, (float, int))
-        assert privileged_class in data[protected_attribute]
+        assert privileged_class in data[protected_attribute].values
         assert isinstance(favorable_label, (float, int)) and isinstance(unfavorable_label, (float, int))
         assert favorable_label in data[target_attribute] and unfavorable_label in data[target_attribute]
         assert sorted(list(set(data[target_attribute]))) == sorted([favorable_label, unfavorable_label]), \
@@ -106,7 +106,7 @@ class FairnessMetric:
 
     def fairness_score(self, metric_name, cutoff=0.5):
         """
-        Fairness metric evaluation using protected variable, privileged class, etc.
+        Fairness metric evaluation using protected variable and privileged class.
 
         Parameters
         ----------

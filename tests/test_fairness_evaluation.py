@@ -1,69 +1,45 @@
 import pandas as pd
-import os
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 import pytest
 
 from fairml import FairnessMetric
 
-TESTS_PATH = os.path.dirname(os.path.abspath(__file__))
-PACKAGE_PATH = os.path.abspath(os.path.join(TESTS_PATH, os.pardir))
-
-expected_metric_scores = {
-    "treatment_equality_ratio": 0.914,
-    "treatment_equality_difference": -0.933,
-    "balance_negative_class": 0.773,
-    "balance_positive_class": 0.914,
-    "equal_opportunity_ratio": 0.535,
-    "accuracy_equality_ratio": 1.072,
-    "predictive_parity_ratio": 0.753,
-    "predictive_equality_ratio": 0.647,
-    "statistical_parity_ratio": 0.400,
-}
+_ESTIMATORS = [LogisticRegression, SVC, DecisionTreeClassifier, RandomForestClassifier]
+_METRICS = ['treatment_equality_ratio', 'treatment_equality_difference', 'balance_positive_class',
+            'balance_negative_class', 'equal_opportunity_ratio', 'accuracy_equality_ratio', 'predictive_parity_ratio',
+            'predictive_equality_ratio', 'statistical_parity_ratio', 'all']
 
 
-@pytest.fixture()
-def train_ml_model():
-    # TODO Review dataset to use for fairness testing
-    # Read training and testing data.
-    target_var = "HOS"
-    train_path = os.path.join(PACKAGE_PATH, 'data', 'data_train.csv')
-    training_data = pd.read_csv(train_path)
-    X_train = training_data.drop(columns=target_var)
-    y_train = training_data[target_var]
-    test_path = os.path.join(PACKAGE_PATH, 'data', 'data_test.csv')
-    testing_data = pd.read_csv(test_path)
+@pytest.mark.parametrize("metric", _METRICS)
+@pytest.mark.parametrize("estimator", _ESTIMATORS)
+def test_smoke(metric, estimator):
+    np.random.seed(0)
+    n = 100
+    X0 = np.random.normal(size=n)
+    X1 = np.random.choice([1, 2], size=n)
+    Y = np.random.choice([0, 1], size=n)
+    train_df = pd.DataFrame({"X0": X0, "X1": X1, "Y": Y})
 
-    # Train Random Forest
-    param_ml = {
-        "n_estimators": 500,  # Number of trees in the forest
-        "min_samples_split": 6,  # Minimum number of samples required  to split an internal node
-        "random_state": 0
-    }
-    ml_model = RandomForestClassifier(**param_ml)
-    ml_model.fit(X_train, y_train)
+    if estimator == SVC:
+        _estimator = estimator(probability=True)
+    else:
+        _estimator = estimator()
+    _estimator.fit(train_df.drop(columns="Y"), Y)
 
-    return {"ml_model": ml_model, "testing_data": testing_data, "target_var": target_var}
+    fairness_metric = FairnessMetric(ml_model=_estimator, data=train_df,
+                                     target_attribute="Y",
+                                     protected_attribute="X1", privileged_class=1)
 
-
-# =======================================================
-
-
-def test_fairness_score_smoke(train_ml_model):
-    fairness_metric = FairnessMetric(ml_model=train_ml_model["ml_model"], data=train_ml_model["testing_data"],
-                                     target_attribute=train_ml_model["target_var"],
-                                     protected_attribute='RACERETH', privileged_class=1)
-    # Compute Fairness score
-    metric_name = "all"
-    fairness_metric_score = fairness_metric.fairness_score(metric_name)
-
-    res = {key: round(fairness_metric_score[key], 3) for key in fairness_metric_score}
-    assert res == expected_metric_scores
-
-
-@pytest.mark.parametrize("metric_name", expected_metric_scores.keys())
-def test_fairness_scores(train_ml_model, metric_name):
-    fairness_metric = FairnessMetric(ml_model=train_ml_model["ml_model"], data=train_ml_model["testing_data"],
-                                     target_attribute=train_ml_model["target_var"],
-                                     protected_attribute='RACERETH', privileged_class=1)
-    fairness_metric_score = fairness_metric.fairness_score(metric_name)
-    assert fairness_metric_score[metric_name] == pytest.approx(expected_metric_scores[metric_name], abs=1e-3)
+    fairness_metric_score = fairness_metric.fairness_score(metric)
+    if metric == 'all':
+        for metric_name in _METRICS:
+            if metric_name == 'all':
+                pass
+            else:
+                assert isinstance(fairness_metric_score[metric_name], float)
+    else:
+        assert isinstance(fairness_metric_score[metric], float)

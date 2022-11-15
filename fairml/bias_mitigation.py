@@ -58,7 +58,7 @@ class BiasMitigation:
         assert target_attribute in data.columns
         assert protected_attribute in data.columns
         assert isinstance(privileged_class, (float, int))
-        assert privileged_class in data[protected_attribute]
+        assert privileged_class in data[protected_attribute].values
         assert isinstance(favorable_label, (float, int)) and isinstance(unfavorable_label, (float, int))
         assert favorable_label in data[target_attribute] and unfavorable_label in data[target_attribute]
         assert sorted(list(set(data[target_attribute]))) == sorted([favorable_label, unfavorable_label]), \
