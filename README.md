@@ -40,45 +40,18 @@ conda install -c conda-forge fairml
 Check out the example below to see how FairML can be used to evaluate the fairness of a Ml model and dataset.
 
 ```python
-import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from fairml.FairPkg.fairness_evaluation import fairness_metrics
+from sklearn.linear_model import LogisticRegression
+from fairml import FairnessMetric
 
-# Read training and testing data.
-target_var = "HOS"
-training_data = pd.read_csv("fairness_data/data_train.csv")
-X_train = training_data.drop(columns=target_var)
-y_train = training_data[target_var]
-testing_data = pd.read_csv("fairness_data/data_test.csv")
-X_test = testing_data.drop(columns=target_var)
-y_test = testing_data[target_var]
+# Train a machine learning model (for example LogisticRegression)
+ml_model = LogisticRegression()
+ml_model.fit(X_train, Y_train)
 
-# Train a Machine Learning Model
-param_ml = {
-    "n_estimators": 500,  # Number of trees in the forest
-    "min_samples_split": 6,  # Minimum number of samples required  to split an internal node
-    "random_state": 0
-}
-mdl_clf = RandomForestClassifier(**param_ml)
-mdl_clf.fit(X_train, y_train)
-
-# Estimate prediction probability and predicted class of training data (Put empty dataframe for testing in order to estimate this)
-pred_class = mdl_clf.predict(X_test)
-pred_prob = mdl_clf.predict_proba(X_test)
-pred_prob = pred_prob[:, 1]  # keep probabilities for positive outcomes only
-
-metric_name = "all"
-param_fairness_metric = {
-    'pred_prob_data': pred_prob,
-    'pred_class_data': pred_class,
-    'protected_var': 'RACERETH',
-    'privileged_classes': [1],
-    'unprivileged_classes': [2],
-    'favorable_classes': [1],
-    'unfavorable_classes': [0],
-    'model': mdl_clf
-}
-fairness_metric_score = fairness_metrics(testing_data, target_var, metric_name, param_fairness_metric)
+fairness_metric = FairnessMetric(ml_model=ml_model, data=testing_data,
+                                 target_variable="Y",
+                                 protected_variable="X1", privileged_class=1)
+metric_name='statistical_parity_ratio'
+fairness_metric_score = fairness_metric.fairness_score(metric_name)
 ```
 
 In case the model is unfair in terms of checked fairness metric score, FairML provides a range of methods to try to
@@ -86,35 +59,19 @@ mitigate bias in Machine Learning models. For example, we can use 'correlation-r
 training dataset.
 
 ```python
-import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from fairml.FairPkg.bias_mitigation import mitigation_methods
+from sklearn.linear_model import LogisticRegression
+from fairml import BiasMitigation
 
-# Read training data.
-target_var = "HOS"
-training_data = pd.read_csv("fairness_data/data_train.csv")
-X_train = training_data.drop(columns=target_var)
-y_train = training_data[target_var]
-
-# Train a Machine Learning Model
-param_ml = {
-    "n_estimators": 500,  # Number of trees in the forest
-    "min_samples_split": 6,  # Minimum number of samples required  to split an internal node
-    "random_state": 0
-}
-mdl_clf = RandomForestClassifier(**param_ml)
-mdl_clf.fit(X_train, y_train)
+# Train a machine learning model (for example LogisticRegression)
+ml_model = LogisticRegression()
+ml_model.fit(X_train, Y_train)
 
 mitigation_method = "correlation-remover"
-param_mitigation_method = {
-    'protected_var': 'RACERETH',
-    'privileged_classes': [1],
-    'unprivileged_classes': [2],
-    'favorable_classes': [1],
-    'unfavorable_classes': [0],
-    'model': mdl_clf
-}
-mitigation_res = mitigation_methods(training_data, target_var, mitigation_method, param_mitigation_method)
+bias_mitigation = BiasMitigation(ml_model=ml_model, data=train_data,
+                                 target_variable="Y",
+                                 protected_variable="X1", privileged_class=1)
+
+mitigation_res = bias_mitigation.fit_transform(mitigation_method=mitigation_method)
 ```
 
 ## Development setup
@@ -122,7 +79,7 @@ mitigation_res = mitigation_methods(training_data, target_var, mitigation_method
 Describe how to install all development dependencies and how to run an automated test-suite of some kind.
 
 ```sh
-pip install requeriments.txt
+pip install -e '.[all]'
 pytest tests
 ```
 

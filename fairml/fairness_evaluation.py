@@ -1,8 +1,7 @@
-import pandas as pd
 import numpy as np
 import logging
 
-# Ignore warnings from aif360
+# Ignore aif360 warnings
 logger = logging.getLogger()
 logger.setLevel(logging.ERROR)
 
@@ -14,7 +13,7 @@ from dalex import Explainer
 
 class FairnessMetric:
     """
-    Fairness metric class to evaluate fairness of a binary classifiation Machine Learning application.
+    Fairness metric class to evaluate fairness of a binary classification Machine Learning application.
 
     Parameters
     ----------
@@ -22,31 +21,31 @@ class FairnessMetric:
         Trained Machine Learning model object (for example LogisticRegression object).
     data : pd.DataFrame
         Data in pd.DataFrame format which will be used to evaluate fairness.
-    target_attribute : str
+    target_variable : str
         Target column of the data with outputs / scores.
-    protected_attribute : str
+    protected_variable : str
         Data attribute for which fairness is desired.
     privileged_class : float
         Subgroup that is suspected to have the most privilege class.
-        It needs to be a value present in `protected_attribute` vector.
+        It needs to be a value present in `protected_variable` column.
     unprivileged_class : float, default=None
         Subgroup that is suspected to have the least privilege class.
-        It needs to be a value present in `protected_attribute` vector.
+        It needs to be a value present in `protected_variable` column.
     favorable_label : float, default=1
         Label value which is considered favorable (i.e. "positive").
     unfavorable_label : float, default=0
         Label value which is considered unfavorable (i.e. "negative").
     pred_class : list, default=None
-        Predicted class labels for input 'data' applied on input machine learning model object 'ml_model'.
+        Predicted class labels for input 'data' applied on machine learning model object 'ml_model'.
     pred_prob : list, default=None
-        Probability estimates for input 'data' applied on input machine learning model object 'ml_model'.
+        Probability estimates for input 'data' applied on machine learning model object 'ml_model'.
     """
 
     def __init__(self,
                  ml_model,
                  data,
-                 target_attribute,
-                 protected_attribute,
+                 target_variable,
+                 protected_variable,
                  privileged_class,
                  unprivileged_class=None,
                  favorable_label=1,
@@ -55,26 +54,26 @@ class FairnessMetric:
                  pred_prob=None):
         super(FairnessMetric, self).__init__()
 
-        # Check input arguments
+        # Assert input arguments
         assert all(np.issubdtype(dtype, np.number) for dtype in data.dtypes)
-        assert target_attribute in data.columns
-        assert protected_attribute in data.columns
+        assert target_variable in data.columns
+        assert protected_variable in data.columns
         assert isinstance(privileged_class, (float, int))
-        assert privileged_class in data[protected_attribute].values
+        assert privileged_class in data[protected_variable].values
         assert isinstance(favorable_label, (float, int)) and isinstance(unfavorable_label, (float, int))
-        assert favorable_label in data[target_attribute] and unfavorable_label in data[target_attribute]
-        assert sorted(list(set(data[target_attribute]))) == sorted([favorable_label, unfavorable_label]), \
+        assert favorable_label in data[target_variable] and unfavorable_label in data[target_variable]
+        assert sorted(list(set(data[target_variable]))) == sorted([favorable_label, unfavorable_label]), \
             "Incorrect favorable and/or unfavorable labels."
 
         self.ml_model = ml_model
         self.data = data
-        self.target_attribute = target_attribute
+        self.target_variable = target_variable
         self.favorable_label = favorable_label
         self.unfavorable_label = unfavorable_label
-        self.protected_attribute = protected_attribute
+        self.protected_variable = protected_variable
         self.privileged_class = privileged_class
         if unprivileged_class is None:
-            _unprivileged_classes = list(set(data[protected_attribute]).difference([privileged_class]))
+            _unprivileged_classes = list(set(data[protected_variable]).difference([privileged_class]))
             assert len(_unprivileged_classes) == 1, "Only available to use one unprivileged class"
             self.unprivileged_class = _unprivileged_classes[0]
         else:
@@ -83,9 +82,9 @@ class FairnessMetric:
         # Compute predicted classes in case input argument 'pred_class' is None
         if pred_class is None:
             try:
-                _features = self.data.drop(columns=target_attribute)
+                _features = self.data.drop(columns=target_variable)
                 self.pred_class = ml_model.predict(_features)
-            except:
+            except Exception:
                 raise Exception("Not possible to predict classes using the input machine learning model")
         else:
             self.pred_class = pred_class
@@ -93,20 +92,20 @@ class FairnessMetric:
         # Compute probability estimates in case input argument 'pred_prob' is None
         if pred_prob is None:
             try:
-                _features = self.data.drop(columns=target_attribute)
+                _features = self.data.drop(columns=target_variable)
                 self.pred_prob = ml_model.predict_proba(_features)
                 self.pred_prob = self.pred_prob[:, 1]  # keep probabilities for positive outcomes only
-            except:
+            except Exception:
                 raise Exception("Not possible to predict estimates using the input machine learning model")
         else:
             self.pred_prob = pred_prob
 
-        self.unprivileged_groups = [{self.protected_attribute: [self.unprivileged_class]}]
-        self.privileged_groups = [{self.protected_attribute: [self.privileged_class]}]
+        self.unprivileged_groups = [{self.protected_variable: [self.unprivileged_class]}]
+        self.privileged_groups = [{self.protected_variable: [self.privileged_class]}]
 
     def fairness_score(self, metric_name, cutoff=0.5):
         """
-        Fairness metric evaluation using protected variable and privileged class.
+        Fairness metric evaluation based on privileged/unprivileged classes.
 
         Parameters
         ----------
@@ -153,8 +152,8 @@ class FairnessMetric:
             data_input_std = BinaryLabelDataset(favorable_label=self.favorable_label,
                                                 unfavorable_label=self.unfavorable_label,
                                                 df=self.data,
-                                                label_names=[self.target_attribute],
-                                                protected_attribute_names=[self.protected_attribute],
+                                                label_names=[self.target_variable],
+                                                protected_attribute_names=[self.protected_variable],
                                                 unprivileged_protected_attributes=self.unprivileged_groups)
 
             # fairness metric computation
@@ -186,14 +185,14 @@ class FairnessMetric:
         # Evaluate fairness_metrics using dalex module
         if (metric_name in dalex_list) or (metric_name == 'all'):
             # features
-            X_data = self.data.drop(columns=self.target_attribute)
+            X_data = self.data.drop(columns=self.target_variable)
             # target variable
-            y_data = self.data[self.target_attribute]
+            y_data = self.data[self.target_variable]
 
             # create an explainer
             exp = Explainer(self.ml_model, X_data, y_data, verbose=False)
-            # define protected variable and privileged group
-            protected_vec = self.data[self.protected_attribute]
+            # define protected vector
+            protected_vec = self.data[self.protected_variable]
 
             fairness_object = exp.model_fairness(protected=protected_vec, privileged=str(self.privileged_class),
                                                  cutoff=cutoff)
@@ -201,7 +200,7 @@ class FairnessMetric:
             fairness_result = fairness_object.result
             if (metric_name == 'equal_opportunity_ratio') or (metric_name == 'all'):
                 # NOTE: check index location for different values of privileged class
-                # TEST: Does location is dependent on the value of the privileged class?
+                # TODO TEST: Does location is dependent on the value of the privileged class?
                 fairness_metric_score['equal_opportunity_ratio'] = fairness_result['TPR'][1]
             if (metric_name == 'accuracy_equality_ratio') or (metric_name == 'all'):
                 fairness_metric_score['accuracy_equality_ratio'] = fairness_result['ACC'][1]

@@ -27,8 +27,8 @@ def test_smoke(mitigation_method, estimator):
     _estimator.fit(df.drop(columns="Y"), Y)
 
     bias_mitigation = BiasMitigation(ml_model=_estimator, data=df,
-                                     target_attribute="Y",
-                                     protected_attribute="X1", privileged_class=1)
+                                     target_variable="Y",
+                                     protected_variable="X1", privileged_class=1)
 
     mitigation_res = bias_mitigation.fit_transform(mitigation_method=mitigation_method)
     assert isinstance(mitigation_res, dict)

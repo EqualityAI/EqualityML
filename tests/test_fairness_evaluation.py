@@ -31,8 +31,8 @@ def test_smoke(metric, estimator):
     _estimator.fit(train_df.drop(columns="Y"), Y)
 
     fairness_metric = FairnessMetric(ml_model=_estimator, data=train_df,
-                                     target_attribute="Y",
-                                     protected_attribute="X1", privileged_class=1)
+                                     target_variable="Y",
+                                     protected_variable="X1", privileged_class=1)
 
     fairness_metric_score = fairness_metric.fairness_score(metric)
     if metric == 'all':
