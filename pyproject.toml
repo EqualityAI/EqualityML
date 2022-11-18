@@ -3,15 +3,18 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "FairML"
-version = "0.0.1"
-
-description = ""
+name = "fairml"
+version = "0.0.9"
+authors = [{name = "EqualityAI"}]
+description = "Algorithms for evaluating fairness metrics and mitigating unfairness in supervised machine learning"
 readme = "README.md"
-license = { file="LICENSE" }
+license = {file = "LICENSE"}
 requires-python = ">=3.7"
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
@@ -29,9 +32,10 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["fairml"]
+where = ["."]  # list of folders that contain the packages (["."] by default)
+include = ["fairml*"]  # package names should match these glob patterns (["*"] by default)
+exclude = ["fariml.tests*"]  # exclude packages matching these glob patterns (empty by default)
+namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
 
-[tool.setuptools.package-data]
-FairPkg = ["fairness_data/fairness_tree.csv",
-    "fairness_data/mitigation_mapping.csv"]
-
+[project.urls]
+repository = "https://github.com/EqualityAI/FairML_Py"

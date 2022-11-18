@@ -22,3 +22,4 @@ coverage.txt
 
 docs/build/
 docs/source/modules/generated
+/.pypirc
