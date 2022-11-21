@@ -53,16 +53,20 @@ class BiasMitigation:
                  unfavorable_label=0):
         super(BiasMitigation, self).__init__()
 
-        # Assert input arguments
-        assert all(np.issubdtype(dtype, np.number) for dtype in data.dtypes)
-        assert target_variable in data.columns
-        assert protected_variable in data.columns
-        assert isinstance(privileged_class, (float, int))
-        assert privileged_class in data[protected_variable].values
-        assert isinstance(favorable_label, (float, int)) and isinstance(unfavorable_label, (float, int))
-        assert favorable_label in data[target_variable] and unfavorable_label in data[target_variable]
-        assert sorted(list(set(data[target_variable]))) == sorted([favorable_label, unfavorable_label]), \
-            "Incorrect favorable and/or unfavorable labels."
+        # Check input arguments
+        if not all(np.issubdtype(dtype, np.number) for dtype in data.dtypes):
+            raise TypeError("Data shall be numeric")
+
+        if target_variable not in data.columns or protected_variable not in data.columns:
+            raise TypeError(f"Target variable {target_variable} or {protected_variable} are not part of Data")
+
+        if not isinstance(privileged_class, (float, int)) or privileged_class not in data[protected_variable].values:
+            raise TypeError(f"Invalid type/value of privileged class")
+
+        if not isinstance(favorable_label, (float, int)) or not isinstance(unfavorable_label, (float, int)) or \
+                favorable_label not in data[target_variable] or unfavorable_label not in data[target_variable] or \
+                sorted(list(set(data[target_variable]))) != sorted([favorable_label, unfavorable_label]):
+            raise TypeError("Invalid type/value of favorable/unfavorable labels")
 
         self.ml_model = ml_model
         self.data = data
@@ -73,7 +77,8 @@ class BiasMitigation:
         self.privileged_class = privileged_class
         if unprivileged_class is None:
             _unprivileged_classes = list(set(data[protected_variable]).difference([privileged_class]))
-            assert len(_unprivileged_classes) == 1, "Only available to use one unprivileged class"
+            if len(_unprivileged_classes) != 1:
+                raise ValueError("Use only binary classes")
             self.unprivileged_class = _unprivileged_classes[0]
         else:
             self.unprivileged_class = unprivileged_class
@@ -110,11 +115,13 @@ class BiasMitigation:
 
         """
 
-        assert mitigation_method in ["resampling-uniform", "resampling", "resampling-preferential",
-                                     "correlation-remover",
-                                     "reweighing", "disparate-impact-remover"], "Incorrect mitigation method."
-        assert 0.0 <= alpha <= 1.0, "'alpha' must be between 0.0 and 1.0."
-        assert 0.0 <= repair_level <= 1.0, "'repair_level' must be between 0.0 and 1.0."
+        if mitigation_method not in ["resampling-uniform", "resampling", "resampling-preferential",
+                                     "correlation-remover", "reweighing", "disparate-impact-remover"]:
+            raise ValueError(f"Incorrect mitigation method {mitigation_method}")
+        if alpha < 0.0 or alpha > 1.0:
+            raise ValueError("'alpha' must be between 0.0 and 1.0.")
+        if repair_level < 0.0 or repair_level > 1.0:
+            raise ValueError("'repair_level' must be between 0.0 and 1.0.")
 
         mitigated_dataset = {}
         if "resampling" in mitigation_method:

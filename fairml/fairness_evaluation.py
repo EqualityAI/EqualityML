@@ -54,16 +54,20 @@ class FairnessMetric:
                  pred_prob=None):
         super(FairnessMetric, self).__init__()
 
-        # Assert input arguments
-        assert all(np.issubdtype(dtype, np.number) for dtype in data.dtypes)
-        assert target_variable in data.columns
-        assert protected_variable in data.columns
-        assert isinstance(privileged_class, (float, int))
-        assert privileged_class in data[protected_variable].values
-        assert isinstance(favorable_label, (float, int)) and isinstance(unfavorable_label, (float, int))
-        assert favorable_label in data[target_variable] and unfavorable_label in data[target_variable]
-        assert sorted(list(set(data[target_variable]))) == sorted([favorable_label, unfavorable_label]), \
-            "Incorrect favorable and/or unfavorable labels."
+        # Check input arguments
+        if not all(np.issubdtype(dtype, np.number) for dtype in data.dtypes):
+            raise TypeError("Data shall be numeric")
+
+        if target_variable not in data.columns or protected_variable not in data.columns:
+            raise TypeError(f"Target variable {target_variable} or {protected_variable} are not part of Data")
+
+        if not isinstance(privileged_class, (float, int)) or privileged_class not in data[protected_variable].values:
+            raise TypeError(f"Invalid type/value of privileged class")
+
+        if not isinstance(favorable_label, (float, int)) or not isinstance(unfavorable_label, (float, int)) or \
+                favorable_label not in data[target_variable] or unfavorable_label not in data[target_variable] or \
+                sorted(list(set(data[target_variable]))) != sorted([favorable_label, unfavorable_label]):
+            raise TypeError("Invalid type/value of favorable/unfavorable labels")
 
         self.ml_model = ml_model
         self.data = data
@@ -74,7 +78,8 @@ class FairnessMetric:
         self.privileged_class = privileged_class
         if unprivileged_class is None:
             _unprivileged_classes = list(set(data[protected_variable]).difference([privileged_class]))
-            assert len(_unprivileged_classes) == 1, "Only available to use one unprivileged class"
+            if len(_unprivileged_classes) != 1:
+                raise ValueError("Use only binary classes")
             self.unprivileged_class = _unprivileged_classes[0]
         else:
             self.unprivileged_class = unprivileged_class
@@ -138,10 +143,11 @@ class FairnessMetric:
                       'predictive_equality_ratio', 'statistical_parity_ratio']
 
         metric_name = metric_name.lower()
-        assert metric_name in aif360_list or metric_name in dalex_list or metric_name == 'all', \
-            "Provided invalid metric name"
+        if metric_name not in aif360_list and metric_name not in dalex_list and metric_name != 'all':
+            raise ValueError(f"Provided invalid metric name {metric_name}")
 
-        assert cutoff >= 0.0, "Cutoff value shall be positive."
+        if cutoff < 0.0:
+            raise ValueError("Cutoff value shall be positive.")
 
         fairness_metric_score = {}
 
@@ -197,18 +203,33 @@ class FairnessMetric:
             fairness_object = exp.model_fairness(protected=protected_vec, privileged=str(self.privileged_class),
                                                  cutoff=cutoff)
 
-            fairness_result = fairness_object.result
+            df_fairness = fairness_object.result
+            # Protected vector shall be binary therefore it's assumed fairness_result is also binary for each ratio.
+            # Use ratio which is different from 1.0
             if (metric_name == 'equal_opportunity_ratio') or (metric_name == 'all'):
-                # NOTE: check index location for different values of privileged class
-                # TODO TEST: Does location is dependent on the value of the privileged class?
-                fairness_metric_score['equal_opportunity_ratio'] = fairness_result['TPR'][1]
+                try:
+                    fairness_metric_score['equal_opportunity_ratio'] = df_fairness[df_fairness['TPR'] != 1.]['TPR'][0]
+                except IndexError:
+                    fairness_metric_score['equal_opportunity_ratio'] = float("NaN")
             if (metric_name == 'accuracy_equality_ratio') or (metric_name == 'all'):
-                fairness_metric_score['accuracy_equality_ratio'] = fairness_result['ACC'][1]
+                try:
+                    fairness_metric_score['accuracy_equality_ratio'] = df_fairness[df_fairness['ACC'] != 1.]['ACC'][0]
+                except IndexError:
+                    fairness_metric_score['accuracy_equality_ratio'] = float("NaN")
             if (metric_name == 'predictive_parity_ratio') or (metric_name == 'all'):
-                fairness_metric_score['predictive_parity_ratio'] = fairness_result['PPV'][1]
+                try:
+                    fairness_metric_score['predictive_parity_ratio'] = df_fairness[df_fairness['PPV'] != 1.]['PPV'][0]
+                except IndexError:
+                    fairness_metric_score['predictive_parity_ratio'] = float("NaN")
             if (metric_name == 'predictive_equality_ratio') or (metric_name == 'all'):
-                fairness_metric_score['predictive_equality_ratio'] = fairness_result['FPR'][1]
+                try:
+                    fairness_metric_score['predictive_equality_ratio'] = df_fairness[df_fairness['FPR'] != 1.]['FPR'][0]
+                except IndexError:
+                    fairness_metric_score['predictive_equality_ratio'] = float("NaN")
             if (metric_name == 'statistical_parity_ratio') or (metric_name == 'all'):
-                fairness_metric_score['statistical_parity_ratio'] = fairness_result['STP'][1]
+                try:
+                    fairness_metric_score['statistical_parity_ratio'] = df_fairness[df_fairness['STP'] != 1.]['STP'][0]
+                except IndexError:
+                    fairness_metric_score['statistical_parity_ratio'] = float("NaN")
 
         return fairness_metric_score

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fairml"
-version = "0.0.9"
+version = "0.0.12"
 authors = [{name = "EqualityAI"}]
 description = "Algorithms for evaluating fairness metrics and mitigating unfairness in supervised machine learning"
 readme = "README.md"
@@ -33,9 +33,6 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]  # list of folders that contain the packages (["."] by default)
-include = ["fairml*"]  # package names should match these glob patterns (["*"] by default)
-exclude = ["fariml.tests*"]  # exclude packages matching these glob patterns (empty by default)
-namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
 
 [project.urls]
 repository = "https://github.com/EqualityAI/FairML_Py"
