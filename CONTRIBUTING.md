@@ -4,9 +4,9 @@
 
 We at Equality AI (EAI) really appreciate the fact that you are here. 
 
-We are working to reduce or elimiate bias from healthcare decision making. This is not an easy task but a crucial one to ensuire health equity for all people. Without the support of our community this task would be virtually impossible. We rely on awesome people like you to help us make health equity a reality. So, a hearty **THANK YOU** from all of us at Equality AI! 
+We are working to reduce or eliminate bias from healthcare decision making. This is not an easy task but a crucial one to ensure health equity for all people. Without the support of our community this task would be virtually impossible. We rely on awesome people like you to help us make health equity a reality. So, a hearty **THANK YOU** from all of us at Equality AI! 
 
-If you haven't already, please check out the [Equality AI Manifesto!](https://github.com/EqualityAI/responsible_mlops/blob/main/MANIFESTO.md) Our Manifesto provides insight into how we operate as an organization, our responsibilities, and our commitments to AI for Good, AI that is Fair, and AI for Equity.
+If you haven't already, please check out the [Equality AI Manifesto!](https://github.com/EqualityAI/FairML_PY/blob/main/MANIFESTO.md) Our Manifesto provides insight into how we operate as an organization, our responsibilities, and our commitments to AI for Good, AI that is Fair, and AI for Equity.
 
 
 ## Purpose of this document
@@ -15,7 +15,7 @@ Please take a moment to review this document in order to make the contribution p
 Following these guidelines helps to ensure we have an organized process for managing and developing this open source project.
 
 
-All of the contributions to Equality AI and interactions with the EAI Community are governed by our [Code of Conduct](https://github.com/EqualityAI/responsible_mlops/blob/main/CODE_OF_CONDUCT.md). 
+All of the contributions to Equality AI and interactions with the EAI Community are governed by our [Code of Conduct](https://github.com/EqualityAI/FairML_PY/blob/main/CODE_OF_CONDUCT.md). 
 
 
 ## Making a contribution to Equality AI
@@ -23,7 +23,7 @@ First things first, head over to Slack and join the [Equality AI Slack Community
 
 Introduce yourself in the [Slack #Introductions channel](https://equalityai.slack.com/archives/C03HF77775W). We're friendly people and would love to learn more about you!
 
-Next, try out the [`responsible_mlops`](https://github.com/EqualityAI/responsible_mlops). Be sure to review the [README](https://github.com/EqualityAI/responsible_mlops/blob/main/README.md) file to learn how to use the Toolkit!
+Next, try out the [`FairML_PY`](https://github.com/EqualityAI/FairML_PY). Be sure to review the [README](https://github.com/EqualityAI/FairML_PY/blob/main/README.md) file to learn how to use the Toolkit!
 
 Hit the top right "star" :star: button on GitHub to show your love.
 :green_heart: 
@@ -33,9 +33,9 @@ Hit the top right "star" :star: button on GitHub to show your love.
 ## Using the issue tracker
 
 
-The [GitHub issue tracker](https://github.com/EqualityAI/responsible_mlops/issues) is the preferred channel for bug reports. (See definition of a bug below :grin: :lady_beetle: )
+The [GitHub issue tracker](https://github.com/EqualityAI/FairML_PY/issues) is the preferred channel for bug reports. (See definition of a bug below :grin: :lady_beetle: )
 
-* Have a question about the EAI code? Please check out the [GitHub discussions](https://github.com/EqualityAI/responsible_mlops/discussions)  first to see if your question has already been asked or answered.  GitHub discussions are the preferred way to ask support questions, but we do also use [Slack #support channel(https://equalityai.slack.com/archives/C03HF7G4N0Y)! 
+* Have a question about the EAI code? Please check out the [GitHub discussions](https://github.com/EqualityAI/FairML_PY/discussions)  first to see if your question has already been asked or answered.  GitHub discussions are the preferred way to ask support questions, but we do also use [Slack #support channel(https://equalityai.slack.com/archives/C03HF7G4N0Y)! 
 
 
 ## Bug reports
@@ -83,7 +83,7 @@ If you uncover a security vulnerability in EAI code, please do not report it in 
 
 We'd love to hear how we can improve the code with new features! What pain points are you experiencing in adopting these tools? How can we help? Are there use cases you would like to see? Methods we should add? Feature requests recommend new functionality, or improved functionality. Please keep in mind they are different than bug reports. 
 
-Feature requests should be posted in the [GitHub discussions](https://github.com/EqualityAI/ResponsibleMLOpsToolkit/discussions). This will allow good conversation to take place between community members so the whole community can participate. Users will also be able to "upvote" feature requests that they would like to see, so partipations in the discussions helps the community to determine which features are the most important!
+Feature requests should be posted in the [GitHub discussions](https://github.com/EqualityAI/ResponsibleMLOpsToolkit/discussions). This will allow good conversation to take place between community members so the whole community can participate. Users will also be able to "upvote" feature requests that they would like to see, so participating in the discussions helps the community to determine which features are the most important!
 
 Please provide as much detail and context as possible and remember to follow the [Code of Conduct](https://github.com/EqualityAI/ResponsibleMLOpsToolkit/blob/main/CODE_OF_CONDUCT.md).
 
@@ -124,7 +124,7 @@ If you have never created a pull request before, welcome :tada: :smile:! Don't w
    ```
 
 4. Make sure to update, or add to the tests when appropriate. Patches and
-   features will not be accepted without tests. Run `npm test` to check that
+   features will not be accepted without tests. Run `pytest tests` to check that
    all tests pass after you've made changes. Look for a `Testing` section in
    the project’s README for more information.
 
