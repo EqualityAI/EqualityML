@@ -1,6 +1,7 @@
 .DS_Store
 **/.DS_Store
 *.pyc
+*.html
 **/*.pyc
 .cache/
 .ipynb_checkpoints/
@@ -11,12 +12,15 @@ __pycache__/
 .vscode/
 
 .eggs/
-/src/FairPkg.egg-info/
 build/
-/dist/
+dist/
+junit/
+htmlcov/
 
 .coverage*
 coverage.txt
 
 docs/build/
 docs/source/modules/generated
+/.pypirc
+/fairml.egg-info/

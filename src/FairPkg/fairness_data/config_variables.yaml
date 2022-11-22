@@ -1,1 +1,0 @@
-dashboard_variables : ['ml_method', 'fairness_metric', 'mitigation_method']

@@ -23,9 +23,6 @@ jobs:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
 
-    env:
-      UCI_DB: "https://archive.ics.uci.edu/ml/machine-learning-databases"
-
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -40,14 +37,7 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install flake8
           python -m pip install junit2html
-          pip install -e '.[all]'
-      - name: "Download datasets"
-        run: |
-          wget ${UCI_DB}/adult/adult.data -P src/FairPkg/fairness_data/
-          wget ${UCI_DB}/adult/adult.test -P src/FairPkg/fairness_data/
-          wget ${UCI_DB}/adult/adult.names -P src/FairPkg/fairness_data/
-          wget ${UCI_DB}/statlog/german/german.data -P src/FairPkg/fairness_data/
-          wget ${UCI_DB}/statlog/german/german.doc -P src/FairPkg/fairness_data/
+          pip install -e '.[all, tests]'
       - name: "Lint with flake8"
         run: |
           # stop the build if there are Python syntax errors or undefined names
