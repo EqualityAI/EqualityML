@@ -54,19 +54,16 @@ class BiasMitigation:
         super(BiasMitigation, self).__init__()
 
         # Check input arguments
-        if not all(np.issubdtype(dtype, np.number) for dtype in data.dtypes):
-            raise TypeError("Data shall be numeric")
-
         if target_variable not in data.columns or protected_variable not in data.columns:
-            raise TypeError(f"Target variable {target_variable} or {protected_variable} are not part of Data")
+            raise TypeError(f"Target variable {target_variable} or protected variable {protected_variable} are not "
+                            f"part of Data")
 
-        if not isinstance(privileged_class, (float, int)) or privileged_class not in data[protected_variable].values:
-            raise TypeError(f"Invalid type/value of privileged class")
+        if privileged_class not in data[protected_variable].values:
+            raise TypeError(f"Privileged class {privileged_class} shall be on data column {protected_variable}")
 
-        if not isinstance(favorable_label, (float, int)) or not isinstance(unfavorable_label, (float, int)) or \
-                favorable_label not in data[target_variable] or unfavorable_label not in data[target_variable] or \
+        if favorable_label not in data[target_variable] or unfavorable_label not in data[target_variable] or \
                 sorted(list(set(data[target_variable]))) != sorted([favorable_label, unfavorable_label]):
-            raise TypeError("Invalid type/value of favorable/unfavorable labels")
+            raise TypeError("Invalid value of favorable/unfavorable labels")
 
         self.ml_model = ml_model
         self.data = data
