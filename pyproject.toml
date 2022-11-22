@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "fairml"
 version = "0.0.13"
 authors = [{name = "EqualityAI"}]
+urls = {repository = "https://github.com/EqualityAI/FairML_Py"}
 description = "Algorithms for evaluating fairness metrics and mitigating unfairness in supervised machine learning"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -32,5 +33,9 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["."]  # list of folders that contain the packages (["."] by default)
 
-[project.urls]
-repository = "https://github.com/EqualityAI/FairML_Py"
+[project.optional-dependencies]
+tests = [
+  "pytest>=3.5.0",
+  "pytest-cov>=2.8.1",
+]
+doc = ["sphinx"]
