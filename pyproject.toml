@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fairml"
-version = "0.0.12"
+version = "0.0.13"
 authors = [{name = "EqualityAI"}]
 description = "Algorithms for evaluating fairness metrics and mitigating unfairness in supervised machine learning"
 readme = "README.md"
@@ -27,8 +27,6 @@ dependencies = [
     "pandas>=1.2.5",
     "numpy>=1.20.3",
     "scikit-learn>=0.22.1",
-    "pytest>=3.5.0",
-    "pytest-cov>=2.8.1"
 ]
 
 [tool.setuptools.packages.find]
