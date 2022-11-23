@@ -30,7 +30,7 @@ We recommend integrating FairML by:
 >5. Comparing model performance and fairness before and after mitigation </br></br>
 
 ## Guidance on selecting Fairness Metrics
-To make fairness metric selection easy we have provided a few essential questions you must answer to identify the appropriate fairness metric for your use case. Here is our extensive literature review and [theoretical analysis](https://github.com/EqualityAI/FairML_PY/blob/main/Fairness%20Metrics%20User%20Manual%20(1).pdf) on dozens of fairness metrics and mitigation methods. [Click here for the questionnaire](https://github.com/nyujwc331/ReadMe/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf). Complete the answers to this questionnaire, then refer to the scoring guide to map your inputs to the desired metrics.
+To make fairness metric selection easy we have provided a few essential questions you must answer to identify the appropriate fairness metric for your use case. Here is our extensive literature review and [theoretical analysis](https://github.com/EqualityAI/FairML/blob/main/Fairness%20Metrics%20User%20Manual%20(1).pdf) on dozens of fairness metrics and mitigation methods. [Click here for the questionnaire](https://github.com/EqualityAI/FairML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf). Complete the answers to this questionnaire, then refer to the scoring guide to map your inputs to the desired metrics.
 
 <img src="img/fairnesstree.png" align="center" alt="" width="800"/></br>
 <sub><b>Figure 2:</b> Tree representation of questionnaire.
@@ -109,9 +109,9 @@ Equality AI uses both GitHib and Slack to manage our open source community. To p
 
 1. Join the Slack community (https://equalityai.com/slack)
     + Introduce yourself in the #Introductions channel. We're all friendly people!
-2. Check out the [CONTRIBUTING](https://github.com/EqualityAI/FairML_PY/blob/main/CONTRIBUTING.md) file to learn how to contribute to our project, report bugs, or make feature requests.
-3. Try out the [`FairML`](https://github.com/EqualityAI/FairML_PY)
+2. Check out the [CONTRIBUTING](https://github.com/EqualityAI/FairML/blob/main/CONTRIBUTING.md) file to learn how to contribute to our project, report bugs, or make feature requests.
+3. Try out the [`FairML`](https://github.com/EqualityAI/FairML)
     + Hit the top right "star" button on GitHub to show your love!
     + Follow the recipe above to use the code. 
-4. Provide feedback on your experience using the [GitHub discussions](https://github.com/EqualityAI/FairML_PY/discussions) or the [Slack #support](https://equalityai.slack.com/archives/C03HF7G4N0Y) channel
+4. Provide feedback on your experience using the [GitHub discussions](https://github.com/EqualityAI/FairML/discussions) or the [Slack #support](https://equalityai.slack.com/archives/C03HF7G4N0Y) channel
     + For any questions or problems, send a message on Slack, or send an email to support@equalityai.com.
