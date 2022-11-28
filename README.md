@@ -4,12 +4,22 @@
 
 ### Welcome to our GitHub repo!
 
-[Equality AI (EAI)](https://equalityai.com/) is a public benefit corporation dedicated to providing developers with the tools to stop algorithmic bias. We believe that developers want to implement algorithmic fairness, but have encountered roadblocks along the way.</b>
+[Equality AI (EAI)](https://equalityai.com/) is a public benefit corporation dedicated to providing developers with the tools to stop algorithmic bias. We believe that developers want to implement algorithmic fairness, but have encountered roadblocks along the way - we are here to help.</b>
 
 `FairML` provides a set of tools to handle the fairness of a Machine Learning application or run Fairness-based machine learning (Fair ML). With the increased use of Machine Learning solutions on a variety of critical real-world problems, it is imperative to guarantee that fair decisions are performed by those black-box Machine Learning models. FairML aims to simplify the complex process of evaluating the fairness of ML models and provides a range of methods to mitigate bias in datasets.
 
 If you like what we're doing, give us a :star: and join our [EAI Manifesto!](https://equalityai.com/community/#manifesto)!</br>
 <img src="img/star.png" align="center" alt="" width="400" /></br>
+
+
+## What is FairML?
+</br>Fairness-based ML offers a potential solution by incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps.  Fairness is a principle of Responsible AI, an emerging framework for how artificial intelligence systems should be developed, deployed, and governed to comply with ethics and laws. 
+
+<img src="img/framework.png" align="center" alt="" width="900" />
+<sub><b>Figure 2:</b> Full Responsible AI Framework.
+</sub>
+
+</br><b>Bias mitigation methods</b> are employed to address bias in data and/or machine learning models and <b>fairness metrics</b> are needed to mathematically represent the fairness or bias levels of a ML model.</br>
 
 ## How FairML is integrated with model fitting
 Fairness can be integrated into the model fitting process through creating parity (i.e., equality) on appropriate fairness metrics before model deployment, then tracking those metrics throughout deployment with model performance metrics (e.g., loss, accuracy, etc.).
