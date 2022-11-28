@@ -12,11 +12,10 @@ If you like what we're doing, give us a :star: and join our [EAI Manifesto!](htt
 <img src="img/star.png" align="center" alt="" width="400" /></br>
 
 <b>Join us as a Beta User of our Responsible MLOps studio.</b> </br>
-<img src="/img/Betauserimg.png" align="left" alt="EqualityAI Logo" width="500"/>
+<img src="/img/Betauserimg.png" align="center" alt="EqualityAI Logo" width="900"/>
 
-<br></br>
 
-<br></br> ## What is Fair ML?
+## What is Fair ML?
 Fairness-based ML offers a potential solution by incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps.  Fairness is a principle of Responsible AI, an emerging framework for how artificial intelligence systems should be developed, deployed, and governed to comply with ethics and laws. 
 
 <img src="img/framework.png" align="center" alt="" width="900" />
