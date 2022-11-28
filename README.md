@@ -11,7 +11,7 @@
 If you like what we're doing, give us a :star: and join our [EAI Manifesto!](https://equalityai.com/community/#manifesto)!</br>
 <img src="img/star.png" align="center" alt="" width="400" /></br>
 
-#### Join us at our Bi-weekly Community Meetup
+#### 🗓️Join us at our Bi-weekly Community Meetup
 Where we will walk through use cases, educational session, and Q&A with the Equality AI team.
 To get the details send an email to support@equalityai.com.
 
