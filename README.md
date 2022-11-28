@@ -16,7 +16,7 @@ If you like what we're doing, give us a :star: and join our [EAI Manifesto!](htt
 Fairness-based ML offers a potential solution by incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps.  Fairness is a principle of Responsible AI, an emerging framework for how artificial intelligence systems should be developed, deployed, and governed to comply with ethics and laws. 
 
 <img src="img/framework.png" align="center" alt="" width="900" />
-<sub><b>Figure 2:</b> Full Responsible AI Framework.
+<sub><b>Figure 1:</b> Full Responsible AI Framework.
 </sub>
 
 </br><b>Bias mitigation methods</b> are employed to address bias in data and/or machine learning models and <b>fairness metrics</b> are needed to mathematically represent the fairness or bias levels of a ML model.</br>
@@ -27,10 +27,10 @@ Fairness can be integrated into the model fitting process through creating parit
 <b>Note:</b> Parity is achieved when a fairness metric (such as the percent of positive predictions) have the same value across all levels of a sensitive attribute.  <i>Sensitive attributes</i> are attributes such as race, gender, age, and other patient attributes that are of primary concern when it comes to fairness, and are typically protected by law. 
 
 <img src="img/How fairML fits into.PNG" align="center" alt="" width="800"/></br>
-<sub><b>Figure 1:</b> An infographic showing where to incorporate fairness evaluation and bias mitigation.
+<sub><b>Figure 2:</b> An infographic showing where to incorporate fairness evaluation and bias mitigation.
 </sub></br>
 
->1. The first row of Figure 1. displays the workflow for traditional ML: data fetch, data prepare, train ML model, performance validation.
+>1. The first row of Figure 2. displays the workflow for traditional ML: data fetch, data prepare, train ML model, performance validation.
 
 We recommend integrating FairML by:
 
