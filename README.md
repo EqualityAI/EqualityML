@@ -39,6 +39,7 @@ We recommend integrating FairML by:
 
 >2. Evaluating the fairness of your machine learning model fit in Step 1.
 >3. Running bias mitigation, which can be done in a pre-processing, in processing, or post processing workflow.
+> * Only pre-processing is currently available
 >4. Reevaluating the fairness after mitigation
 >5. Comparing model performance and fairness before and after mitigation </br></br>
 
