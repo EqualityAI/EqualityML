@@ -11,7 +11,6 @@
 If you like what we're doing, give us a :star: and join our [EAI Manifesto!](https://equalityai.com/community/#manifesto)!</br>
 <img src="img/star.png" align="center" alt="" width="400" /></br>
 
-<b>Join us as a Beta User of our Responsible MLOps studio.</b> </br>
 <img src="/img/Betauserimg.png" align="center" alt="EqualityAI Logo" width="500"/>
 
 
