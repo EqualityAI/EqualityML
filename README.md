@@ -29,13 +29,16 @@ Incorporating bias mitigation methods and fairness metrics into the traditional 
 
 > [Fairness Metric Guide:](https://github.com/EqualityAI/FairML/blob/main/Fairness%20Metrics%20User%20Manual.pdf)
 <sub> Statistical Parity | Conditional Statistical Parity | Negative Predictive Parity | Equal Opportunity | Balance for Positive Class | Predictive Parity | Well Calibration | Calibration | Conditional Use Accuracy | Predictive Equality | Balance for Negative Class | Equalized Odds | Overall Balance
+  * We have combined fairness metrics and bias mitigation into a unified syntax.
 </sub>
 
 
 ### Bias Mitigation:
 * Methods or algorithms applied to a machine learning dataset or model to improve the fairness of the model output. Many mitigation methods have been proposed in the literature, which can be broadly classified into the application of a mitigation method on the data set (pre-processing), in the model fitting (in-processing), and to the model predictions (post-processing).
 
-Resampling | Reweighting | Disparate Impact Remover | Correlation Remover 
+> [Bias Mitigation Guide:](https://github.com/EqualityAI/FairML/blob/main/Fairness%20Metrics%20User%20Manual.pdf)
+<sub> Resampling | Reweighting | Disparate Impact Remover | Correlation Remover 
+</sub>
 
 <img src="img/pre_in_post_nw.png" align="center" alt="" width="350" />
 <sub><b>Figure 2:</b> Bias mitigation can be performed in the pre-processing, in-processing, and post-processing of a model.
