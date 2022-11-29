@@ -74,7 +74,7 @@ Through these steps we <b>safeguard against bias</b> by:
 </details>
 
 
-## EAI Fair ML Workflow
+## EAI `FairML` Workflow
 We have conducted extensive literature review and theoretical analysis on dozens of fairness metrics and mitigation methods. Theoretical properties of those fairness mitigation methods were analyzed to determine their suitability under various conditions to create our framework for a pre-processing workflow. 
 
 | Pre-processing Workflow                                      | Tool or Guidance provided         |
@@ -96,58 +96,8 @@ We recommend assessing the fairness of the same ml model after bias is applied. 
 
 > In-processing and Post-processing are still under development. Do you need this now? [Let us know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
 
-## How to use `FairML` in model fitting
-
-
-
-
-When incorporating fairness and bias mitigation methods to your own workflow, we recommend the following recipe:
-
->1. Define Research Question
->2. Connect to Source Data
->3. Select Fairness Strategy
-> * Identify fairness metric
->4. Data Preparation
->5. Fit Prediction Model
->6. Compute Model Results and Fairness Score
->7. Run Mitigation
->8. Compute Model Results and Fairness Score After Mitigation
->9. Compare Model Results and Fairness Score Before and After Mitigation
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<img src="img/How fairML fits into.PNG" align="center" alt="" width="800"/></br>
-<sub><b>Figure 2:</b> An infographic showing where to incorporate fairness evaluation and bias mitigation.
-</sub></br>
-
->1. The first row of Figure 2. displays the workflow for traditional ML: data fetch, data prepare, train ML model, performance validation.
-
-We recommend integrating FairML by:
-
->2. Evaluating the fairness of your machine learning model fit in Step 1.
->3. Running bias mitigation, which can be done in a pre-processing, in processing, or post processing workflow.
-> <i> In processing and Post processing will be available in future iterations.</i>
->4. Reevaluating the fairness after mitigation
->5. Comparing model performance and fairness before and after mitigation </br></br>
-
 ## Guidance on selecting Fairness Metrics
-To make fairness metric selection easy we have provided a few essential questions you must answer to identify the appropriate fairness metric for your use case. Here is our extensive literature review and [theoretical analysis](https://github.com/EqualityAI/FairML/blob/main/Fairness%20Metrics%20User%20Manual.pdf) on dozens of fairness metrics and mitigation methods. [Click here for the questionnaire](https://github.com/EqualityAI/FairML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf). Complete the answers to this questionnaire, then refer to the scoring guide to map your inputs to the desired metrics.
+To make fairness metric selection easy we have provided a few essential questions you must answer to identify the appropriate fairness metric for your use case. [Click here for the questionnaire](https://github.com/EqualityAI/FairML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf). Complete the answers to this questionnaire, then refer to the scoring guide to map your inputs to the desired metrics.
 
 <img src="img/fairnesstree.png" align="center" alt="" width="800"/></br>
 <sub><b>Figure 3:</b> Tree representation of questionnaire.
