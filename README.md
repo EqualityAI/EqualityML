@@ -22,7 +22,7 @@ If you like what we're doing, give us a :star: and join our [EAI Manifesto!](htt
 
 
 ## Introduction
-Incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps is called fairness-based machine learning (ML) or fair machine learning. However, Fairness-based ML comes with its own challenges. We assembled a diverse team of statisticians and ML experts to provide a workflow or series of steps, [evidence-based](https://github.com/EqualityAI/FairML/blob/main/Fairness%20Metrics%20User%20Manual.pdf) guidance on fairness metric selection, and how to properly run bias mitigation methods.
+Incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps is called fairness-based machine learning (ML) or fair machine learning. However, Fairness-based ML comes with its own challenges. We assembled a diverse team of statisticians and ML experts to provide a workflow or series of steps, [evidence-based](https://github.com/EqualityAI/FairML/blob/main/Fairness%20Metrics%20User%20Manual.pdf) guidance on fairness metrics, and validated code to properly run bias mitigation methods.
 
 The fundamental workflow behind fair ML is to:
 * Determine potential sources of bias also known as (a.k.a) sources of harm;
