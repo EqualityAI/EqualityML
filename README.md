@@ -22,14 +22,13 @@ If you like what we're doing, give us a :star: and join our [EAI Manifesto!](htt
 
 
 ## Introduction
-Incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps is called fairness-based machine learning (ML) or fair machine learning. However, Fairness-based ML comes with its own challenges. We assembled a diverse team of statisticians and ML experts to provide a workflow or series of steps, [evidence-based](https://github.com/EqualityAI/FairML/blob/main/Fairness%20Metrics%20User%20Manual.pdf) guidance on fairness metrics, and validated code to properly run bias mitigation methods.
+Incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps is called fairness-based machine learning (ML) or fair machine learning. However, Fairness-based ML comes with its own challenges. We assembled a diverse team of statisticians and ML experts to provide a workflow or series of steps, evidence-based guidance on fairness metrics, and validated code to properly run bias mitigation methods.
 
 ### Fairness Metric:
 * Statistical measure of the output of a machine learning model based a mathematical definition of fairness.
 
->Examples:
-<sub>
-> Statistical Parity | Conditional Statistical Parity | Negative Predictive Parity | Equal Opportunity | Balance for Positive Class | Predictive Parity | Well Calibration | Calibration | Conditional Use Accuracy | Predictive Equality | Balance for Negative Class | Equalized Odds | Overall Balance
+> [Fairness Metric Guide:](https://github.com/EqualityAI/FairML/blob/main/Fairness%20Metrics%20User%20Manual.pdf)
+<sub> Statistical Parity | Conditional Statistical Parity | Negative Predictive Parity | Equal Opportunity | Balance for Positive Class | Predictive Parity | Well Calibration | Calibration | Conditional Use Accuracy | Predictive Equality | Balance for Negative Class | Equalized Odds | Overall Balance
 </sub>
 
 
