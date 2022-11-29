@@ -81,11 +81,11 @@ We have conducted extensive literature review and theoretical analysis on dozens
 |:-------------------------------------------------------------|:-------------------------------------------------|
 | 1. Define Research Question                                  |  |
 | 2. Connect to Source Data                                    |  |
-| 3. Select Fairness Metric                             | [Fairness Metric Selection Questionnaire & Tree](https://github.com/EqualityAI/FairML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf)|
+| 3. Select Fairness Metric                             | Use our [Fairness Metric Selection Questionnaire & Tree](https://github.com/EqualityAI/FairML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf) to determine appropriate fairness metric(s)|
 | 4. Data Preparation                                          ||
 | 5. Fit Prediction Model                                      ||
-| 6. Compute Model Results and Evaluate Fairness Score      | `fairness_metric`|
-| 7. Run Mitigation                                            | `bias_mitigation`|
+| 6. Compute Model Results and Evaluate Fairness Score      | Use `FairML` function `fairness_metric` to evaluate the fairness of a model|
+| 7. Run Mitigation                                            | Use `FairML` function `bias_mitigation` to run various bias mitigation methods on your dataset|
 | 8. Compute Model Results and Fairness Score After Mitigation | `fairness_metric` `bias_mitigation`|
 | 9. Compare Model Results and Fairness Score Before and After Mitigation| `fairness_metric` `bias_mitigation`|
 
