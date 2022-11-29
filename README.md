@@ -77,8 +77,6 @@ Through these steps we <b>safeguard against bias</b> by:
 ## EAI Fair ML Workflow
 We have conducted extensive literature review and theoretical analysis on dozens of fairness metrics and mitigation methods. Theoretical properties of those fairness mitigation methods were analyzed to determine their suitability under various conditions to create our framework for a pre-processing workflow. 
 
-> In-processing and Post-processing are still under development. Do you need this now? [Let us know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
-
 >1. Define Research Question
 >2. Connect to Source Data
 >3. Select Fairness Strategy
@@ -92,6 +90,12 @@ We have conducted extensive literature review and theoretical analysis on dozens
 > * We recommend assessing the fairness of the same ml model after bias is applied. By comparing the predictions before and after mitigation, we will be able to assess whether and to what extent the fairness can be improved. Furthermore, the trade-offs between teh accuracy and fairness of the machine learning model will be examined.
 
 
+
+
+
+
+
+> In-processing and Post-processing are still under development. Do you need this now? [Let us know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
 
 
 ## How to use `FairML` in model fitting
