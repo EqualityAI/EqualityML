@@ -77,21 +77,13 @@ Through these steps we <b>safeguard against bias</b> by:
 ## EAI Fair ML Workflow
 We have conducted extensive literature review and theoretical analysis on dozens of fairness metrics and mitigation methods. Theoretical properties of those fairness mitigation methods were analyzed to determine their suitability under various conditions to create our framework for a pre-processing workflow. 
 
-| Pre-processing Workflow                                     | Description                                           |
-|:------------------------------------------------------------|:------------------------------------------------------|
-
-| Pre-processing Workflow                                     | Description                                           |
-|:------------------------------------------------------------|:------------------------------------------------------|
-
-
-
->1. Define Research Question ------------------------------------------>
+>1. Define Research Question
 >2. Connect to Source Data
->3. Select Fairness Strategy
+>3. <b>Select Fairness Metric</b> ------------------------------------------> [Fairness Metric Selection Questionnaire & Tree](https://github.com/EqualityAI/FairML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf).
 >4. Data Preparation
 >5. Fit Prediction Model
->6. Compute Model Results and Fairness Score
->7. Run Mitigation
+>6. Compute Model Results and <b>Evaluate Fairness Score</b> ------------------------------------------> ``
+>7. <b>Run Mitigation</b> ------------------------------------------> ``
 >8. Compute Model Results and Fairness Score After Mitigation
 >9. Compare Model Results and Fairness Score Before and After Mitigation
 >>
@@ -101,6 +93,11 @@ We have conducted extensive literature review and theoretical analysis on dozens
 
 
 
+| Pre-processing Workflow                                     | Description                                           |
+|:------------------------------------------------------------|:------------------------------------------------------|
+
+| Pre-processing Workflow                                     | Description                                           |
+|:------------------------------------------------------------|:------------------------------------------------------|
 
 
 
