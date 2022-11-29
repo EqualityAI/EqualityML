@@ -77,17 +77,13 @@ Through these steps we <b>safeguard against bias</b> by:
 ## EAI Fair ML Workflow
 We have conducted extensive literature review and theoretical analysis on dozens of fairness metrics and mitigation methods. Theoretical properties of those fairness mitigation methods were analyzed to determine their suitability under various conditions to create our framework for a pre-processing workflow. 
 
-
-| Pre-processing Workflow                                     | Tools & Guidance                                         |
-|:------------------------------------------------------------|:------------------------------------------------------|
-
 >1. Define Research Question
 >2. Connect to Source Data
 >3. <b>Select Fairness Metric</b> ------------------------------------------> [Fairness Metric Selection Questionnaire & Tree](https://github.com/EqualityAI/FairML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf).
 >4. Data Preparation
 >5. Fit Prediction Model
->6. Compute Model Results and <b>Evaluate Fairness Score</b> ------------------------------------------> ``
->7. <b>Run Mitigation</b> ------------------------------------------> ``
+>6. Compute Model Results and <b>Evaluate Fairness Score</b> ------------------------------------------> `fairness_metric`
+>7. <b>Run Mitigation</b> ------------------------------------------> `bias_mitigation`
 >8. Compute Model Results and Fairness Score After Mitigation
 >9. Compare Model Results and Fairness Score Before and After Mitigation
 >>
