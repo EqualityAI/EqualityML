@@ -24,11 +24,8 @@ If you like what we're doing, give us a :star: and join our [EAI Manifesto!](htt
 ## Introduction
 Incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps is called fairness-based machine learning (ML) or fair machine learning. However, fair ML comes with its own challenges. We assembled a diverse team of statisticians and ML experts to provide evidence-based guidance on fairness metrics use/selection and validated code to properly run bias mitigation methods.
 
-### Our Findings:
-
-
 <details>
-  <summary> ### Our Findings: </summary>
+  <summary> Click to read our findings: </summary>
   
 #### Fairness Metric
 * Statistical measure of the output of a machine learning model based a mathematical definition of fairness.
