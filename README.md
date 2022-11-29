@@ -24,11 +24,22 @@ If you like what we're doing, give us a :star: and join our [EAI Manifesto!](htt
 ## Introduction
 Incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps is called fairness-based machine learning (ML) or fair machine learning. However, Fairness-based ML comes with its own challenges. We assembled a diverse team of statisticians and ML experts to provide a workflow or series of steps, [evidence-based](https://github.com/EqualityAI/FairML/blob/main/Fairness%20Metrics%20User%20Manual.pdf) guidance on fairness metrics, and validated code to properly run bias mitigation methods.
 
+### Fairness Metric:
+* Statistical measure of the output of a machine learning model based a mathematical definition of fairness.
+
+### Bias Mitigation:
+* Methods or algorithms applied to a machine learning dataset or model to improve the fairness of the model output.
+
 ### Fair ML Workflow:
-| ------------- |:-------------:| -----:|
-| col 3 is      | right-aligned | $1600 |
-| col 2 is      | centered      |   $12 |
-| zebra stripes | are neat      |    $1 |
+| Workflow                                                     | Step          |
+| ------------------------------------------------------------ |:-------------:|
+| Determine potential bias                                     | 1. Select Fairness Metric               |
+| Quanitfy fairness targeting that bias                        | |
+| Evaluate fairness                                     | 2. Evalute Fairness|
+| Create parity on fairness            | 2. Evalute Fairness|
+| Select most fair model            | 2. Evalute Fairness|
+| Apply methods to improve the fairness & performance tradeoff | are neat      |
+
 
 
 
