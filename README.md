@@ -57,9 +57,8 @@ Bias mitigation methods are employed to address bias in data and/or machine lear
 | Select most fair model                                       | Balance fairness with performance metrics when selecting the final model.|
 | Apply methods to improve the fairness & performance tradeoff | Methods to improve the fairness by applying a.k.a bias mitigation methods |
 
-<sub>
+
 <b>Note:</b> Parity is achieved when a fairness metric (such as the percent of positive predictions) have the same value across all levels of a sensitive attribute.  <i>Sensitive attributes</i> are attributes such as race, gender, age, and other patient attributes that are of primary concern when it comes to fairness, and are typically protected by law. 
-  </sub>
   <br></br>
 
 
