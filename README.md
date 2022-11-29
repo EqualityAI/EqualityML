@@ -89,6 +89,18 @@ We have conducted extensive literature review and theoretical analysis on dozens
 >>
 > * We recommend assessing the fairness of the same ml model after bias is applied. By comparing the predictions before and after mitigation, we will be able to assess whether and to what extent the fairness can be improved. Furthermore, the trade-offs between teh accuracy and fairness of the machine learning model will be examined.
 
+<div style="-webkit-column-count: 3; -moz-column-count: 3; column-count: 3; -webkit-column-rule: 1px dotted #e0e0e0; -moz-column-rule: 1px dotted #e0e0e0; column-rule: 1px dotted #e0e0e0;">
+    <div style="display: inline-block;">
+        <!-- first column's content -->
+    </div>
+    <div style="display: inline-block;">
+        <!-- second column's content -->
+    </div>
+    <div style="display: inline-block;">
+        <!-- third column's content -->
+    </div>
+</div>
+
 
 
 
