@@ -38,14 +38,14 @@ Incorporating bias mitigation methods and fairness metrics into the traditional 
 Bias mitigation methods are employed to address bias in data and/or machine learning models and fairness metrics are needed to mathematically represent the fairness or bias levels of a ML model.
 
 ### Fair ML Workflow:
-| Workflow                                                     | Step          |
-| ------------------------------------------------------------ |:-------------:|
-| Determine potential bias                                     | 1. Select Fairness Metric               |
-| Quanitfy fairness targeting that bias                        | |
-| Evaluate fairness                                     | 2. Evalute Fairness|
-| Create parity on fairness            | 2. Evalute Fairness|
-| Select most fair model            | 2. Evalute Fairness|
-| Apply methods to improve the fairness & performance tradeoff | are neat      |
+| Step                                                         | Description          |
+| ------------------------------------------------------------ |:-------------------------------------------------:|
+| Determine potential bias                                     | Determine potential sources of bias also known as (a.k.a) sources of harm.   |
+| Select fairness metric                                       | Quanitfy a measure of fairness (a.k.a a fairness metric) targeting that bias |
+| Evaluate fairness                                            | Fairness metrics can be used to mathematically represent the fairness levels of a ML model. |
+| Create parity on fairness                                    | Unlike model performance metrics (e.g., loss, accuracy, etc.), fairness metrics affect your final model selection by creating parity (i.e., equality) on appropriate fairness metrics before model deployment. |
+| Select most fair model                                       | Balance fairness with performance metrics when selecting the final model.|
+| Apply methods to improve the fairness & performance tradeoff | Methods to improve the fairness by applying a.k.a bias mitigation methods |
 
 
 
