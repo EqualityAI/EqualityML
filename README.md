@@ -4,34 +4,33 @@
 
 ### Welcome to our GitHub repo!
 
-[Equality AI (EAI)](https://equalityai.com/) is a public-benefit corporation dedicated to providing developers with the evidence-based tools to end algorithmic bias. We believe that developers want to implement algorithmic fairness, but have encountered roadblocks along the way - <b>we are here to help!</b></b>
+[Equality AI (EAI)](https://equalityai.com/) is a public-benefit corporation dedicated to providing developers with evidence-based tools to end algorithmic bias. Our tools are built by developers for developers. So, we know that developers want their models to be fair, but we also understand that bias is <u>difficult and intimidating</u>. 
 
+The EAI `FairML` repository provides functions and guidance on how to include fairness and bias mitigation methods to model fitting so as to safeguard the people on the receiving end of our models. 
 
-
-
-
-
-`FairML` provides functions and guidance 
-
-to run Fairness-based machine learning (Fair ML) using evidence-based best practices.
-
-
-With the increased use of Machine Learning solutions on a variety of critical real-world problems, it is imperative to guarantee that fair decisions are performed by those black-box Machine Learning models. FairML aims to simplify the complex process of evaluating the fairness of ML models and provides a range of methods to mitigate bias in datasets.
-
-If you like what we're doing, give us a :star: and join our [EAI Manifesto!](https://equalityai.com/community/#manifesto)!</br>
-<img src="img/star.png" align="center" alt="" width="400" /></br>
-
-<img src="/img/Betauserimg.png" align="center" alt="EqualityAI Logo" width="500"/>
-
-
-## What is Fair ML?
-Fairness-based ML offers a potential solution by incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps.  Fairness is a principle of Responsible AI, an emerging framework for how artificial intelligence systems should be developed, deployed, and governed to comply with ethics and laws. 
+>We have extented `FairML` to include other aspects of Responsible AI (see full framework <b>Figure 1.</b>) and collaboration features >to create our Beta MLOps Developer Studio. Become a Beta user by going to our [website!](https://equalityai.com/)
 
 <img src="img/framework.png" align="center" alt="" width="900" />
 <sub><b>Figure 1:</b> Full Responsible AI Framework.
 </sub>
 
-</br><b>Bias mitigation methods</b> are employed to address bias in data and/or machine learning models and <b>fairness metrics</b> are needed to mathematically represent the fairness or bias levels of a ML model.</br>
+If you like what we're doing, give us a :star: and join our [EAI Manifesto!](https://equalityai.com/community/#manifesto)!</br>
+<img src="img/star.png" align="center" alt="" width="400" /></br>
+
+
+## Introduction
+Incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps is called fairness-based machine learning (ML) or fair machine learning. 
+
+The fundamental idea behind fair ML is to:
+1. determine potential sources of bias also known as (a.k.a) sources of harm;
+2. quanitfy a measure of fairness (a.k.a a fairness metric) offsetting that bias;
+3. use that fairness metric to evaluate, monitor, and affect your final model selection; and,
+> Unlike model performance metrics (e.g., loss, accuracy, etc.), fairness metrics affect your final model selection by creating parity (i.e., equality) on appropriate fairness metrics before model deployment.
+4. apply a range of methods to improve the fairness (a.k.a bias mitigation methods) and performance tradeoff
+> Yes, there is indeed a tradeoff between model performance and fairness metrics.
+
+
+
 
 ## How FairML is integrated with model fitting
 Fairness can be integrated into the model fitting process through creating parity (i.e., equality) on appropriate fairness metrics before model deployment, then tracking those metrics throughout deployment with model performance metrics (e.g., loss, accuracy, etc.).
