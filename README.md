@@ -59,6 +59,8 @@ We have combined fairness metrics and bias mitigation into a unified syntax.</br
 | Select most fair model                                       | Balance fairness with performance metrics when selecting the final model.|
 | Apply methods to improve the fairness & performance tradeoff | Methods to improve the fairness by applying a.k.a bias mitigation methods |
 
+<sub><b>Table 1:</b> The potential uses for fairness metrics and bias mitigation methods.
+</sub>
 
 <b>Note:</b> Parity is achieved when a fairness metric (such as the percent of positive predictions) have the same value across all levels of a sensitive attribute.  <i>Sensitive attributes</i> are attributes such as race, gender, age, and other patient attributes that are of primary concern when it comes to fairness, and are typically protected by law. 
   <br></br>
