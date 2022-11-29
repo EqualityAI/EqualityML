@@ -86,20 +86,8 @@ We have conducted extensive literature review and theoretical analysis on dozens
 >7. <b>Run Mitigation</b> ------------------------------------------> `bias_mitigation`
 >8. Compute Model Results and Fairness Score After Mitigation
 >9. Compare Model Results and Fairness Score Before and After Mitigation
->>
-> * We recommend assessing the fairness of the same ml model after bias is applied. By comparing the predictions before and after mitigation, we will be able to assess whether and to what extent the fairness can be improved. Furthermore, the trade-offs between teh accuracy and fairness of the machine learning model will be examined.
 
-
-
-
-
-| Pre-processing Workflow                                     | Description                                           |
-|:------------------------------------------------------------|:------------------------------------------------------|
-
-| Pre-processing Workflow                                     | Description                                           |
-|:------------------------------------------------------------|:------------------------------------------------------|
-
-
+We recommend assessing the fairness of the same ml model after bias is applied. By comparing the predictions before and after mitigation, we will be able to assess whether and to what extent the fairness can be improved. Furthermore, the trade-offs between teh accuracy and fairness of the machine learning model will be examined.
 
 > In-processing and Post-processing are still under development. Do you need this now? [Let us know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
 
