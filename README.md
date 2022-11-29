@@ -45,7 +45,7 @@ We have combined fairness metrics and bias mitigation into a unified syntax.</br
 </sub>
 <br></br>
 
-> Need a specific metric or method? [Reach out to us! We would love to know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
+> Need a specific metric or method? [Just let us know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
 
 #### Potential Uses
 
@@ -65,13 +65,24 @@ We have combined fairness metrics and bias mitigation into a unified syntax.</br
 <b>Note:</b> Parity is achieved when a fairness metric (such as the percent of positive predictions) have the same value across all levels of a sensitive attribute.  <i>Sensitive attributes</i> are attributes such as race, gender, age, and other patient attributes that are of primary concern when it comes to fairness, and are typically protected by law. 
   <br></br>
 
-
 Through these steps we <b>safeguard against bias</b> by:
 > 1. Creating metrics targeting sources of bias to balance alongside our performance metrics in evaluation, model selection, and monitoring.
 > 2. Applying bias mitigation methods to improve fairness without compromising performance.
  <br></br>
 
+## EAI Fair ML Workflow
+We have conducted extensive literature review and theoretical analysis on dozens of fairness metrics and mitigation methods. Theoretical properties of those fairness mitigation methods were analyzed to determine their suitability under various conditions to create our framework for a pre-processing workflow. 
+
+> In-processing and Post-processing are still under development. Do you need this now? [Let us know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
+
+
+
+
 ## How to use `FairML` in model fitting
+
+
+
+
 When incorporating fairness and bias mitigation methods to your own workflow, we recommend the following recipe:
 
 >1. Define Research Question
