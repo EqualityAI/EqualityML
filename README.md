@@ -35,7 +35,7 @@ The fundamental workflow behind fair ML is to:
   >>
   * <i>Yes, there is indeed a tradeoff between model performance and fairness metrics.</i>
 
-Through these steps we are safeguarding against bias by:
+Through these steps we <b>safeguard against bias<b> by:
 > 1. Creating metrics targeting sources of bias to balance alongside our performance metrics in evaluation, model selection, and monitoring.
 > 2. Applying bias mitigation methods to improve fairness without compromising performance.
 
