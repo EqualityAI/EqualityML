@@ -14,7 +14,7 @@ The EAI `FairML` repository provides functions and guidance on how to include fa
 <sub><b>Figure 1:</b> Full Responsible AI Framework.
 </sub></br>
 
-If you like what we're doing, give us a :star: and join our [EAI Manifesto!](https://equalityai.com/community/#manifesto)!</br>
+<br>If you like what we're doing, give us a :star: and join our [EAI Manifesto!](https://equalityai.com/community/#manifesto)!</br>
 <img src="img/star.png" align="center" alt="" width="400" /></br>
 
 
