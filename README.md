@@ -59,7 +59,8 @@ Bias mitigation methods are employed to address bias in data and/or machine lear
 
 <sub>
 <b>Note:</b> Parity is achieved when a fairness metric (such as the percent of positive predictions) have the same value across all levels of a sensitive attribute.  <i>Sensitive attributes</i> are attributes such as race, gender, age, and other patient attributes that are of primary concern when it comes to fairness, and are typically protected by law. 
-  </sub> </br>
+  </sub>
+  <br></br>
 
 
 Through these steps we <b>safeguard against bias</b> by:
