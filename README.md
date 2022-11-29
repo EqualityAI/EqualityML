@@ -75,6 +75,18 @@ We have conducted extensive literature review and theoretical analysis on dozens
 
 > In-processing and Post-processing are still under development. Do you need this now? [Let us know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
 
+>1. Define Research Question
+>2. Connect to Source Data
+>3. Select Fairness Strategy
+>4. Data Preparation
+>5. Fit Prediction Model
+>6. Compute Model Results and Fairness Score
+>7. Run Mitigation
+>8. Compute Model Results and Fairness Score After Mitigation
+>9. Compare Model Results and Fairness Score Before and After Mitigation
+>>
+> * We recommend assessing the fairness of the same ml model after bias is applied. By comparing the predictions before and after mitigation, we will be able to assess whether and to what extent the fairness can be improved. Furthermore, the trade-offs between teh accuracy and fairness of the machine learning model will be examined.
+
 
 
 
