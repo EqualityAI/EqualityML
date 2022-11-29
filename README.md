@@ -35,7 +35,7 @@ We have combined fairness metrics and bias mitigation into a unified syntax.</br
 ### Bias Mitigation:
 * Methods or algorithms applied to a machine learning dataset or model to improve the fairness of the model output. Many mitigation methods have been proposed in the literature, which can be broadly classified into the application of a mitigation method on the data set (pre-processing), in the model fitting (in-processing), and to the model predictions (post-processing).
 
-> [Bias Mitigation Guide:](https://github.com/EqualityAI/FairML/blob/main/Fairness%20Metrics%20User%20Manual.pdf)
+> [Bias Mitigation Guide:](https://github.com/EqualityAI/FairML/blob/main/Fairness%20Metrics%20User%20Manual.pdf)</br>
 <sub> Resampling | Reweighting | Disparate Impact Remover | Correlation Remover 
 </sub>
 
