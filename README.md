@@ -22,7 +22,9 @@ If you like what we're doing, give us a :star: and join our [EAI Manifesto!](htt
 
 
 ## Introduction
-Incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps is called fairness-based machine learning (ML) or fair machine learning. However, Fairness-based ML comes with its own challenges. We assembled a diverse team of statisticians and ML experts to provide a workflow or series of steps, evidence-based guidance on fairness metrics, and validated code to properly run bias mitigation methods.
+Incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps is called fairness-based machine learning (ML) or fair machine learning. However, fair ML comes with its own challenges. We assembled a diverse team of statisticians and ML experts to provide evidence-based guidance on fairness metrics use/selection and validated code to properly run bias mitigation methods.
+
+## Our Findings
 
 ### Fairness Metric:
 * Statistical measure of the output of a machine learning model based a mathematical definition of fairness.
@@ -30,7 +32,6 @@ Incorporating bias mitigation methods and fairness metrics into the traditional 
 > [Fairness Metric Guide:](https://github.com/EqualityAI/FairML/blob/main/Fairness%20Metrics%20User%20Manual.pdf)
 We have combined fairness metrics and bias mitigation into a unified syntax.</br><sub> Statistical Parity | Conditional Statistical Parity | Negative Predictive Parity | Equal Opportunity | Balance for Positive Class | Predictive Parity | Well Calibration | Calibration | Conditional Use Accuracy | Predictive Equality | Balance for Negative Class | Equalized Odds | Overall Balance
 </sub>
-
 
 ### Bias Mitigation:
 * Methods or algorithms applied to a machine learning dataset or model to improve the fairness of the model output. Many mitigation methods have been proposed in the literature, which can be broadly classified into the application of a mitigation method on the data set (pre-processing), in the model fitting (in-processing), and to the model predictions (post-processing).
@@ -46,13 +47,12 @@ We have combined fairness metrics and bias mitigation into a unified syntax.</br
 
 Bias mitigation methods are employed to address bias in data and/or machine learning models and fairness metrics are needed to mathematically represent the fairness or bias levels of a ML model.
 
-### Fair ML Workflow:
+### Fairness and Bias Mitigation Uses
   
-| Step                                                         | Description          |
+| Use                                                         | Description          |
 | ------------------------------------------------------------ |:-------------------------------------------------|
-| Determine potential bias                                     | Determine potential sources of bias also known as (a.k.a) sources of harm.   |
-| Select fairness metric                                       | Quanitfy a measure of fairness (a.k.a a fairness metric) targeting that bias |
-| Evaluate fairness                                            | Fairness metrics can be used to mathematically represent the fairness levels of a ML model. |
+| As a metric                                      | Quanitfy a measure of fairness (a.k.a a fairness metric) targeting a bias |
+| Evaluate fairness                                            | Fairness metrics can be used to mathematically represent the fairness levels of a ML model. This can also be used to monitor a model. |
 | Create parity on fairness                                    | Unlike model performance metrics (e.g., loss, accuracy, etc.), fairness metrics affect your final model selection by creating parity (i.e., equality) on appropriate fairness metrics before model deployment. |
 | Select most fair model                                       | Balance fairness with performance metrics when selecting the final model.|
 | Apply methods to improve the fairness & performance tradeoff | Methods to improve the fairness by applying a.k.a bias mitigation methods |
@@ -68,6 +68,33 @@ Through these steps we <b>safeguard against bias</b> by:
  <br></br>
 
 ## How to use `FairML` in model fitting
+When incorporating fairness and bias mitigation methods to your own workflow, we recommend the following recipe:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Fairness can be integrated into the model fitting process through creating parity (i.e., equality) on appropriate fairness metrics before model deployment, then tracking those metrics throughout deployment with model performance metrics (e.g., loss, accuracy, etc.).
 
 <b>Note:</b> Parity is achieved when a fairness metric (such as the percent of positive predictions) have the same value across all levels of a sensitive attribute.  <i>Sensitive attributes</i> are attributes such as race, gender, age, and other patient attributes that are of primary concern when it comes to fairness, and are typically protected by law. 
