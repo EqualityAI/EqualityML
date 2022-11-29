@@ -6,10 +6,10 @@
 \usage{
 bias_mitigation(
   method,
-  ml_model,
   data_input,
   target_variable,
   protected_variable,
+  probs = NULL,
   lambda = 1,
   cutoff = 0.5
 )
@@ -46,7 +46,7 @@ custom_data <- data.frame(
 
 mitigation_result <- bias_mitigation(
   method = disparate-impact-remover,
-  data = custom_data,
+  data_input = custom_data,
   target_variable = custom_data$target,
   protected_variable = custom_data$kind,
   lambda = 0.8

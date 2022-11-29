@@ -6,10 +6,10 @@
 \usage{
 resampling_data(
   method,
-  ml_model,
   data_input,
   target_variable,
-  protected_variablee,
+  protected_variable,
+  probs = NULL,
   cutoff = 0.5
 )
 }

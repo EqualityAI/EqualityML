@@ -25,11 +25,11 @@
 #'
 #'ADD ml_model
 #'
-#' mitigation_result <- bias_mitigation(
+#' fairness_score <- fairness_metric(
 #'   ml_model = ml_model,
 #'   input_data = custom_data,
-#'   target_variable = custom_data$y,
-#'   protected_variable = custom_data$x1,
+#'   target_variable = y,
+#'   protected_variable = x1,
 #'   privileged_class = 1
 #' )
 fairness_metric <- function(ml_model, input_data, target_variable, protected_variable, privileged_class, ignore_protected = TRUE){
@@ -41,15 +41,19 @@ fairness_metric <- function(ml_model, input_data, target_variable, protected_var
     # removing protected variable from model explanation calculation
     data <- input_data[colnames(input_data) != protected_variable]
     print('Warning: Protected variable not included in model explanation')
+    
   }
   else
   {
     data <- input_data
   }
   
+  # Get x data 
+  x <- data[colnames(data) != target_variable]
+  
   #Create model explainer object using explain function from DALEX package
-  model_explainer <- DALEX::explain(ml_model, data = data[, -1], y = get(target_variable[1], input_data), colorize = FALSE) 
-  fairness_obj <- fairness_check(model_explainer, protected = get(protected_variable[1], input_data), privileged = privileged_class)
+  model_explainer <- DALEX::explain(ml_model, data = x, y = get(target_variable[1], input_data), colorize = FALSE) 
+  fairness_obj <- fairmodels::fairness_check(model_explainer, protected = get(protected_variable[1], input_data), privileged = privileged_class)
   
   # Extract required fairness metric scores: predictive_equality, equal_opportunity and statistical_parity
   predictive_equality <- fairness_obj$fairness_check_data$score[3]

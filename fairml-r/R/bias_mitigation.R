@@ -27,12 +27,12 @@
 #'
 #' mitigation_result <- bias_mitigation(
 #'   method = disparate-impact-remover,
-#'   data = custom_data,
+#'   data_input = custom_data,
 #'   target_variable = custom_data$target,
 #'   protected_variable = custom_data$kind,
 #'   lambda = 0.8
 #' )
-bias_mitigation <- function(method, ml_model, data_input, target_variable, protected_variable, lambda = 1, cutoff = 0.5){
+bias_mitigation <- function(method, data_input, target_variable, protected_variable, probs = NULL, lambda = 1, cutoff = 0.5){
 
   # Check input arguments
   stopifnot(method == "disparate-impact-remover" | method == "reweighing" | method == "resampling" | 
@@ -55,7 +55,7 @@ bias_mitigation <- function(method, ml_model, data_input, target_variable, prote
   }
   else if((method == "resampling") || (method == "resampling-uniform") || (method == "resampling-preferential"))
   {
-    results <- resampling_data(method, ml_model, data_input, target_variable, protected_variable, cutoff)
+    results <- resampling_data(method, data_input, target_variable, protected_variable, probs, cutoff)
   } else{
     print('Mitigation Method - Invalid/Not Available')
   }
@@ -75,9 +75,13 @@ disp_removing_data <- function(data_input, target_variable, protected_variable, 
 
     # finding list of numeric features
     features_transform <- colnames(data_input[sapply(data_input, is.numeric)])
-
+    
     # removing target variable from the features transform list
     features_transform <- features_transform[features_transform != target_variable[1]]
+    if(length(features_transform) == 0){
+      print("Features to transform are empty")
+    }
+      
 
     # Data transformation using Disparate Impact Remover
     data_transformed <- fairmodels::disparate_impact_remover(data = data_input, protected = get(protected_variable[1], data_input),
@@ -103,17 +107,19 @@ reweighing_model_weights <- function(data_input, target_variable, protected_vari
 #' Resampling Data
 #'
 #'Resample the input data using fairmodels module function.
-resampling_data <- function(method, ml_model, data_input, target_variable, protected_variablee, cutoff = 0.5){
+resampling_data <- function(method, data_input, target_variable, protected_variable, probs = NULL, cutoff = 0.5){
 
-  stopifnot(method == "resampling" | method == "resampling-uniform"  | method == "resampling-preferential")
+  if (cutoff > 1 || cutoff < 0) {
+    cutoff = 0.5
+    print("The cutoff value for probabilities threshold has been changed to 0.5 since cutoff>1 or cutoff<0")
+  }
+  
   if((method == "resampling") || (method == "resampling-uniform")){
-    # data resampling
     data_index <- fairmodels::resample(protected = get(protected_variable[1], data_input), y = get(target_variable[1], data_input), type = "uniform", cutoff = cutoff)
   }
   else{
-    exp <- DALEX::explain(ml_model, data = data_input[, -1],y = get(target_variable[1], data_input))
-    # data resampling
-    data_index <- fairmodels::resample(protected = get(protected_variable[1], data_input), y = get(target_variable[1], data_input), type = "preferential", probs = exp$y_hat, cutoff = cutoff)
+    stopifnot(!is.null(probs))
+    data_index <- fairmodels::resample(protected = get(protected_variable[1], data_input), y = get(target_variable[1], data_input), type = "preferential", probs = probs, cutoff = cutoff)
   }
   data_transformed <- data_input[data_index,] # mitigated training data
   data_transformed = list("data" = data_transformed)
