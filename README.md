@@ -72,6 +72,16 @@ Through these steps we <b>safeguard against bias</b> by:
 ## How to use `FairML` in model fitting
 When incorporating fairness and bias mitigation methods to your own workflow, we recommend the following recipe:
 
+>1. Define Research Question
+>2. Connect to Source Data
+>3. Select Fairness Strategy
+> * Identify fairness metric
+>4. Data Preparation
+>5. Fit Prediction Model
+>6. Compute Model Results and Fairness Score
+>7. Run Mitigation
+>8. Compute Model Results and Fairness Score After Mitigation
+>9. Compare Model Results and Fairness Score Before and After Mitigation
 
 
 
@@ -90,16 +100,6 @@ When incorporating fairness and bias mitigation methods to your own workflow, we
 
 
 
-
-
-
-
-
-
-
-Fairness can be integrated into the model fitting process through creating parity (i.e., equality) on appropriate fairness metrics before model deployment, then tracking those metrics throughout deployment with model performance metrics (e.g., loss, accuracy, etc.).
-
-<b>Note:</b> Parity is achieved when a fairness metric (such as the percent of positive predictions) have the same value across all levels of a sensitive attribute.  <i>Sensitive attributes</i> are attributes such as race, gender, age, and other patient attributes that are of primary concern when it comes to fairness, and are typically protected by law. 
 
 <img src="img/How fairML fits into.PNG" align="center" alt="" width="800"/></br>
 <sub><b>Figure 2:</b> An infographic showing where to incorporate fairness evaluation and bias mitigation.
