@@ -26,8 +26,10 @@ Incorporating bias mitigation methods and fairness metrics into the traditional 
 
 ### Fairness Metric:
 * Statistical measure of the output of a machine learning model based a mathematical definition of fairness.
-
- <font size="1"> This is my text number1</font> 
+ 
+ <span style="color:green;font-weight:700;font-size:20px">
+    markdown color font styles
+</span>
 
 Statistical Parity | Conditional Statistical Parity | Negative Predictive Parity | Equal Opportunity | Balance for Positive Class | Predictive Parity | Well Calibration | Calibration | Conditional Use Accuracy | Predictive Equality | Balance for Negative Class | Equalized Odds | Overall Balance
 
