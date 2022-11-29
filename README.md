@@ -8,7 +8,7 @@
 
 The EAI `FairML` repository provides functions and guidance on how to include fairness and bias mitigation methods to model fitting so as to safeguard the people on the receiving end of our models. 
 
-<br>If you like what we're doing, give us a :star: and join our [EAI Manifesto!](https://equalityai.com/community/#manifesto)!</br>
+If you like what we're doing, give us a :star: and join our [EAI Manifesto!](https://equalityai.com/community/#manifesto)!</br>
 <img src="img/star.png" align="center" alt="" width="400" /></br>
 
 >We have extented `FairML` to include other aspects of Responsible AI (see full framework <b>Figure 1.</b>) and collaboration features >to create our Beta MLOps Developer Studio. Become a Beta user by going to our [website!](https://equalityai.com/)
