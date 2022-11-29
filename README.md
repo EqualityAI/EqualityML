@@ -26,7 +26,7 @@ Incorporating bias mitigation methods and fairness metrics into the traditional 
 
 The fundamental idea behind fair ML is to:
 * Determine potential sources of bias also known as (a.k.a) sources of harm;
-* Quanitfy a measure of fairness (a.k.a a fairness metric) offsetting that bias;
+* Quanitfy a measure of fairness (a.k.a a fairness metric) targeting that bias;
 * Use that fairness metric to evaluate, monitor, and affect your final model selection; and, </br>
   >>
   * <i> Unlike model performance metrics (e.g., loss, accuracy, etc.), fairness metrics affect your final model selection by creating parity (i.e., equality) on appropriate fairness metrics before model deployment.</i>
@@ -35,7 +35,9 @@ The fundamental idea behind fair ML is to:
   >>
   * <i>Yes, there is indeed a tradeoff between model performance and fairness metrics.</i>
 
-
+Through these steps we are safeguarding against bias by:
+1. Creating metrics targeting sources of bias to balance alongside our performance metrics in evaluation, model selection, and monitoring.
+2. Applying bias mitigation methods to improve fairness without compromising performance.
 
 
 ## How FairML is integrated with model fitting
