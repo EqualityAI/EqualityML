@@ -33,7 +33,7 @@ The fundamental idea behind fair ML is to:
   >>
 * Apply a range of methods to improve the fairness (a.k.a bias mitigation methods) and performance tradeoff </br>
   >>
-  * Yes, there is indeed a tradeoff between model performance and fairness metrics.
+  * <i>Yes, there is indeed a tradeoff between model performance and fairness metrics.</i>
 
 
 
