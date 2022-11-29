@@ -47,7 +47,6 @@ We have combined fairness metrics and bias mitigation into a unified syntax.</br
 Bias mitigation methods are employed to address bias in data and/or machine learning models and fairness metrics are needed to mathematically represent the fairness or bias levels of a ML model.
 
 ### Fair ML Workflow:
-<left>
   
 | Step                                                         | Description          |
 | ------------------------------------------------------------ |:-------------------------------------------------|
@@ -58,14 +57,17 @@ Bias mitigation methods are employed to address bias in data and/or machine lear
 | Select most fair model                                       | Balance fairness with performance metrics when selecting the final model.|
 | Apply methods to improve the fairness & performance tradeoff | Methods to improve the fairness by applying a.k.a bias mitigation methods |
 
-</left>
+<sub>
+<b>Note:</b> Parity is achieved when a fairness metric (such as the percent of positive predictions) have the same value across all levels of a sensitive attribute.  <i>Sensitive attributes</i> are attributes such as race, gender, age, and other patient attributes that are of primary concern when it comes to fairness, and are typically protected by law. 
+  </sub>
+
 
 Through these steps we <b>safeguard against bias</b> by:
 > 1. Creating metrics targeting sources of bias to balance alongside our performance metrics in evaluation, model selection, and monitoring.
 > 2. Applying bias mitigation methods to improve fairness without compromising performance.
 
 
-## How to use FairML in model fitting
+## How to use `FairML` in model fitting
 Fairness can be integrated into the model fitting process through creating parity (i.e., equality) on appropriate fairness metrics before model deployment, then tracking those metrics throughout deployment with model performance metrics (e.g., loss, accuracy, etc.).
 
 <b>Note:</b> Parity is achieved when a fairness metric (such as the percent of positive predictions) have the same value across all levels of a sensitive attribute.  <i>Sensitive attributes</i> are attributes such as race, gender, age, and other patient attributes that are of primary concern when it comes to fairness, and are typically protected by law. 
