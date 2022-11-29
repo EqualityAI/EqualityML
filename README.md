@@ -30,6 +30,12 @@ Incorporating bias mitigation methods and fairness metrics into the traditional 
 ### Bias Mitigation:
 * Methods or algorithms applied to a machine learning dataset or model to improve the fairness of the model output.
 
+<center>
+<img src="img/pre_in_post.png" align="center" alt="" width="500" />
+<sub><b>Figure 1:</b> Full Responsible AI Framework.
+</sub>
+  </center>
+
 ### Fair ML Workflow:
 | Workflow                                                     | Step          |
 | ------------------------------------------------------------ |:-------------:|
