@@ -65,7 +65,7 @@ Bias mitigation methods are employed to address bias in data and/or machine lear
 Through these steps we <b>safeguard against bias</b> by:
 > 1. Creating metrics targeting sources of bias to balance alongside our performance metrics in evaluation, model selection, and monitoring.
 > 2. Applying bias mitigation methods to improve fairness without compromising performance.
-
+ <br></br>
 
 ## How to use `FairML` in model fitting
 Fairness can be integrated into the model fitting process through creating parity (i.e., equality) on appropriate fairness metrics before model deployment, then tracking those metrics throughout deployment with model performance metrics (e.g., loss, accuracy, etc.).
