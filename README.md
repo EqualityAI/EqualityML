@@ -77,53 +77,6 @@ Through these steps we <b>safeguard against bias</b> by:
 </details>
 
 
-
-
-
-#### Fairness Metric
-* Statistical measure of the output of a machine learning model based a mathematical definition of fairness.
-
-> [Fairness Metric Guide:](https://github.com/EqualityAI/FairML/blob/main/Fairness%20Metrics%20User%20Manual.pdf)
-We have combined fairness metrics and bias mitigation into a unified syntax.</br><sub> Statistical Parity | Conditional Statistical Parity | Negative Predictive Parity | Equal Opportunity | Balance for Positive Class | Predictive Parity | Well Calibration | Calibration | Conditional Use Accuracy | Predictive Equality | Balance for Negative Class | Equalized Odds | Overall Balance
-</sub>
-
-#### Bias Mitigation
-* Methods or algorithms applied to a machine learning dataset or model to improve the fairness of the model output. Many mitigation methods have been proposed in the literature, which can be broadly classified into the application of a mitigation method on the data set (pre-processing), in the model fitting (in-processing), and to the model predictions (post-processing).
-
-> [Bias Mitigation Guide:](https://github.com/EqualityAI/FairML/blob/main/Fairness%20Metrics%20User%20Manual.pdf)</br>
-<sub> Resampling | Reweighting | Disparate Impact Remover | Correlation Remover 
-</sub>
-
-<img src="img/pre_in_post_nw.png" align="center" alt="" width="350" />
-<sub><b>Figure 2:</b> Bias mitigation can be performed in the pre-processing, in-processing, and post-processing of a model.
-</sub>
-<br></br>
-
-> Need a specific metric or method? [Just let us know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
-
-#### Potential Uses
-
-* Bias mitigation methods are employed to address bias in data and/or machine learning models and fairness metrics are needed to mathematically represent the fairness or bias levels of a ML model.
-  
-| Use                                                         | Description          |
-|:-------------------------------------------------------------|:-------------------------------------------------|
-| As a metric                                      | Quanitfy a measure of fairness (a.k.a a fairness metric) targeting a bias |
-| Evaluate fairness                                            | Fairness metrics can be used to mathematically represent the fairness levels of a ML model. This can also be used to monitor a model. |
-| Create parity on fairness                                    | Unlike model performance metrics (e.g., loss, accuracy, etc.), fairness metrics affect your final model selection by creating parity (i.e., equality) on appropriate fairness metrics before model deployment. |
-| Select most fair model                                       | Balance fairness with performance metrics when selecting the final model.|
-| Apply methods to improve the fairness & performance tradeoff | Methods to improve the fairness by applying a.k.a bias mitigation methods |
-
-<sub><b>Table 1:</b> The potential uses for fairness metrics and bias mitigation methods.
-</sub>
-
-<b>Note:</b> Parity is achieved when a fairness metric (such as the percent of positive predictions) have the same value across all levels of a sensitive attribute.  <i>Sensitive attributes</i> are attributes such as race, gender, age, and other patient attributes that are of primary concern when it comes to fairness, and are typically protected by law. 
-  <br></br>
-
-Through these steps we <b>safeguard against bias</b> by:
-> 1. Creating metrics targeting sources of bias to balance alongside our performance metrics in evaluation, model selection, and monitoring.
-> 2. Applying bias mitigation methods to improve fairness without compromising performance.
- <br></br>
-
 ## EAI Fair ML Workflow
 We have conducted extensive literature review and theoretical analysis on dozens of fairness metrics and mitigation methods. Theoretical properties of those fairness mitigation methods were analyzed to determine their suitability under various conditions to create our framework for a pre-processing workflow. 
 
