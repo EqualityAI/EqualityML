@@ -12,7 +12,7 @@ The EAI `FairML` repository provides functions and guidance on how to include fa
 
 <img src="img/framework.png" align="center" alt="" width="400" />
 <sub><b>Figure 1:</b> Full Responsible AI Framework.
-</sub>
+</sub></br>
 
 If you like what we're doing, give us a :star: and join our [EAI Manifesto!](https://equalityai.com/community/#manifesto)!</br>
 <img src="img/star.png" align="center" alt="" width="400" /></br>
