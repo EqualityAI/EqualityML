@@ -32,15 +32,13 @@ The fundamental workflow behind fair ML is to:
   * <i> Unlike model performance metrics (e.g., loss, accuracy, etc.), fairness metrics affect your final model selection by creating parity (i.e., equality) on appropriate fairness metrics before model deployment.</i>
   >>
 * Apply a range of methods to improve the fairness (a.k.a bias mitigation methods) and performance tradeoff </br>
-  >>
-  * <i>Yes, there is indeed a tradeoff between model performance and fairness metrics.</i>
 
-Through these steps we <b>safeguard against bias<b> by:
+Through these steps we <b>safeguard against bias</b> by:
 > 1. Creating metrics targeting sources of bias to balance alongside our performance metrics in evaluation, model selection, and monitoring.
 > 2. Applying bias mitigation methods to improve fairness without compromising performance.
 
 
-## How FairML is integrated with model fitting
+## How to use FairML in model fitting
 Fairness can be integrated into the model fitting process through creating parity (i.e., equality) on appropriate fairness metrics before model deployment, then tracking those metrics throughout deployment with model performance metrics (e.g., loss, accuracy, etc.).
 
 <b>Note:</b> Parity is achieved when a fairness metric (such as the percent of positive predictions) have the same value across all levels of a sensitive attribute.  <i>Sensitive attributes</i> are attributes such as race, gender, age, and other patient attributes that are of primary concern when it comes to fairness, and are typically protected by law. 
