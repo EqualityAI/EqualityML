@@ -4,9 +4,19 @@
 
 ### Welcome to our GitHub repo!
 
-[Equality AI (EAI)](https://equalityai.com/) is a public benefit corporation dedicated to providing developers with the evidence-based tools to eliminate algorithmic bias. We believe that developers want to implement algorithmic fairness, but have encountered roadblocks along the way - we are here to help!</b>
+[Equality AI (EAI)](https://equalityai.com/) is a public-benefit corporation dedicated to providing developers with the evidence-based tools to end algorithmic bias. We believe that developers want to implement algorithmic fairness, but have encountered roadblocks along the way - <b>we are here to help!</b></b>
 
-`FairML` provides a set of tools to handle the fairness of a Machine Learning application or run Fairness-based machine learning (Fair ML). With the increased use of Machine Learning solutions on a variety of critical real-world problems, it is imperative to guarantee that fair decisions are performed by those black-box Machine Learning models. FairML aims to simplify the complex process of evaluating the fairness of ML models and provides a range of methods to mitigate bias in datasets.
+
+
+
+
+
+`FairML` provides functions and guidance 
+
+to run Fairness-based machine learning (Fair ML) using evidence-based best practices.
+
+
+With the increased use of Machine Learning solutions on a variety of critical real-world problems, it is imperative to guarantee that fair decisions are performed by those black-box Machine Learning models. FairML aims to simplify the complex process of evaluating the fairness of ML models and provides a range of methods to mitigate bias in datasets.
 
 If you like what we're doing, give us a :star: and join our [EAI Manifesto!](https://equalityai.com/community/#manifesto)!</br>
 <img src="img/star.png" align="center" alt="" width="400" /></br>
