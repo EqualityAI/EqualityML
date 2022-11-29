@@ -24,7 +24,7 @@ If you like what we're doing, give us a :star: and join our [EAI Manifesto!](htt
 ## Introduction
 Incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps is called fairness-based machine learning (ML) or fair machine learning. 
 
-The fundamental idea behind fair ML is to:
+The fundamental workflow behind fair ML is to:
 * Determine potential sources of bias also known as (a.k.a) sources of harm;
 * Quanitfy a measure of fairness (a.k.a a fairness metric) targeting that bias;
 * Use that fairness metric to evaluate, monitor, and affect your final model selection; and, </br>
@@ -36,8 +36,8 @@ The fundamental idea behind fair ML is to:
   * <i>Yes, there is indeed a tradeoff between model performance and fairness metrics.</i>
 
 Through these steps we are safeguarding against bias by:
-1. Creating metrics targeting sources of bias to balance alongside our performance metrics in evaluation, model selection, and monitoring.
-2. Applying bias mitigation methods to improve fairness without compromising performance.
+> 1. Creating metrics targeting sources of bias to balance alongside our performance metrics in evaluation, model selection, and monitoring.
+> 2. Applying bias mitigation methods to improve fairness without compromising performance.
 
 
 ## How FairML is integrated with model fitting
