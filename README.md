@@ -105,9 +105,9 @@ To make fairness metric selection easy we have provided a few essential question
 
 After identifying the important fairness criteria, we recommend you attempt to use multiple bias mitigation strategies to try to optimize the efficiency-fairness tradeoff.</br>
 
-## Installation
+## `FairML` Installation
 
-FairML can be installed from [PyPI](https://pypi.org/project/fairml/).
+`FairML` can be installed from [PyPI](https://pypi.org/project/fairml/).
 
 ```bash
 pip install fairml
