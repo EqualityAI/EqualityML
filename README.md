@@ -45,7 +45,7 @@ We have combined fairness metrics and bias mitigation into a unified syntax.</br
 </sub>
 <br></br>
 
-Need a specific metric or method? [Reach out to us! We would love to know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
+> Need a specific metric or method? [Reach out to us! We would love to know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
 
 #### Potential Uses
 
