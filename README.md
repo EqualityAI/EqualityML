@@ -39,6 +39,7 @@ Bias mitigation methods are employed to address bias in data and/or machine lear
 
 ### Fair ML Workflow:
 <left>
+  
 | Step                                                         | Description          |
 | ------------------------------------------------------------ |:-------------------------------------------------:|
 | Determine potential bias                                     | Determine potential sources of bias also known as (a.k.a) sources of harm.   |
@@ -47,6 +48,7 @@ Bias mitigation methods are employed to address bias in data and/or machine lear
 | Create parity on fairness                                    | Unlike model performance metrics (e.g., loss, accuracy, etc.), fairness metrics affect your final model selection by creating parity (i.e., equality) on appropriate fairness metrics before model deployment. |
 | Select most fair model                                       | Balance fairness with performance metrics when selecting the final model.|
 | Apply methods to improve the fairness & performance tradeoff | Methods to improve the fairness by applying a.k.a bias mitigation methods |
+
 </left>
 
 Through these steps we <b>safeguard against bias</b> by:
