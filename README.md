@@ -25,11 +25,11 @@ If you like what we're doing, give us a :star: and join our [EAI Manifesto!](htt
 Incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps is called fairness-based machine learning (ML) or fair machine learning. 
 
 The fundamental idea behind fair ML is to:
-1. Determine potential sources of bias also known as (a.k.a) sources of harm;
-2. Quanitfy a measure of fairness (a.k.a a fairness metric) offsetting that bias;
-3. Use that fairness metric to evaluate, monitor, and affect your final model selection; and, </br>
+* Determine potential sources of bias also known as (a.k.a) sources of harm;
+* Quanitfy a measure of fairness (a.k.a a fairness metric) offsetting that bias;
+* Use that fairness metric to evaluate, monitor, and affect your final model selection; and, </br>
   > Unlike model performance metrics (e.g., loss, accuracy, etc.), fairness metrics affect your final model selection by creating parity (i.e., equality) on appropriate fairness metrics before model deployment.
-4. Apply a range of methods to improve the fairness (a.k.a bias mitigation methods) and performance tradeoff </br>
+* Apply a range of methods to improve the fairness (a.k.a bias mitigation methods) and performance tradeoff </br>
   > Yes, there is indeed a tradeoff between model performance and fairness metrics.
 
 
