@@ -30,7 +30,7 @@ Incorporating bias mitigation methods and fairness metrics into the traditional 
 ### Bias Mitigation:
 * Methods or algorithms applied to a machine learning dataset or model to improve the fairness of the model output. Many mitigation methods have been proposed in the literature, which can be broadly classified into the application of a mitigation method on the data set (pre-processing), in the model fitting (in-processing), and to the model predictions (post-processing).
 
-<img src="img/pre_in_post.png" align="center" alt="" width="550" />
+<img src="img/pre_in_post_nw.png" align="center" alt="" width="550" />
 <sub><b>Figure 2:</b> Bias mitigation can be performed in the pre-processing, in-processing, and post-processing of a model.
 </sub>
 <br></br>
