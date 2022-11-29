@@ -45,6 +45,8 @@ We have combined fairness metrics and bias mitigation into a unified syntax.</br
 </sub>
 <br></br>
 
+[Need a specific metric or method? We would love to know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
+
 #### Potential Uses
 
 * Bias mitigation methods are employed to address bias in data and/or machine learning models and fairness metrics are needed to mathematically represent the fairness or bias levels of a ML model.
