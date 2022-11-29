@@ -77,7 +77,8 @@ Through these steps we <b>safeguard against bias</b> by:
 ## EAI Fair ML Workflow
 We have conducted extensive literature review and theoretical analysis on dozens of fairness metrics and mitigation methods. Theoretical properties of those fairness mitigation methods were analyzed to determine their suitability under various conditions to create our framework for a pre-processing workflow. 
 
-| Use                                                         | Description          |
+| Pre-processing Workflow
+  asdfdsf | Description          |
 |:-------------------------------------------------------------|:-------------------------------------------------|
 
 
