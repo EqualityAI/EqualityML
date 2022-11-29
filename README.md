@@ -28,7 +28,7 @@ Incorporating bias mitigation methods and fairness metrics into the traditional 
 
 
 <details>
-  <summary>Click to see our findings</summary>
+  <summary> ### Our Findings: </summary>
   
 #### Fairness Metric
 * Statistical measure of the output of a machine learning model based a mathematical definition of fairness.
