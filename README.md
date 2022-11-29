@@ -32,7 +32,7 @@ Incorporating bias mitigation methods and fairness metrics into the traditional 
 
 <center>
 <img src="img/pre_in_post.png" align="center" alt="" width="500" />
-<sub><b>Figure 1:</b> Full Responsible AI Framework.
+<sub><b>Figure 2:</b> Bias mitigation can be performed in the pre-processing, in-processing, and post processing of a model.
 </sub>
   </center>
 
