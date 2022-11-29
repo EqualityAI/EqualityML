@@ -19,9 +19,10 @@ Imports:
     DALEX,
     fairmodels
 Suggests:
-    testthat
+    testthat (>= 3.0.0)
 RoxygenNote: 7.2.2
 VignetteBuilder: knitr
 URL: https://github.com/EqualityAI/FairML
 BugReports: https://github.com/EqualityAI/FairML/issues
 Language: en-US
+Config/testthat/edition: 3
