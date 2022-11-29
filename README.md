@@ -38,6 +38,7 @@ Incorporating bias mitigation methods and fairness metrics into the traditional 
 Bias mitigation methods are employed to address bias in data and/or machine learning models and fairness metrics are needed to mathematically represent the fairness or bias levels of a ML model.
 
 ### Fair ML Workflow:
+<left>
 | Step                                                         | Description          |
 | ------------------------------------------------------------ |:-------------------------------------------------:|
 | Determine potential bias                                     | Determine potential sources of bias also known as (a.k.a) sources of harm.   |
@@ -46,22 +47,7 @@ Bias mitigation methods are employed to address bias in data and/or machine lear
 | Create parity on fairness                                    | Unlike model performance metrics (e.g., loss, accuracy, etc.), fairness metrics affect your final model selection by creating parity (i.e., equality) on appropriate fairness metrics before model deployment. |
 | Select most fair model                                       | Balance fairness with performance metrics when selecting the final model.|
 | Apply methods to improve the fairness & performance tradeoff | Methods to improve the fairness by applying a.k.a bias mitigation methods |
-
-
-
-
-
-
-
-
-
-* Determine potential sources of bias also known as (a.k.a) sources of harm;
-* Quanitfy a measure of fairness (a.k.a a fairness metric) targeting that bias;
-* Use that fairness metric to evaluate, monitor, and affect your final model selection; and, </br>
-  >>
-  * <i> Unlike model performance metrics (e.g., loss, accuracy, etc.), fairness metrics affect your final model selection by creating parity (i.e., equality) on appropriate fairness metrics before model deployment.</i>
-  >>
-* Apply a range of methods to improve the fairness (a.k.a bias mitigation methods) and performance tradeoff </br>
+</left>
 
 Through these steps we <b>safeguard against bias</b> by:
 > 1. Creating metrics targeting sources of bias to balance alongside our performance metrics in evaluation, model selection, and monitoring.
