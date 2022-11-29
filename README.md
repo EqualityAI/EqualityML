@@ -12,7 +12,7 @@ If you like what we're doing, give us a :star: and join our [EAI Manifesto!](htt
 <img src="img/star.png" align="center" alt="" width="400" /><br></br>
 
 
->We have extented `FairML` to include other aspects of Responsible AI (see full framework <b>Figure 1.</b>) and collaboration features >to create our Beta MLOps Developer Studio. Become a Beta user by going to our [website!](https://equalityai.com/)
+>We have extented `FairML` to include other aspects of Responsible AI (see full framework <b>Figure 1.</b>) and collaboration features >to create our Beta MLOps Developer Studio. <b>Become a Beta user by going to our [website!](https://equalityai.com/)</b>
 
 <img src="img/framework.png" align="center" alt="" width="500" />
 <sub><b>Figure 1:</b> Full Responsible AI Framework.
