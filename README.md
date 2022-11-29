@@ -81,10 +81,10 @@ We have conducted extensive literature review and theoretical analysis on dozens
 |:-------------------------------------------------------------|:-------------------------------------------------|
 | 1. Define Research Question                                  |  |
 | 2. Connect to Source Data                                    |  |
-| 3. <b>Select Fairness Metric</b>                             | [Fairness Metric Selection Questionnaire & Tree](https://github.com/EqualityAI/FairML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf)|
+| 3. Select Fairness Metric                             | [Fairness Metric Selection Questionnaire & Tree](https://github.com/EqualityAI/FairML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf)|
 | 4. Data Preparation                                          ||
 | 5. Fit Prediction Model                                      ||
-| 6. Compute Model Results and <b>Evaluate Fairness Score      | `fairness_metric`|
+| 6. Compute Model Results and Evaluate Fairness Score      | `fairness_metric`|
 | 7. Run Mitigation                                            | `bias_mitigation`|
 | 8. Compute Model Results and Fairness Score After Mitigation | `fairness_metric` `bias_mitigation`|
 | 9. Compare Model Results and Fairness Score Before and After Mitigation| `fairness_metric` `bias_mitigation`|
@@ -95,7 +95,6 @@ We have conducted extensive literature review and theoretical analysis on dozens
 We recommend assessing the fairness of the same ml model after bias is applied. By comparing the predictions before and after mitigation, we will be able to assess whether and to what extent the fairness can be improved. Furthermore, the trade-offs between the accuracy and fairness of the machine learning model will be examined.
 
 > In-processing and Post-processing are still under development. Do you need this now? [Let us know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
-
 
 ## How to use `FairML` in model fitting
 
