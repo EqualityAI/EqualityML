@@ -123,7 +123,7 @@ Check out the example below to see how FairML can be used to evaluate the fairne
 library(fairmodels)
 library(DALEX)
 library(fairml)
-library("gbm")
+library(gbm)
 
 df <- data.frame(
     sex = c(rep("M", 140), rep("F", 60)),
@@ -150,6 +150,9 @@ mitigate bias in Machine Learning models. For example, we can use 'resampling' t
 training dataset.
 
 ```
+library(fairmodels)
+library(DALEX)
+library(fairml)
 
 df <- data.frame(
     sex = c(rep("M", 140), rep("F", 60)),
