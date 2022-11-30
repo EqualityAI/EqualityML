@@ -1,2 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^.*\.md$
+^.*\.pdf$
+^.*\.docx$
+^LICENSE$

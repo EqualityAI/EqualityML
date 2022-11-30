@@ -9,8 +9,10 @@
 #' @param data_input \code{data.frame}, data to be transformed
 #' @param target_variable character, target variable
 #' @param protected_variable character, data column name which contains sensitive information such as gender, race etc...
-#' @param lambda numeric, amount of repair desired. Value from 0 to 1, where 0 will return almost unchanged dataset and 1 fully repaired dataset
-#'
+#' @param probs numeric, vector with probabilities for preferential sampling 
+#' @param cutoff numeric, threshold for probabilities for sampling.  Value from 0 to 1.
+#' @param lambda numeric, amount of repair desired for disparate-impact-remover. 
+#' Value from 0 to 1, where 0 will return almost unchanged dataset and 1 fully repaired dataset
 #'
 #' @return Data/indices/weights after the mitigation (list)
 #' @export
@@ -18,19 +20,21 @@
 #' @examples
 #'
 #' set.seed(1)
-#' # custom data frame with kind, score and target column names
+#' # custom data frame with sex, age and target column names
 #' custom_data <- data.frame(
-#'   kind = as.factor(c(rep("second", 500), rep("first", 500))),
-#'   score = c(rnorm(500, 400, 40), rnorm(500, 600, 100))
-#'   target = sample(c(0,1), replace=TRUE, size=1000)
+#'   sex = c(rep("M", 140), rep("F", 60)),
+#'   age = c(rep(1:20,10)),
+#'   target = c(
+#'   c(rep(c(1, 1, 1, 1, 1, 1, 1, 0, 0, 0),14)),
+#'   c(rep(c(0, 1, 0, 1, 0, 0, 1, 0, 0, 1),6))
+#'   )
 #' )
 #'
 #' mitigation_result <- bias_mitigation(
-#'   method = disparate-impact-remover,
+#'   method = "disparate-impact-remover",
 #'   data_input = custom_data,
-#'   target_variable = custom_data$target,
-#'   protected_variable = custom_data$kind,
-#'   lambda = 0.8
+#'   target_variable = "target",
+#'   protected_variable = "sex"
 #' )
 bias_mitigation <- function(method, data_input, target_variable, protected_variable, probs = NULL, lambda = 1, cutoff = 0.5){
 
@@ -66,6 +70,7 @@ bias_mitigation <- function(method, data_input, target_variable, protected_varia
 #'
 #' This function mitigates bias with disparate impact remover pre-processing method (Feldman et al. (2015))
 #' Filters out sensitive correlations in a dataset using 'disparate_impact_remover' function from fairmodels package.
+#' @noRd
 disp_removing_data <- function(data_input, target_variable, protected_variable, lambda){
 
     if (lambda > 1 || lambda < 0) {
@@ -94,7 +99,8 @@ disp_removing_data <- function(data_input, target_variable, protected_variable, 
 #' Reweighing Model Weights
 #'
 #' Function returns weights for model training. The purpose of this weights is to mitigate bias in statistical parity.
-#' Obtain weights for model training using 'reweight' function from fairmodels package.
+#' Obtain weights for machine learning modelusing 'reweight' function from fairmodels package.
+#' @noRd
 reweighing_model_weights <- function(data_input, target_variable, protected_variable){
 
     # data weights calculations
@@ -106,7 +112,8 @@ reweighing_model_weights <- function(data_input, target_variable, protected_vari
 
 #' Resampling Data
 #'
-#'Resample the input data using fairmodels module function.
+#' Resample the input data using 'resample' function from fairmodels package.
+#' @noRd
 resampling_data <- function(method, data_input, target_variable, protected_variable, probs = NULL, cutoff = 0.5){
 
   if (cutoff > 1 || cutoff < 0) {

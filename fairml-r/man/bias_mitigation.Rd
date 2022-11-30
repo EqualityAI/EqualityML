@@ -26,7 +26,12 @@ bias_mitigation(
 
 \item{protected_variable}{character, data column name which contains sensitive information such as gender, race etc...}
 
-\item{lambda}{numeric, amount of repair desired. Value from 0 to 1, where 0 will return almost unchanged dataset and 1 fully repaired dataset}
+\item{probs}{numeric, vector with probabilities for preferential sampling}
+
+\item{lambda}{numeric, amount of repair desired for disparate-impact-remover. 
+Value from 0 to 1, where 0 will return almost unchanged dataset and 1 fully repaired dataset}
+
+\item{cutoff}{numeric, threshold for probabilities for sampling.  Value from 0 to 1.}
 }
 \value{
 Data/indices/weights after the mitigation (list)
@@ -37,18 +42,20 @@ Bias mitigation is a wrapper with several options to make a dataset more balance
 \examples{
 
 set.seed(1)
-# custom data frame with kind, score and target column names
+# custom data frame with sex, age and target column names
 custom_data <- data.frame(
-  kind = as.factor(c(rep("second", 500), rep("first", 500))),
-  score = c(rnorm(500, 400, 40), rnorm(500, 600, 100))
-  target = sample(c(0,1), replace=TRUE, size=1000)
+  sex = c(rep("M", 140), rep("F", 60)),
+  age = c(rep(1:20,10)),
+  target = c(
+  c(rep(c(1, 1, 1, 1, 1, 1, 1, 0, 0, 0),14)),
+  c(rep(c(0, 1, 0, 1, 0, 0, 1, 0, 0, 1),6))
+  )
 )
 
 mitigation_result <- bias_mitigation(
-  method = disparate-impact-remover,
+  method = "disparate-impact-remover",
   data_input = custom_data,
-  target_variable = custom_data$target,
-  protected_variable = custom_data$kind,
-  lambda = 0.8
+  target_variable = "target",
+  protected_variable = "sex"
 )
 }

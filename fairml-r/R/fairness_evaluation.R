@@ -16,21 +16,25 @@
 #' @examples
 #'
 #' set.seed(1)
-#' # custom data frame with x1, x2 and y column names
+#' # custom data frame with sex, age and target column names
 #' custom_data <- data.frame(
-#'   x1 = as.factor(c(rep(1, 500), rep(2, 500))),
-#'   x2 = c(rnorm(500, 400, 40), rnorm(500, 600, 100))
-#'   y = sample(c(0,1), replace=TRUE, size=1000)
+#'   sex = c(rep("M", 140), rep("F", 60)),
+#'   age = c(rep(1:20,10)),
+#'   target = c(
+#'   c(rep(c(1, 1, 1, 1, 1, 1, 1, 0, 0, 0),14)),
+#'   c(rep(c(0, 1, 0, 1, 0, 0, 1, 0, 0, 1),6))
+#'   )
 #' )
 #'
-#'ADD ml_model
+#'ml_model <- glm(target ~ sex + age, data = custom_data, family = 'binomial')
 #'
 #' fairness_score <- fairness_metric(
 #'   ml_model = ml_model,
 #'   input_data = custom_data,
-#'   target_variable = y,
-#'   protected_variable = x1,
-#'   privileged_class = 1
+#'   target_variable = "target",
+#'   protected_variable = "sex",
+#'   privileged_class = "M",
+#'   ignore_protected = FALSE
 #' )
 fairness_metric <- function(ml_model, input_data, target_variable, protected_variable, privileged_class, ignore_protected = TRUE){
   # conversion of targeted variable to numeric
