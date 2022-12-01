@@ -6,7 +6,7 @@ We at Equality AI (EAI) really appreciate the fact that you are here.
 
 We are working to reduce or eliminate bias from healthcare decision making. This is not an easy task but a crucial one to ensure health equity for all people. Without the support of our community this task would be virtually impossible. We rely on awesome people like you to help us make health equity a reality. So, a hearty **THANK YOU** from all of us at Equality AI! 
 
-If you haven't already, please check out the [Equality AI Manifesto!](https://github.com/EqualityAI/FairML_PY/blob/main/MANIFESTO.md) Our Manifesto provides insight into how we operate as an organization, our responsibilities, and our commitments to AI for Good, AI that is Fair, and AI for Equity.
+If you haven't already, please check out the [Equality AI Manifesto!](https://github.com/EqualityAI/EqualityML/blob/main/MANIFESTO.md) Our Manifesto provides insight into how we operate as an organization, our responsibilities, and our commitments to AI for Good, AI that is Fair, and AI for Equity.
 
 
 ## Purpose of this document
@@ -15,7 +15,7 @@ Please take a moment to review this document in order to make the contribution p
 Following these guidelines helps to ensure we have an organized process for managing and developing this open source project.
 
 
-All of the contributions to Equality AI and interactions with the EAI Community are governed by our [Code of Conduct](https://github.com/EqualityAI/FairML_PY/blob/main/CODE_OF_CONDUCT.md). 
+All of the contributions to Equality AI and interactions with the EAI Community are governed by our [Code of Conduct](https://github.com/EqualityAI/EqualityML/blob/main/CODE_OF_CONDUCT.md). 
 
 
 ## Making a contribution to Equality AI
@@ -23,7 +23,7 @@ First things first, head over to Slack and join the [Equality AI Slack Community
 
 Introduce yourself in the [Slack #Introductions channel](https://equalityai.slack.com/archives/C03HF77775W). We're friendly people and would love to learn more about you!
 
-Next, try out the [`FairML_PY`](https://github.com/EqualityAI/FairML_PY). Be sure to review the [README](https://github.com/EqualityAI/FairML_PY/blob/main/README.md) file to learn how to use the Toolkit!
+Next, try out the [`EqualityML`](https://github.com/EqualityAI/EqualityML). Be sure to review the [README](https://github.com/EqualityAI/EqualityML/blob/main/README.md) file to learn how to use the Toolkit!
 
 Hit the top right "star" :star: button on GitHub to show your love.
 :green_heart: 
@@ -33,9 +33,9 @@ Hit the top right "star" :star: button on GitHub to show your love.
 ## Using the issue tracker
 
 
-The [GitHub issue tracker](https://github.com/EqualityAI/FairML_PY/issues) is the preferred channel for bug reports. (See definition of a bug below :grin: :lady_beetle: )
+The [GitHub issue tracker](https://github.com/EqualityAI/EqualityML/issues) is the preferred channel for bug reports. (See definition of a bug below :grin: :lady_beetle: )
 
-* Have a question about the EAI code? Please check out the [GitHub discussions](https://github.com/EqualityAI/FairML_PY/discussions)  first to see if your question has already been asked or answered.  GitHub discussions are the preferred way to ask support questions, but we do also use [Slack #support channel(https://equalityai.slack.com/archives/C03HF7G4N0Y)! 
+* Have a question about the EAI code? Please check out the [GitHub discussions](https://github.com/EqualityAI/EqualityML/discussions)  first to see if your question has already been asked or answered.  GitHub discussions are the preferred way to ask support questions, but we do also use [Slack #support channel(https://equalityai.slack.com/archives/C03HF7G4N0Y)! 
 
 
 ## Bug reports

@@ -3,10 +3,10 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fairml"
+name = "equalityml"
 version = "0.0.13"
 authors = [{name = "EqualityAI"}]
-urls = {repository = "https://github.com/EqualityAI/FairML_Py"}
+urls = {repository = "https://github.com/EqualityAI/EqualityML"}
 description = "Algorithms for evaluating fairness metrics and mitigating unfairness in supervised machine learning"
 readme = "README.md"
 license = {file = "LICENSE"}
