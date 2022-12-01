@@ -4,19 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "equalityml"
-version = "0.0.13"
+version = "0.1.0-alpha.1"
 authors = [{name = "EqualityAI"}]
 urls = {repository = "https://github.com/EqualityAI/EqualityML"}
 description = "Algorithms for evaluating fairness metrics and mitigating unfairness in supervised machine learning"
 readme = "README.md"
-license = {file = "LICENSE"}
 requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
 
