@@ -14,7 +14,7 @@ If you like what we're doing, give us a :star: and join our [EAI Manifesto!](htt
 >We have extented `EqualityML` to include other aspects of Responsible AI (see full framework <b>Figure 1.</b>) and collaboration features to create our Beta MLOps Developer Studio. <b>Become a Beta user by going to our [website!](https://equalityai.com/)</b>
 
 ![](https://github.com/EqualityAI/EqualityML/blob/rename-project/img/framework_sm.png?raw=true)
-
+<sub><b>Figure 1:</b> Full Responsible AI Framework.</sub>
 
 ## Introduction
 Incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps is called fairness-based machine learning (ML) or fair machine learning. However, fair ML comes with its own challenges. We assembled a diverse team of statisticians and ML experts to provide evidence-based guidance on fairness metrics use/selection and validated code to properly run bias mitigation methods.
@@ -37,8 +37,7 @@ We have combined fairness metrics and bias mitigation into a unified syntax.</br
 </sub>
 
 ![](https://github.com/EqualityAI/EqualityML/blob/rename-project/img/pre_in_post_nw_sm.png?raw=true)
-<sub><b>Figure 2:</b> Bias mitigation can be performed in the pre-processing, in-processing, and post-processing of a model.
-</sub>
+<sub><b>Figure 2:</b> Bias mitigation can be performed in the pre-processing, in-processing, and post-processing of a model.</sub>
 <br></br>
 
 > Need a specific metric or method? [Just let us know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
@@ -95,8 +94,7 @@ We recommend assessing the fairness of the same ML model after bias is applied. 
 To make fairness metric selection easy we have provided a few essential questions you must answer to identify the appropriate fairness metric for your use case. [Click here for the questionnaire](https://github.com/EqualityAI/EqualityML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf). Complete the answers to this questionnaire, then refer to the scoring guide to map your inputs to the desired metrics.
 
 ![](https://github.com/EqualityAI/EqualityML/blob/rename-project/img/fairnesstree_sm.png?raw=true)
-<sub><b>Figure 3:</b> Tree representation of questionnaire.
-</sub></br>
+<sub><b>Figure 3:</b> Tree representation of questionnaire. </sub></br>
 
 After identifying the important fairness criteria, we recommend you attempt to use multiple bias mitigation strategies to try to optimize the efficiency-fairness tradeoff.</br>
 
