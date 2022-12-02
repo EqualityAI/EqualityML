@@ -4,13 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "equalityml"
-version = "0.1.0-alpha.1"
-authors = [{name = "EqualityAI"}]
-urls = {Repository = "https://github.com/EqualityAI/FairML_Py", 
-        Website =  "https://equalityai.com", 
-        Manifesto = "https://equalityai.com/community/#manifesto", 
-        GitHub = "https://github.com/EqualityAI/EqualityML", 
-        Slack = "https://equalityai.slack.com/ssb/redirect#/shared-invite/email"}
+version = "0.1.0-alpha"
+authors = [
+    {name = "Janice Davis, Ji Won, João Granja", email = "support@equalityai.com"}
+]
 description = "Algorithms for evaluating fairness metrics and mitigating unfairness in supervised machine learning"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -22,7 +19,6 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
-
 dependencies = [
     "BlackBoxAuditing",
     "aif360>=0.5.0",
@@ -35,6 +31,12 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]  # list of folders that contain the packages (["."] by default)
+
+[project.urls]
+Website =  "https://equalityai.com"
+Manifesto = "https://equalityai.com/community/#manifesto"
+GitHub = "https://github.com/EqualityAI/EqualityML"
+Slack = "https://equalityai.slack.com/ssb/redirect#/shared-invite/email"
 
 [project.optional-dependencies]
 tests = [
