@@ -1,4 +1,4 @@
-<img src="https://github.com/EqualityAI/EqualityML/blob/main/img/natural-bird.png" align="left" alt="EqualityAI Logo"/>
+<img src="https://github.com/EqualityAI/EqualityML/blob/main/img/natural-bird.png" align="left" alt="EqualityAI Logo" width = "100"/>
 
 # Equality AI `EqualityML`
 
