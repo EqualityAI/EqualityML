@@ -99,7 +99,7 @@ We recommend assessing the fairness of the same ML model after bias is applied. 
 ## Guidance on selecting Fairness Metrics
 To make fairness metric selection easy we have provided a few essential questions you must answer to identify the appropriate fairness metric for your use case. [Click here for the questionnaire](https://github.com/EqualityAI/EqualityML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf). Complete the answers to this questionnaire, then refer to the scoring guide to map your inputs to the desired metrics.
 
-<img src="img/fairnesstree.png" align="center" alt="" width="800"/></br>
+<img src="img/fairnesstree_sm.png" align="center" alt=""/></br>
 <sub><b>Figure 3:</b> Tree representation of questionnaire.
 </sub></br>
 
