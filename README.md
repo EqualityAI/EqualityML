@@ -15,7 +15,7 @@ If you like what we're doing, give us a :star: and join our [EAI Manifesto!](htt
 >We have extented `EqualityML` to include other aspects of Responsible AI (see full framework <b>Figure 1.</b>) and collaboration features to create our Beta MLOps Developer Studio. <b>Become a Beta user by going to our [website!](https://equalityai.com/)</b>
 
 <center>
-<img src="img/framework.png" align="center" alt="" width="500" />
+<img src="img/framework_sm.png" align="center" alt="" />
 <sub><b>Figure 1:</b> Full Responsible AI Framework.
 </sub>
   </center>
