@@ -1,4 +1,6 @@
 ![](https://github.com/EqualityAI/EqualityML/blob/rename-project/img/natural-bird_sm.png?raw=true align="left" "EqualityAI logo")
+
+<img src="rename-project/img/natural-bird_sm.png?raw=true" alt="EqualityAI logo" style="height: 100px; width:100px;"/>
 # Equality AI `EqualityML`
 
 ### Let's end algorithmic bias together!
