@@ -1,6 +1,6 @@
 <img src="/img/natural-bird.png" align="left" alt="EqualityAI Logo" width="100"/>
 
-# Equality AI `FairML`
+# Equality AI `EqualityML`
 
 ### Let's end algorithmic bias together!
 
