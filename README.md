@@ -15,7 +15,7 @@ If you like what we're doing, give us a :star: and join our [EAI Manifesto!](htt
 >We have extented `EqualityML` to include other aspects of Responsible AI (see full framework <b>Figure 1.</b>) and collaboration features to create our Beta MLOps Developer Studio. <b>Become a Beta user by going to our [website!](https://equalityai.com/)</b>
 
 <center>
-<img src="img/framework_sm.png" align="center" alt="" />
+<img src="img/framework_sm.png" />
 <sub><b>Figure 1:</b> Full Responsible AI Framework.
 </sub>
   </center>
@@ -41,7 +41,7 @@ We have combined fairness metrics and bias mitigation into a unified syntax.</br
 <sub> Resampling | Reweighting | Disparate Impact Remover | Correlation Remover 
 </sub>
 
-<img src="img/pre_in_post_nw.png" align="center" alt="" width="350" />
+<img src="img/pre_in_post_nw_sm.png" />
 <sub><b>Figure 2:</b> Bias mitigation can be performed in the pre-processing, in-processing, and post-processing of a model.
 </sub>
 <br></br>
