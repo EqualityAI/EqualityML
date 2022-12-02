@@ -6,11 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "fairml"
 version = "0.0.13"
 authors = [{name = "EqualityAI"}]
-urls = {Repository = "https://github.com/EqualityAI/FairML_Py", 
-        Website =  "https://equalityai.com", 
-        Manifesto = "https://equalityai.com/community/#manifesto", 
-        GitHub = "https://github.com/EqualityAI/EqualityML", 
-        Slack = "https://equalityai.slack.com/ssb/redirect#/shared-invite/email"}
+urls = {Repository = "https://github.com/EqualityAI/FairML_Py"}
 description = "Algorithms for evaluating fairness metrics and mitigating unfairness in supervised machine learning"
 readme = "README.md"
 license = {file = "LICENSE"}
