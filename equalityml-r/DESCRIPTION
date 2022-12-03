@@ -10,9 +10,9 @@ Description: Equality AI (EAI) is a public benefit corporation dedicated to prov
 Version: 0.1.0
 Authors@R: c(
   person("Janice", "Davis", email = "janice.davis@equalityai.com", role = c("aut", "cre")),
-  person("Ji", "Won", email = "jiwon.chang@equalityai.com", role = c("aut", "cre")),
-  person("João", "Granja", email = "joao@equalityai.com", role = c("aut", "cre")),
-  person("EqualityAI", role = c("cph", "fnd")))
+  person("Ji", "Won", email = "jiwon.chang@equalityai.com", role = c("aut")),
+  person("João", "Granja", email = "joao@equalityai.com", role = c("aut"))
+  )
 License: Apache License (>= 2.0)
 Encoding: UTF-8
 Depends: R (>= 3.5)
@@ -23,7 +23,7 @@ Suggests:
     testthat (>= 3.0.0),
     gbm
 RoxygenNote: 7.2.2
-URL: https://github.com/EqualityAI/EqualityML
+URL: https://equalityai.com
 BugReports: https://github.com/EqualityAI/EqualityML/issues
 Language: en-US
 Config/testthat/edition: 3

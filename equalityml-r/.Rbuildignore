@@ -5,3 +5,4 @@
 ^.*\.docx$
 ^LICENSE$
 ^\.github$
+.*\.PNG$
