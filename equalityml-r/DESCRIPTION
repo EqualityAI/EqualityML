@@ -1,17 +1,17 @@
-Package: fairml
+Package: equalityml
 Type: Package
 Title: Algorithms for Evaluating Fairness Metrics and Mitigating Unfairness in Supervised Machine Learning
 Description: Equality AI (EAI) is a public benefit corporation dedicated to providing developers with the tools to stop
   algorithmic bias. We believe that developers want to implement algorithmic fairness, but have encountered roadblocks
   along the way.
-  FairML provides a set of tools to handle the fairness of a Machine Learning application or run Fairness-based machine
+  We provide a set of tools to handle the fairness of a Machine Learning application or run Fairness-based machine
   learning. With the increased use of Machine Learning solutions on a variety of critical real-world problems,
-  it is imperative to guarantee that fair decisions are performed by those black-box Machine Learning models. 'FairML' aims
-  to simplify the complex process of evaluating the fairness of ML models and provides a range of methods to mitigate bias
-  in datasets.
+  it is imperative to guarantee that fair decisions are performed by those black-box Machine Learning models.
 Version: 0.1.0
 Authors@R: c(
   person("Janice", "Davis", email = "janice.davis@equalityai.com", role = c("aut", "cre")),
+  person("Ji", "Won", email = "jiwon.chang@equalityai.com", role = c("aut", "cre")),
+  person("João", "Granja", email = "joao@equalityai.com", role = c("aut", "cre")),
   person("EqualityAI", role = c("cph", "fnd")))
 License: Apache License (>= 2.0)
 Encoding: UTF-8
@@ -23,7 +23,7 @@ Suggests:
     testthat (>= 3.0.0),
     gbm
 RoxygenNote: 7.2.2
-URL: https://github.com/EqualityAI/FairML
-BugReports: https://github.com/EqualityAI/FairML/issues
+URL: https://github.com/EqualityAI/EqualityML
+BugReports: https://github.com/EqualityAI/EqualityML/issues
 Language: en-US
 Config/testthat/edition: 3

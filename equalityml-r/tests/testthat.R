@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/reference/test_package.html#special-files
 
 library(testthat)
-library(fairml)
+library(equalityml)
 
-test_check("fairml")
+test_check("equalityml")
