@@ -1,26 +1,33 @@
-<img src="img/natural-bird.png"  align="left" alt="EqualityAI Logo" width="100"/>
+# Copyright (c) EqualityAI Corporation.
+# Licensed under the Apache License.
 
+import setuptools
+
+long_description = """
 # Equality AI `EqualityML`
 
 ### Let's end algorithmic bias together!
 
-[Equality AI (EAI)](https://equalityai.com/) is a public-benefit corporation dedicated to providing developers with evidence-based tools to end algorithmic bias. Our tools are built by developers for developers. So, we know that developers want their models to be fair, but we also understand that bias is <b> difficult and intimidating.</b> 
+[Equality AI (EAI)](https://equalityai.com/) is a public-benefit corporation dedicated to providing developers with 
+evidence-based tools to end algorithmic bias. Our tools are built by developers for developers. So, we know that 
+developers want their models to be fair, but we also understand that bias is <b> difficult and intimidating.</b> 
 
-The EAI `EqualityML` repository provides functions and guidance on how to include fairness and bias mitigation methods to model fitting so as to safeguard the people on the receiving end of our models from bias. 
-
-If you like what we're doing, give us a :star: and join our [EAI Manifesto!](https://equalityai.com/community/#manifesto)!</br>
-<img src="img/star.png" align="center" alt="" width="400" /><br></br>
+The EAI `EqualityML` repository provides functions and guidance on how to include fairness and bias mitigation methods 
+to model fitting so as to safeguard the people on the receiving end of our models from bias. 
 
 
->We have extented `EqualityML` to include other aspects of Responsible AI (see full framework <b>Figure 1.</b>) and collaboration features to create our Beta MLOps Developer Studio. <b>Become a Beta user by going to our [website!](https://equalityai.com/)</b>
+>We have extented `EqualityML` to include other aspects of Responsible AI (see full framework <b>Figure 1.</b>) and 
+collaboration features to create our Beta MLOps Developer Studio. <b>Become a Beta user by going to our 
+[website!](https://equalityai.com/)</b>
 
-<center>
-<img src="img/framework.png" align="center" alt="" width="500" />
+![](https://github.com/EqualityAI/EqualityML/blob/main/img/framework.png?raw=true)
 <sub><b>Figure 1:</b> Full Responsible AI Framework.</sub>
-</center>
 
 ## Introduction
-Incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps is called fairness-based machine learning (ML) or fair machine learning. However, fair ML comes with its own challenges. We assembled a diverse team of statisticians and ML experts to provide evidence-based guidance on fairness metrics use/selection and validated code to properly run bias mitigation methods.
+Incorporating bias mitigation methods and fairness metrics into the traditional end-to-end MLOps is called 
+fairness-based machine learning (ML) or fair machine learning. However, fair ML comes with its own challenges. 
+We assembled a diverse team of statisticians and ML experts to provide evidence-based guidance on fairness metrics 
+use/selection and validated code to properly run bias mitigation methods.
 
 <details>
   <summary> Click to read our findings: </summary>
@@ -29,17 +36,23 @@ Incorporating bias mitigation methods and fairness metrics into the traditional 
 * Statistical measure of the output of a machine learning model based a mathematical definition of fairness.
 
 > [Fairness Metric Guide:](https://github.com/EqualityAI/EqualityML/raw/main/Fairness%20Metrics%20User%20Manual.pdf)
-We have combined fairness metrics and bias mitigation into a unified syntax.</br><sub> Statistical Parity | Conditional Statistical Parity | Negative Predictive Parity | Equal Opportunity | Balance for Positive Class | Predictive Parity | Well Calibration | Calibration | Conditional Use Accuracy | Predictive Equality | Balance for Negative Class | Equalized Odds | Overall Balance
+We have combined fairness metrics and bias mitigation into a unified syntax.</br><sub> Statistical Parity | 
+Conditional Statistical Parity | Negative Predictive Parity | Equal Opportunity | Balance for Positive Class | 
+Predictive Parity | Well Calibration | Calibration | Conditional Use Accuracy | Predictive Equality | Balance for 
+Negative Class | Equalized Odds | Overall Balance
 </sub>
 
 #### Bias Mitigation
-* Methods or algorithms applied to a machine learning dataset or model to improve the fairness of the model output. Many mitigation methods have been proposed in the literature, which can be broadly classified into the application of a mitigation method on the data set (pre-processing), in the model fitting (in-processing), and to the model predictions (post-processing).
+* Methods or algorithms applied to a machine learning dataset or model to improve the fairness of the model output. 
+Many mitigation methods have been proposed in the literature, which can be broadly classified into the application of 
+a mitigation method on the data set (pre-processing), in the model fitting (in-processing), and to the model 
+predictions (post-processing).
 
 > [Bias Mitigation Guide:](https://github.com/EqualityAI/EqualityML/blob/main/Fairness%20Metrics%20User%20Manual.pdf)</br>
 <sub> Resampling | Reweighting | Disparate Impact Remover | Correlation Remover 
 </sub>
 
-<img src="img/pre_in_post_nw.png" align="center" alt="" width="350" />
+![](https://github.com/EqualityAI/EqualityML/blob/main/img/pre_in_post_nw.png?raw=true)
 <sub><b>Figure 2:</b> Bias mitigation can be performed in the pre-processing, in-processing, and post-processing of a model.</sub>
 <br>
 
@@ -89,21 +102,23 @@ We have conducted extensive literature review and theoretical analysis on dozens
 <sub><b>Table 2:</b> The Equality AI recommended pre-processing workflow and tools and guidance made available per step.
 </sub> </br>
 
-We recommend assessing the fairness of the same ML model after bias is applied. By comparing the predictions before and after mitigation, we will be able to assess whether and to what extent the fairness can be improved. Furthermore, the trade-offs between the accuracy and fairness of the machine learning model will be examined.
+We recommend assessing the fairness of the same ML model after bias is applied. By comparing the predictions before and 
+after mitigation, we will be able to assess whether and to what extent the fairness can be improved. Furthermore, 
+the trade-offs between the accuracy and fairness of the machine learning model will be examined.
 
 > In-processing and Post-processing are still under development. Do you need this now? [Let us know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
 
 ## Guidance on selecting Fairness Metrics
-To make fairness metric selection easy we have provided a few essential questions you must answer to identify the appropriate fairness metric for your use case. [Click here for the questionnaire](https://github.com/EqualityAI/EqualityML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf). Complete the answers to this questionnaire, then refer to the scoring guide to map your inputs to the desired metrics.
+To make fairness metric selection easy we have provided a few essential questions you must answer to identify the 
+appropriate fairness metric for your use case. [Click here for the questionnaire](https://github.com/EqualityAI/EqualityML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf). Complete the answers to this questionnaire, then refer to the scoring guide to map your inputs to the desired metrics.
 
-<img src="img/fairnesstree.png" align="center" alt="" width="800"/></br>
+![](https://github.com/EqualityAI/EqualityML/blob/main/img/fairnesstree.png?raw=true)
 <sub><b>Figure 3:</b> Tree representation of questionnaire.</sub></br>
 
-After identifying the important fairness criteria, we recommend you attempt to use multiple bias mitigation strategies to try to optimize the efficiency-fairness tradeoff.</br>
+After identifying the important fairness criteria, we recommend you attempt to use multiple bias mitigation strategies 
+to try to optimize the efficiency-fairness tradeoff.</br>
 
 ## `EqualityML` Installation
-
-`EqualityML` can be installed from [PyPI](https://pypi.org/project/equalityml/).
 
 ```bash
 pip install equalityml
@@ -148,28 +163,70 @@ bias_mitigation = BiasMitigation(ml_model=ml_model, data=train_data,
 mitigation_res = bias_mitigation.fit_transform(mitigation_method=mitigation_method)
 ```
 
-## Development setup
-
-Describe how to install all development dependencies and how to run an automated test-suite of some kind.
-
-```sh
-pip install -e '.[all, tests]'
-pytest tests
-```
-
 ## Responsible AI Takes a Community
-The connections and trade-offs between fairness, explainability, and privacy require a holistic approach to Responsible AI development in the machine learning community. We are starting with the principle of fairness and working towards a solution that incorporates multiple aspects of Responsible AI for data scientists and healthcare professionals. We have much more in the works, and we want to know—what do you need? Do you have a Responsible AI challenge you need to solve? [Drop us a line and let’s see how we can help!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
-
-<img src="img/color logo only.PNG" align="left" alt="EqualityAI Logo" width="50"/>
+The connections and trade-offs between fairness, explainability, and privacy require a holistic approach to Responsible 
+AI development in the machine learning community. We are starting with the principle of fairness and working towards a 
+solution that incorporates multiple aspects of Responsible AI for data scientists and healthcare professionals. We have 
+much more in the works, and we want to know—what do you need? Do you have a Responsible AI challenge you need to solve? 
+[Drop us a line and let’s see how we can help!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
 
 ## Contributing to the project
 Equality AI uses both GitHib and Slack to manage our open source community. To participate:
 
 1. Join the Slack community (https://equalityai.com/slack)
     + Introduce yourself in the #Introductions channel. We're all friendly people!
-2. Check out the [CONTRIBUTING](https://github.com/EqualityAI/EqualityML/blob/main/CONTRIBUTING.md) file to learn how to contribute to our project, report bugs, or make feature requests.
+2. Check out the [CONTRIBUTING](https://github.com/EqualityAI/EqualityML/blob/main/CONTRIBUTING.md) file to learn how 
+to contribute to our project, report bugs, or make feature requests.
 3. Try out the [`EqualityML`](https://github.com/EqualityAI/EqualityML)
     + Hit the top right "star" button on GitHub to show your love!
     + Follow the recipe above to use the code. 
-4. Provide feedback on your experience using the [GitHub discussions](https://github.com/EqualityAI/EqualityML/discussions) or the [Slack #support](https://equalityai.slack.com/archives/C03HF7G4N0Y) channel
+4. Provide feedback on your experience using the [GitHub discussions](https://github.com/EqualityAI/EqualityML/discussions) 
+or the [Slack #support](https://equalityai.slack.com/archives/C03HF7G4N0Y) channel
     + For any questions or problems, send a message on Slack, or send an email to support@equalityai.com.
+
+
+"""
+
+# Use requirements.txt to set the install_requires
+install_requires = [
+    "BlackBoxAuditing",
+    "aif360>=0.5.0",
+    "dalex>=1.5.0",
+    "fairlearn>=0.7.0",
+    "pandas>=1.2.5",
+    "numpy>=1.20.3",
+    "scikit-learn>=0.22.1",
+]
+
+extras = {'tests': ["pytest>=3.5.0", "pytest-cov>=2.8.1"], 'doc': ["sphinx"]}
+
+setuptools.setup(
+    name="equalityml",
+    version="0.1.0-alpha",
+    author="Janice Davis, Ji Won, João Granja",
+    author_email="support@equalityai.com",
+    description="Algorithms for evaluating fairness metrics and mitigating unfairness in supervised machine learning",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://equalityai.com",
+    project_urls={
+        "Website": "https://equalityai.com",
+        "Manifesto": "https://equalityai.com/community/#manifesto",
+        "GitHub": "https://github.com/EqualityAI/EqualityML",
+        "Slack": "https://equalityai.slack.com/ssb/redirect#/shared-invite/email"
+    },
+    packages=setuptools.find_packages(),
+    python_requires=">=3.7",
+    install_requires=install_requires,
+    classifiers=[
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: OS Independent",
+    ],
+    extras_require=extras,
+    include_package_data=True,
+    zip_safe=False,
+)
