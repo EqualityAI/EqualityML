@@ -58,6 +58,7 @@ jobs:
 
       - uses: r-lib/actions/check-r-package@v2
         with:
+          working-directory: "equalityml-r"
           upload-snapshots: true
 
       - name: Upload check results
