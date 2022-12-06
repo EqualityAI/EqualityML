@@ -9,9 +9,14 @@ Description: Equality AI (EAI) is a public benefit corporation dedicated to prov
   it is imperative to guarantee that fair decisions are performed by those black-box Machine Learning models.
 Version: 0.1.0
 Authors@R: c(
+  person("James", "Ng", email = "ngja@tcd.ie", role = c("aut")),
+  person("Mark", "Zhang", email = "zha238@aucklanduni.ac.nz", role = c("aut")),
+  person("Ben", "Brintz", email = "bjb2088@gmail.com", role = c("aut")),
+  person("Rizwan", "Muhammad", email = "muhammadriz@gmail.com", role = c("aut")),
+  person("Ji won", "Chang", email = "jiwon.chang@equalityai.com", role = c("aut")),
   person("Janice", "Davis", email = "janice.davis@equalityai.com", role = c("aut", "cre")),
-  person("Ji", "Won", email = "jiwon.chang@equalityai.com", role = c("aut")),
-  person("João", "Granja", email = "joao@equalityai.com", role = c("aut"))
+  person("João", "Granja", email = "joao@equalityai.com", role = c("aut")),
+  person("Jared", "Hansen", email = "jhansen.ut@gmail.com", role = c("aut"))
   )
 License: Apache License (>= 2.0)
 Encoding: UTF-8
