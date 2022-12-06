@@ -6,7 +6,7 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 import pytest
 
-from fairml import FairnessMetric
+from equalityml import FairnessMetric
 
 _ESTIMATORS = [LogisticRegression, SVC, DecisionTreeClassifier, RandomForestClassifier]
 _METRICS = ['treatment_equality_ratio', 'treatment_equality_difference', 'balance_positive_class',
