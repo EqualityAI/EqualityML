@@ -1,0 +1,34 @@
+Package: equalityml
+Type: Package
+Title: Algorithms for Evaluating Fairness Metrics and Mitigating Unfairness in Supervised Machine Learning
+Description: Equality AI (EAI) is a public benefit corporation dedicated to providing developers with the tools to stop
+  algorithmic bias. We believe that developers want to implement algorithmic fairness, but have encountered roadblocks
+  along the way.
+  We provide a set of tools to handle the fairness of a Machine Learning application or run Fairness-based machine
+  learning. With the increased use of Machine Learning solutions on a variety of critical real-world problems,
+  it is imperative to guarantee that fair decisions are performed by those black-box Machine Learning models.
+Version: 0.1.0
+Authors@R: c(
+  person("James", "Ng", email = "ngja@tcd.ie", role = c("aut")),
+  person("Mark", "Zhang", email = "zha238@aucklanduni.ac.nz", role = c("aut")),
+  person("Ben", "Brintz", email = "bjb2088@gmail.com", role = c("aut")),
+  person("Rizwan", "Muhammad", email = "muhammadriz@gmail.com", role = c("aut")),
+  person("Ji won", "Chang", email = "jiwon.chang@equalityai.com", role = c("aut")),
+  person("Janice", "Davis", email = "janice.davis@equalityai.com", role = c("aut", "cre")),
+  person("João", "Granja", email = "joao@equalityai.com", role = c("aut")),
+  person("Jared", "Hansen", email = "jhansen.ut@gmail.com", role = c("aut"))
+  )
+License: Apache License (>= 2.0)
+Encoding: UTF-8
+Depends: R (>= 3.5)
+Imports:
+    DALEX,
+    fairmodels
+Suggests:
+    testthat (>= 3.0.0),
+    gbm
+RoxygenNote: 7.2.2
+URL: https://equalityai.com
+BugReports: https://github.com/EqualityAI/EqualityML/issues
+Language: en-US
+Config/testthat/edition: 3
