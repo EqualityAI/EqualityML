@@ -347,8 +347,6 @@ class FairML:
             Mitigated data and corresponding indexes
         """
 
-        mitigated_dataset = {}
-
         # Uniform resampling
         idx_resample = 0
         if (mitigation_method == "resampling-uniform") or (mitigation_method == "resampling"):
@@ -364,12 +362,7 @@ class FairML:
                                     type='preferential', verbose=False,
                                     probs=_pred_prob)
 
-        # mitigated data
-        mitigated_dataset['data'] = self.training_data.iloc[idx_resample, :]
-        # resample index
-        mitigated_dataset['index'] = idx_resample
-
-        return mitigated_dataset
+        return self.training_data.iloc[idx_resample, :]
 
     def _cr_removing_data(self, alpha=1.0):
         """
@@ -385,7 +378,6 @@ class FairML:
         T : dictionary-like of shape
             Mitigated data and corresponding 'CorrelationRemover' object.
         """
-        mitigated_dataset = {}
 
         # Getting correlation coefficient for mitigation_method 'correlation_remover'. The input alpha parameter is
         # used to control the level of filtering between the sensitive and non-sensitive features
@@ -406,11 +398,7 @@ class FairML:
         # Change train_data_mitigated columns order as training_data
         train_data_mitigated = train_data_mitigated[self.training_data.columns]
 
-        mitigated_dataset['data'] = train_data_mitigated
-        # correlation transform as an object
-        mitigated_dataset['transform'] = cr
-
-        return mitigated_dataset
+        return train_data_mitigated
 
     def _reweighing_model(self):
         """
@@ -437,12 +425,7 @@ class FairML:
                         privileged_groups=self.privileged_groups)
         dataset_transf_train = RW.fit_transform(aif_data)
 
-        # mitigated data weights for machine learning model
-        mitigated_dataset['weights'] = dataset_transf_train.instance_weights
-        # transform as an object
-        mitigated_dataset['transform'] = RW
-
-        return mitigated_dataset
+        return dataset_transf_train.instance_weights
 
     def _disp_removing_data(self, repair_level=0.8):
         """
@@ -457,8 +440,6 @@ class FairML:
         T : dictionary-like of shape
             Mitigated data and corresponding 'DisparateImpactRemover' object
         """
-
-        mitigated_dataset = {}
 
         # putting data in specific standardize form required by the aif360 package
         aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
@@ -476,9 +457,4 @@ class FairML:
         # Change train_data_mitigated columns order as training_data
         train_data_mitigated = train_data_mitigated[self.training_data.columns]
 
-        # train data after mitigation
-        mitigated_dataset['data'] = train_data_mitigated
-        #  transform as an object
-        mitigated_dataset['transform'] = DIR
-
-        return mitigated_dataset
+        return train_data_mitigated
