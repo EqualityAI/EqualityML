@@ -100,22 +100,13 @@ class FairML:
 
         # Compute predicted classes in case input argument 'pred_class' is None
         if pred_class is None:
-            try:
-                _features = self.testing_data.drop(columns=target_variable)
-                self.pred_class = ml_model.predict(_features)
-            except Exception:
-                raise Exception("Not possible to predict classes using the input machine learning model")
+            self.pred_class = self._get_binary_class(self.testing_data)
         else:
             self.pred_class = pred_class
 
         # Compute probability estimates in case input argument 'pred_prob' is None
         if pred_prob is None:
-            try:
-                _features = self.testing_data.drop(columns=target_variable)
-                self.pred_prob = ml_model.predict_proba(_features)
-                self.pred_prob = self.pred_prob[:, 1]  # keep probabilities for positive outcomes only
-            except Exception:
-                raise Exception("Not possible to predict estimates using the input machine learning model")
+            self.pred_prob = self._get_binary_prob(self.testing_data)
         else:
             self.pred_prob = pred_prob
 
@@ -125,20 +116,70 @@ class FairML:
         self.metric_name = None
         self.cutoff = None
 
-    def update_classifier(self, ml_model):
+    def update_classifier(self, ml_model, pred_class=None, pred_prob=None):
         self.ml_model = ml_model
 
-    def update_train_data(self, training_data):
-        self.training_data = training_data
+        # Compute predicted classes in case input argument 'pred_class' is None
+        if pred_class is None:
+            self.pred_class = self._get_binary_class(self.testing_data)
+        else:
+            self.pred_class = pred_class
+
+        # Compute probability estimates in case input argument 'pred_prob' is None
+        if pred_prob is None:
+            self.pred_prob = self._get_binary_prob(self.testing_data)
+        else:
+            self.pred_prob = pred_prob
+
+    def _get_binary_prob(self, data):
+
+        try:
+            _features = data.drop(columns=self.target_variable)
+            _pred_prob = self.ml_model.predict_proba(_features)
+            _pred_prob = _pred_prob[:, 1]  # keep probabilities for positive outcomes only
+        except Exception:
+            raise Exception("Not possible to predict estimates using the input machine learning model")
+
+        return _pred_prob
+
+    def _get_binary_class(self, data):
+
+        try:
+            _features = data.drop(columns=self.target_variable)
+            _pred_class = self.ml_model.predict(_features)
+        except Exception:
+            raise Exception("Not possible to predict classes using the input machine learning model")
+
+        return _pred_class
 
     def _get_fairness_metric(self, df_fairness, metric):
 
         try:
-            fairness_metric = df_fairness[df_fairness[metric] != 1.][metric][0]
+            _fairness_metric = df_fairness[df_fairness[metric] != 1.][metric][0]
         except IndexError:
-            fairness_metric = float("NaN")
+            _fairness_metric = float("NaN")
 
-        return fairness_metric
+        return _fairness_metric
+
+    def print_fairness_list(self):
+        print("Available fairness metrics are: \n"
+               "1. 'treatment_equality_ratio'\n"
+               "2. 'treatment_equality_difference'\n"
+               "3. 'balance_positive_class': Balance for positive class\n"
+               "4. 'balance_negative_class': Balance for negative class\n"
+               "5. 'equal_opportunity_ratio': Equal opportunity ratio\n"
+               "6. 'accuracy_equality_ratio': Accuracy equality ratio\n"
+               "7. 'predictive_parity_ratio':  Predictive parity ratio\n"
+               "8. 'predictive_equality_ratio': Predictive equality ratio\n"
+               "9. 'statistical_parity_ratio': Statistical parity ratio")
+
+    def print_bias_mitigation_list(self):
+        print("Available bias mitigation methods are: \n"
+               "1. 'resampling' or 'resampling-uniform'\n"
+               "2. 'resampling-preferential'\n"
+               "3. 'reweighing'\n"
+               "4. 'disparate-impact-remover'\n"
+               "5. 'correlation-remover'")
 
     def evaluate_fairness(self, metric_name, cutoff=0.5):
         """
@@ -167,15 +208,12 @@ class FairML:
             Returns the fairness metric score for the input fairness metric name.
         """
 
-        #  PACKAGE: AIF360
-        aif360_list = ['treatment_equality_ratio', 'treatment_equality_difference', 'balance_positive_class',
-                       'balance_negative_class']
-        #  PACKAGE: DALEX
-        dalex_list = ['equal_opportunity_ratio', 'accuracy_equality_ratio', 'predictive_parity_ratio',
-                      'predictive_equality_ratio', 'statistical_parity_ratio']
+        metrics_list = ['treatment_equality_ratio', 'treatment_equality_difference', 'balance_positive_class',
+                        'balance_negative_class', 'equal_opportunity_ratio', 'accuracy_equality_ratio',
+                        'predictive_parity_ratio', 'predictive_equality_ratio', 'statistical_parity_ratio']
 
         metric_name = metric_name.lower()
-        if metric_name not in aif360_list and metric_name not in dalex_list and metric_name != 'all':
+        if metric_name not in metrics_list and metric_name != 'all':
             raise ValueError(f"Provided invalid metric name {metric_name}")
 
         if cutoff < 0.0:
@@ -186,83 +224,52 @@ class FairML:
 
         fairness_metric = {}
         # Evaluate fairness_metrics using aif360 module
-        if (metric_name in aif360_list) or (metric_name == 'all'):
 
-            # create a dataset according to structure required by the package AIF360
-            aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
-                                          unfavorable_label=self.unfavorable_label,
-                                          df=self.testing_data,
-                                          label_names=[self.target_variable],
-                                          protected_attribute_names=[self.protected_variable],
-                                          privileged_protected_attributes=[[self.privileged_class]],
-                                          unprivileged_protected_attributes=[[self.unprivileged_class]])
+        # create a dataset according to structure required by the package AIF360
+        aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
+                                      unfavorable_label=self.unfavorable_label,
+                                      df=self.testing_data,
+                                      label_names=[self.target_variable],
+                                      protected_attribute_names=[self.protected_variable],
+                                      privileged_protected_attributes=[[self.privileged_class]],
+                                      unprivileged_protected_attributes=[[self.unprivileged_class]])
 
-            # fairness metric computation
-            aif_data_pred = aif_data.copy()
-            aif_data_pred.scores = self.pred_prob  # predicted  probability
-            aif_data_pred.labels = self.pred_class  # predicted class
-            cm_pred_data = ClassificationMetric(aif_data,
-                                                aif_data_pred,
-                                                unprivileged_groups=self.unprivileged_groups,
-                                                privileged_groups=self.privileged_groups)
-            # Treatment equality
-            # Note that both treatment equality ratio and treatment equality difference are calculated
-            privileged_ratio = cm_pred_data.num_false_negatives(True) / cm_pred_data.num_false_positives(True)
-            unprivileged_ratio = cm_pred_data.num_false_negatives(False) / cm_pred_data.num_false_positives(False)
-            treatment_equality_ratio = unprivileged_ratio / privileged_ratio
-            treatment_equality_diff = unprivileged_ratio - privileged_ratio
+        # fairness metric computation
+        aif_data_pred = aif_data.copy()
+        aif_data_pred.scores = self.pred_prob  # predicted  probability
+        aif_data_pred.labels = self.pred_class  # predicted class
+        cm_pred_data = ClassificationMetric(aif_data,
+                                            aif_data_pred,
+                                            unprivileged_groups=self.unprivileged_groups,
+                                            privileged_groups=self.privileged_groups)
+        # Treatment equality
+        # Note that both treatment equality ratio and treatment equality difference are calculated
+        privileged_ratio = cm_pred_data.num_false_negatives(True) / cm_pred_data.num_false_positives(True)
+        unprivileged_ratio = cm_pred_data.num_false_negatives(False) / cm_pred_data.num_false_positives(False)
 
-            # Get privileged_metrics and unprivileged_metrics to compute required ratios
-            privileged_metrics = cm_pred_data.performance_measures(True)
-            unprivileged_metrics = cm_pred_data.performance_measures(False)
+        # Get privileged_metrics and unprivileged_metrics to compute required ratios
+        privileged_metrics = cm_pred_data.performance_measures(True)
+        unprivileged_metrics = cm_pred_data.performance_measures(False)
 
-            print(cm_pred_data.performance_measures())
-
-            if (metric_name == 'treatment_equality_ratio') or (metric_name == 'all'):
-                fairness_metric['treatment_equality_ratio'] = treatment_equality_ratio
-            if (metric_name == 'treatment_equality_difference') or (metric_name == 'all'):
-                fairness_metric['treatment_equality_difference'] = treatment_equality_diff
-            if (metric_name == 'balance_negative_class') or (metric_name == 'all'):
-                fairness_metric['balance_negative_class'] = unprivileged_metrics['GFPR'] / privileged_metrics['GFPR']
-            if (metric_name == 'balance_positive_class') or (metric_name == 'all'):
-                fairness_metric['balance_positive_class'] = unprivileged_metrics['GTPR'] / privileged_metrics['GTPR']
-
-            if (metric_name == 'equal_opportunity_ratio') or (metric_name == 'all'):
-                fairness_metric['equal_opportunity_ratio'] = privileged_metrics['TPR'] / unprivileged_metrics['TPR']
-            if (metric_name == 'accuracy_equality_ratio') or (metric_name == 'all'):
-                fairness_metric['accuracy_equality_ratio'] = privileged_metrics['ACC'] / unprivileged_metrics['ACC']
-            if (metric_name == 'predictive_parity_ratio') or (metric_name == 'all'):
-                fairness_metric['predictive_parity_ratio'] = privileged_metrics['PPV'] / unprivileged_metrics['PPV']
-            if (metric_name == 'predictive_equality_ratio') or (metric_name == 'all'):
-                fairness_metric['predictive_equality_ratio'] = privileged_metrics['FPR'] / unprivileged_metrics['FPR']
-            if (metric_name == 'statistical_parity_ratio') or (metric_name == 'all'):
-                fairness_metric['statistical_parity_ratio'] = cm_pred_data.selection_rate(True) / cm_pred_data.selection_rate(False)
-
-        # Evaluate fairness_metrics using dalex module
-        if (metric_name in dalex_list) or (metric_name == 'all'):
-            # features
-            X_data = self.testing_data.drop(columns=self.target_variable)
-            # target variable
-            y_data = self.testing_data[self.target_variable]
-
-            # create an explainer
-            exp = Explainer(self.ml_model, X_data, y_data, verbose=False)
-
-            fairness_object = exp.model_fairness(protected=self.testing_data[self.protected_variable],
-                                                 privileged=str(self.privileged_class), cutoff=cutoff)
-
-            # Protected vector shall be binary therefore it's assumed fairness_result is also binary for each ratio.
-            # Use ratio which is different from 1.0
-            if (metric_name == 'equal_opportunity_ratio') or (metric_name == 'all'):
-                fairness_metric['equal_opportunity_ratio'] = self._get_fairness_metric(fairness_object.result, 'TPR')
-            if (metric_name == 'accuracy_equality_ratio') or (metric_name == 'all'):
-                fairness_metric['accuracy_equality_ratio'] = self._get_fairness_metric(fairness_object.result, 'ACC')
-            if (metric_name == 'predictive_parity_ratio') or (metric_name == 'all'):
-                fairness_metric['predictive_parity_ratio'] = self._get_fairness_metric(fairness_object.result, 'PPV')
-            if (metric_name == 'predictive_equality_ratio') or (metric_name == 'all'):
-                fairness_metric['predictive_equality_ratio'] = self._get_fairness_metric(fairness_object.result, 'FPR')
-            if (metric_name == 'statistical_parity_ratio') or (metric_name == 'all'):
-                fairness_metric['statistical_parity_ratio'] = self._get_fairness_metric(fairness_object.result, 'STP')
+        if (metric_name == 'treatment_equality_ratio') or (metric_name == 'all'):
+            fairness_metric['treatment_equality_ratio'] = unprivileged_ratio / privileged_ratio
+        if (metric_name == 'treatment_equality_difference') or (metric_name == 'all'):
+            fairness_metric['treatment_equality_difference'] = unprivileged_ratio - privileged_ratio
+        if (metric_name == 'balance_negative_class') or (metric_name == 'all'):
+            fairness_metric['balance_negative_class'] = unprivileged_metrics['GFPR'] / privileged_metrics['GFPR']
+        if (metric_name == 'balance_positive_class') or (metric_name == 'all'):
+            fairness_metric['balance_positive_class'] = unprivileged_metrics['GTPR'] / privileged_metrics['GTPR']
+        if (metric_name == 'equal_opportunity_ratio') or (metric_name == 'all'):
+            fairness_metric['equal_opportunity_ratio'] = unprivileged_metrics['TPR'] / privileged_metrics['TPR']
+        if (metric_name == 'accuracy_equality_ratio') or (metric_name == 'all'):
+            fairness_metric['accuracy_equality_ratio'] = unprivileged_metrics['ACC'] / privileged_metrics['ACC']
+        if (metric_name == 'predictive_parity_ratio') or (metric_name == 'all'):
+            fairness_metric['predictive_parity_ratio'] = unprivileged_metrics['PPV'] / privileged_metrics['PPV']
+        if (metric_name == 'predictive_equality_ratio') or (metric_name == 'all'):
+            fairness_metric['predictive_equality_ratio'] = unprivileged_metrics['FPR'] / privileged_metrics['FPR']
+        if (metric_name == 'statistical_parity_ratio') or (metric_name == 'all'):
+            fairness_metric['statistical_parity_ratio'] = cm_pred_data.selection_rate(False) / \
+                                                          cm_pred_data.selection_rate(True)
 
         self.fairness_metrics.append(fairness_metric)
 
@@ -351,19 +358,14 @@ class FairML:
                                     verbose=False)
         # preferential resampling
         elif mitigation_method == "resampling-preferential":
-            exp = Explainer(self.ml_model,
-                            self.training_data[self.training_data.columns.drop(self.target_variable)].values,
-                            self.training_data[self.target_variable].values, verbose=False)
+            _pred_prob = self._get_binary_prob(self.training_data)
             idx_resample = resample(self.training_data[self.protected_variable],
                                     self.training_data[self.target_variable],
                                     type='preferential', verbose=False,
-                                    probs=exp.y_hat)
+                                    probs=_pred_prob)
 
-        mitigated_data = self.training_data.iloc[idx_resample, :]
-
-        print(mitigated_data.head())
         # mitigated data
-        mitigated_dataset['data'] = mitigated_data
+        mitigated_dataset['data'] = self.training_data.iloc[idx_resample, :]
         # resample index
         mitigated_dataset['index'] = idx_resample
 
@@ -389,17 +391,20 @@ class FairML:
         # used to control the level of filtering between the sensitive and non-sensitive features
 
         # remove the outcome variable and sensitive variable
-        train_data_rm = self.training_data.drop([self.protected_variable, self.target_variable], axis=1)
-        train_data_rm_cols = list(train_data_rm.columns)
-        cr = CorrelationRemover(sensitive_feature_ids=[self.protected_variable], alpha=alpha)
-        train_data_cr = cr.fit_transform(self.training_data.drop([self.target_variable], axis=1))
-        train_data_cr = pd.DataFrame(train_data_cr, columns=train_data_rm_cols)
+        train_data_rm = self.training_data.drop(columns=[self.protected_variable, self.target_variable])
 
-        # complete data after correlation remover
+        cr = CorrelationRemover(sensitive_feature_ids=[self.protected_variable], alpha=alpha)
+        train_data_cr = cr.fit_transform(self.training_data.drop(columns=[self.target_variable]))
+        train_data_cr = pd.DataFrame(train_data_cr, columns=list(train_data_rm.columns))
+
+        # Concatenate data after correlation remover
         train_data_mitigated = pd.concat(
             [pd.DataFrame(self.training_data[self.target_variable]),
              pd.DataFrame(self.training_data[self.protected_variable]),
              train_data_cr], axis=1)
+
+        # Change train_data_mitigated columns order as training_data
+        train_data_mitigated = train_data_mitigated[self.training_data.columns]
 
         mitigated_dataset['data'] = train_data_mitigated
         # correlation transform as an object
@@ -420,23 +425,20 @@ class FairML:
         mitigated_dataset = {}
 
         # putting data in specific standardize form required by the aif360 package
-        train_data_std = StandardDataset(self.training_data,
-                                         label_name=self.target_variable,
-                                         favorable_classes=[self.favorable_label],
-                                         protected_attribute_names=[self.protected_variable],
-                                         privileged_classes=[[self.privileged_class]])
+        aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
+                                      unfavorable_label=self.unfavorable_label,
+                                      df=self.training_data,
+                                      label_names=[self.target_variable],
+                                      protected_attribute_names=[self.protected_variable],
+                                      privileged_protected_attributes=[[self.privileged_class]],
+                                      unprivileged_protected_attributes=[[self.unprivileged_class]])
 
-        RW = Reweighing(unprivileged_groups=self.unprivileged_groups, privileged_groups=self.privileged_groups)
-        RW = RW.fit(train_data_std)
-        # train data after reweighing
-        train_data_std_m = RW.transform(train_data_std)
-        # train_data_mitigated = train_data_std_m.convert_to_dataframe()[0]
-        # train_data_std_m.features - mitigated data features (i.e. without target values)
-        # train_data_std_m.labels.ravel() - mitigated data target values
-        # train_data_std_m.instance_weights - mitigated data weights for machine learning model
+        RW = Reweighing(unprivileged_groups=self.unprivileged_groups,
+                        privileged_groups=self.privileged_groups)
+        dataset_transf_train = RW.fit_transform(aif_data)
 
         # mitigated data weights for machine learning model
-        mitigated_dataset['weights'] = train_data_std_m.instance_weights
+        mitigated_dataset['weights'] = dataset_transf_train.instance_weights
         # transform as an object
         mitigated_dataset['transform'] = RW
 
@@ -459,15 +461,20 @@ class FairML:
         mitigated_dataset = {}
 
         # putting data in specific standardize form required by the aif360 package
-        train_data_std = BinaryLabelDataset(favorable_label=self.favorable_label,
-                                            unfavorable_label=self.unfavorable_label,
-                                            df=self.training_data,
-                                            label_names=[self.target_variable],
-                                            protected_attribute_names=[self.protected_variable])
+        aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
+                                      unfavorable_label=self.unfavorable_label,
+                                      df=self.training_data,
+                                      label_names=[self.target_variable],
+                                      protected_attribute_names=[self.protected_variable],
+                                      privileged_protected_attributes=[[self.privileged_class]],
+                                      unprivileged_protected_attributes=[[self.unprivileged_class]])
 
         DIR = DisparateImpactRemover(repair_level=repair_level)
-        train_data_std = DIR.fit_transform(train_data_std)
+        train_data_std = DIR.fit_transform(aif_data)
         train_data_mitigated = train_data_std.convert_to_dataframe()[0]
+
+        # Change train_data_mitigated columns order as training_data
+        train_data_mitigated = train_data_mitigated[self.training_data.columns]
 
         # train data after mitigation
         mitigated_dataset['data'] = train_data_mitigated
