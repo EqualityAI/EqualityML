@@ -278,8 +278,10 @@ class FairML:
     def reevaluate_fairness(self):
         new_fairness_metric = self.evaluate_fairness(metric_name=self.metric_name, cutoff=self.cutoff)
 
-        print(f"Previous Fairness Score = {self.fairness_metrics[0][self.metric_name]} and New Fairness Score = "
-              f"{new_fairness_metric[self.metric_name]}")
+        print(f"Previous Fairness Score = {self.fairness_metrics[0][self.metric_name]:.2f} and New Fairness Score = "
+              f"{new_fairness_metric[self.metric_name]:.2f}")
+
+        return new_fairness_metric
 
     def bias_mitigation(self, mitigation_method, alpha=1.0, repair_level=0.8):
         """
