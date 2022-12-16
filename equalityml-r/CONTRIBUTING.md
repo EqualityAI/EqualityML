@@ -83,9 +83,9 @@ If you uncover a security vulnerability in EAI code, please do not report it in 
 
 We'd love to hear how we can improve the code with new features! What pain points are you experiencing in adopting these tools? How can we help? Are there use cases you would like to see? Methods we should add? Feature requests recommend new functionality, or improved functionality. Please keep in mind they are different than bug reports. 
 
-Feature requests should be posted in the [GitHub discussions](https://github.com/EqualityAI/ResponsibleMLOpsToolkit/discussions). This will allow good conversation to take place between community members so the whole community can participate. Users will also be able to "upvote" feature requests that they would like to see, so participating in the discussions helps the community to determine which features are the most important!
+Feature requests should be posted in the [GitHub discussions](https://github.com/EqualityAI/EqualityML/discussions). This will allow good conversation to take place between community members so the whole community can participate. Users will also be able to "upvote" feature requests that they would like to see, so participating in the discussions helps the community to determine which features are the most important!
 
-Please provide as much detail and context as possible and remember to follow the [Code of Conduct](https://github.com/EqualityAI/ResponsibleMLOpsToolkit/blob/main/CODE_OF_CONDUCT.md).
+Please provide as much detail and context as possible and remember to follow the [Code of Conduct](https://github.com/EqualityAI/EqualityML/blob/main/CODE_OF_CONDUCT.md).
 
 ## Pull requests
 

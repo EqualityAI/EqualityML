@@ -6,20 +6,24 @@ logger = logging.getLogger()
 logger.setLevel(logging.ERROR)
 
 # Import library
-from dalex import Explainer
 from dalex.fairness import resample
-from aif360.datasets import StandardDataset
 from aif360.datasets import BinaryLabelDataset
-from aif360.metrics import ClassificationMetric, BinaryLabelDatasetMetric
+from aif360.metrics import ClassificationMetric
 from aif360.algorithms.preprocessing import Reweighing
 from aif360.algorithms.preprocessing import DisparateImpactRemover
 from fairlearn.preprocessing import CorrelationRemover
 
 
-class FairML:
+# FairBoost
+# BiasMitigation
+# FairnessAssessmentCorrection
+#
+
+
+class FairBoost:
     """
-    Bias mitigation class. Apply a mitigation method to make a Dataset more balanced.
-    Fairness metric class to evaluate fairness of a binary classification Machine Learning application.
+    FairBoost empowers AI developers to assess fairness of their Machine Learning application  and mitigate any observed
+    bias in its application. It contains methods to assess fairness metrics as well as mitigation algorithms.
 
     Parameters
     ----------
@@ -62,7 +66,7 @@ class FairML:
                  pred_class=None,
                  pred_prob=None):
 
-        super(FairML, self).__init__()
+        super(FairBoost, self).__init__()
 
         # Check input arguments
         if target_variable not in training_data.columns or protected_variable not in training_data.columns:
@@ -77,6 +81,7 @@ class FairML:
                 sorted(list(set(training_data[target_variable]))) != sorted([favorable_label, unfavorable_label]):
             raise TypeError("Invalid value of favorable/unfavorable labels")
 
+        # testing data is used to assess fairness metrics.
         if testing_data is None:
             self.testing_data = training_data
         else:
@@ -117,6 +122,18 @@ class FairML:
         self.cutoff = None
 
     def update_classifier(self, ml_model, pred_class=None, pred_prob=None):
+        """
+        Update Machine Learning model classifier typically after applying a bias mitigation method.
+
+        Parameters
+        ----------
+        ml_model : object
+            Trained Machine Learning model object (for example LogisticRegression object).
+        pred_class : list, default=None
+            Predicted class labels for input 'data' applied on machine learning model object 'ml_model'.
+        pred_prob : list, default=None
+            Probability estimates for input 'data' applied on machine learning model object 'ml_model'.
+        """
         self.ml_model = ml_model
 
         # Compute predicted classes in case input argument 'pred_class' is None
@@ -161,29 +178,29 @@ class FairML:
 
         return _fairness_metric
 
-    def print_fairness_list(self):
+    def print_fairness_metrics(self):
         print("Available fairness metrics are: \n"
-               "1. 'treatment_equality_ratio'\n"
-               "2. 'treatment_equality_difference'\n"
-               "3. 'balance_positive_class': Balance for positive class\n"
-               "4. 'balance_negative_class': Balance for negative class\n"
-               "5. 'equal_opportunity_ratio': Equal opportunity ratio\n"
-               "6. 'accuracy_equality_ratio': Accuracy equality ratio\n"
-               "7. 'predictive_parity_ratio':  Predictive parity ratio\n"
-               "8. 'predictive_equality_ratio': Predictive equality ratio\n"
-               "9. 'statistical_parity_ratio': Statistical parity ratio")
+              "1. 'treatment_equality_ratio'\n"
+              "2. 'treatment_equality_difference'\n"
+              "3. 'balance_positive_class': Balance for positive class\n"
+              "4. 'balance_negative_class': Balance for negative class\n"
+              "5. 'equal_opportunity_ratio': Equal opportunity ratio\n"
+              "6. 'accuracy_equality_ratio': Accuracy equality ratio\n"
+              "7. 'predictive_parity_ratio':  Predictive parity ratio\n"
+              "8. 'predictive_equality_ratio': Predictive equality ratio\n"
+              "9. 'statistical_parity_ratio': Statistical parity ratio")
 
-    def print_bias_mitigation_list(self):
+    def print_bias_mitigation_methods(self):
         print("Available bias mitigation methods are: \n"
-               "1. 'resampling' or 'resampling-uniform'\n"
-               "2. 'resampling-preferential'\n"
-               "3. 'reweighing'\n"
-               "4. 'disparate-impact-remover'\n"
-               "5. 'correlation-remover'")
+              "1. 'resampling' or 'resampling-uniform'\n"
+              "2. 'resampling-preferential'\n"
+              "3. 'reweighing'\n"
+              "4. 'disparate-impact-remover'\n"
+              "5. 'correlation-remover'")
 
-    def evaluate_fairness(self, metric_name, cutoff=0.5):
+    def fairness_metric(self, metric_name, cutoff=0.5):
         """
-        Fairness metric evaluation based on privileged/unprivileged classes.
+        Fairness metric assessment based on privileged/unprivileged classes.
 
         Parameters
         ----------
@@ -275,14 +292,6 @@ class FairML:
 
         return fairness_metric
 
-    def reevaluate_fairness(self):
-        new_fairness_metric = self.evaluate_fairness(metric_name=self.metric_name, cutoff=self.cutoff)
-
-        print(f"Previous Fairness Score = {self.fairness_metrics[0][self.metric_name]:.2f} and New Fairness Score = "
-              f"{new_fairness_metric[self.metric_name]:.2f}")
-
-        return new_fairness_metric
-
     def bias_mitigation(self, mitigation_method, alpha=1.0, repair_level=0.8):
         """
         Apply a mitigation method to data to make it more balanced.
@@ -304,11 +313,10 @@ class FairML:
         Returns
         ----------
         T : dictionary-like of shape
-            Mitigated data/weights and corresponding transforms/indexes
+            Mitigated data/weights
             Notes:
-            Mitigated data and corresponding transform is stored as dictionary
             Output shouldn't have both 'data' and 'weights' keys i.e. if method only changes data then
-             key is 'data' and if method changes machine learning model weights then 'weight' is in key
+             key is 'data' and if method changes machine learning model weights then 'weights' is in key
 
         """
 
@@ -346,7 +354,7 @@ class FairML:
         Returns
         ----------
         T : dictionary-like of shape
-            Mitigated data and corresponding indexes
+            Mitigated data.
         """
 
         # Uniform resampling
@@ -364,7 +372,7 @@ class FairML:
                                     type='preferential', verbose=False,
                                     probs=_pred_prob)
 
-        return self.training_data.iloc[idx_resample, :]
+        return {'data': self.training_data.iloc[idx_resample, :]}
 
     def _cr_removing_data(self, alpha=1.0):
         """
@@ -378,7 +386,7 @@ class FairML:
         Returns
         ----------
         T : dictionary-like of shape
-            Mitigated data and corresponding 'CorrelationRemover' object.
+            Mitigated data.
         """
 
         # Getting correlation coefficient for mitigation_method 'correlation_remover'. The input alpha parameter is
@@ -400,7 +408,7 @@ class FairML:
         # Change train_data_mitigated columns order as training_data
         train_data_mitigated = train_data_mitigated[self.training_data.columns]
 
-        return train_data_mitigated
+        return {'data': train_data_mitigated}
 
     def _reweighing_model(self):
         """
@@ -409,7 +417,7 @@ class FairML:
         Returns
         ----------
         T : dictionary-like of shape
-            Balanced model weights and corresponding 'Reweighing' object.
+            Balanced model weights.
         """
 
         mitigated_dataset = {}
@@ -427,7 +435,7 @@ class FairML:
                         privileged_groups=self.privileged_groups)
         dataset_transf_train = RW.fit_transform(aif_data)
 
-        return dataset_transf_train.instance_weights
+        return {'weights': dataset_transf_train.instance_weights}
 
     def _disp_removing_data(self, repair_level=0.8):
         """
@@ -440,7 +448,7 @@ class FairML:
         Returns
         ----------
         T : dictionary-like of shape
-            Mitigated data and corresponding 'DisparateImpactRemover' object
+            Mitigated data
         """
 
         # putting data in specific standardize form required by the aif360 package
@@ -459,4 +467,4 @@ class FairML:
         # Change train_data_mitigated columns order as training_data
         train_data_mitigated = train_data_mitigated[self.training_data.columns]
 
-        return train_data_mitigated
+        return {'data': train_data_mitigated}
