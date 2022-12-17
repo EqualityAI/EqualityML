@@ -23,7 +23,7 @@ from fairlearn.preprocessing import CorrelationRemover
 class FairBoost:
     """
     FairBoost empowers AI developers to assess fairness of their Machine Learning application  and mitigate any observed
-    bias in its application. It contains methods to assess fairness metrics as well as mitigation algorithms.
+    bias in its application. It contains methods to assess fairness metrics as well as bias mitigation algorithms.
 
     Parameters
     ----------
@@ -240,7 +240,6 @@ class FairBoost:
         self.cutoff = cutoff
 
         fairness_metric = {}
-        # Evaluate fairness_metrics using aif360 module
 
         # create a dataset according to structure required by the package AIF360
         aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
