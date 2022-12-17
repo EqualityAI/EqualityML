@@ -14,15 +14,18 @@ from aif360.algorithms.preprocessing import DisparateImpactRemover
 from fairlearn.preprocessing import CorrelationRemover
 
 
+# FairML
 # FairBoost
 # BiasMitigation
-# FairnessAssessmentCorrection
-#
+# FairnessAssessmentCorrection - FAC
+# Fairness Assessment and Mitigation - FAM
+# Fairness Assessment and Bias Mitigation - FABM
+# Fairness Assessment and Inequality Reduction - FAIR
 
 
-class FairBoost:
+class FAIR:
     """
-    FairBoost empowers AI developers to assess fairness of their Machine Learning application  and mitigate any observed
+    FAIR empowers AI developers to assess fairness of their Machine Learning application  and mitigate any observed
     bias in its application. It contains methods to assess fairness metrics as well as bias mitigation algorithms.
 
     Parameters
@@ -66,7 +69,7 @@ class FairBoost:
                  pred_class=None,
                  pred_prob=None):
 
-        super(FairBoost, self).__init__()
+        super(FAIR, self).__init__()
 
         # Check input arguments
         if target_variable not in training_data.columns or protected_variable not in training_data.columns:

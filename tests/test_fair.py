@@ -6,7 +6,7 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 import pytest
 
-from equalityml import FairBoost
+from equalityml import FAIR
 
 _ESTIMATORS = [LogisticRegression, SVC, DecisionTreeClassifier, RandomForestClassifier]
 _MITIGATION_METHODS = ["resampling", "resampling-preferential", "reweighing", "disparate-impact-remover",
@@ -49,12 +49,12 @@ def test_bias_mitigation(dataset, mitigation_method, estimator):
     _estimator.fit(dataset["training_data"].drop(columns=dataset["target_variable"]),
                    dataset["training_data"][dataset["target_variable"]])
 
-    fair_boost = FairBoost(ml_model=_estimator, training_data=dataset["training_data"],
+    fair = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
                            target_variable=dataset["target_variable"],
                            protected_variable=dataset["protected_variable"], privileged_class=1)
 
     # call bias mitigation method
-    mitigation_result = fair_boost.bias_mitigation(mitigation_method)
+    mitigation_result = fair.bias_mitigation(mitigation_method)
     if mitigation_method == "reweighing":
         mitigated_weights = mitigation_result['weights']
         assert len(mitigated_weights) == dataset["training_data"].shape[0]
@@ -73,18 +73,18 @@ def test_fairness_metric_evaluation(dataset, metric, estimated_value):
     _estimator.fit(dataset["training_data"].drop(columns=dataset["target_variable"]),
                    dataset["training_data"][dataset["target_variable"]])
 
-    fair_boost = FairBoost(ml_model=_estimator, training_data=dataset["training_data"],
+    fair = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
                            target_variable=dataset["target_variable"],
                            protected_variable=dataset["protected_variable"], privileged_class=1)
 
     # Compute fairness metric
-    fairness_metric = fair_boost.fairness_metric(metric)
+    fairness_metric = fair.fairness_metric(metric)
     assert np.allclose(fairness_metric[metric], estimated_value, rtol=1.e-3)
 
 
 @pytest.mark.parametrize("mitigation_method",
                          ["resampling", "resampling-preferential", "reweighing", "disparate-impact-remover"])
-def test_fairml(dataset, mitigation_method):
+def test_workflow(dataset, mitigation_method):
     np.random.seed(0)
 
     X_train = dataset["training_data"].drop(columns=dataset["target_variable"])
@@ -94,16 +94,16 @@ def test_fairml(dataset, mitigation_method):
     _estimator = LogisticRegression()
     _estimator.fit(X_train, y_train)
 
-    fair_boost = FairBoost(ml_model=_estimator, training_data=dataset["training_data"],
+    fair = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
                            target_variable=dataset["target_variable"],
                            protected_variable=dataset["protected_variable"], privileged_class=1)
 
     # Compute fairness metric
     metric = "statistical_parity_ratio"
-    prev_fairness_metric = fair_boost.fairness_metric(metric)
+    prev_fairness_metric = fair.fairness_metric(metric)
 
     # Apply a bias mitigation method
-    mitigation_result = fair_boost.bias_mitigation(mitigation_method)
+    mitigation_result = fair.bias_mitigation(mitigation_method)
     if mitigation_method == "reweighing":
         mitigated_weights = mitigation_result['weights']
         # Re-train the machine learning model using the mitigate weights
@@ -116,8 +116,8 @@ def test_fairml(dataset, mitigation_method):
         # Re-train the machine learning model based on mitigated data
         _estimator.fit(X_train, y_train)
 
-    fair_boost.update_classifier(_estimator)
-    fairness_metric = fair_boost.fairness_metric(metric)
+    fair.update_classifier(_estimator)
+    fairness_metric = fair.fairness_metric(metric)
 
     # The new fairness metric value shall be better than previous one
     assert prev_fairness_metric[metric] < fairness_metric[metric] < 1
