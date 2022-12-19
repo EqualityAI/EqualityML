@@ -6,7 +6,7 @@
 
 [Equality AI (EAI)](https://equalityai.com/) is a public-benefit corporation dedicated to providing developers with evidence-based tools to end algorithmic bias. Our tools are built by developers for developers. So, we know that developers want their models to be fair, but we also understand that bias is <b> difficult and intimidating.</b> 
 
-The EAI `EqualityML` repository provides functions and guidance on how to include fairness and bias mitigation methods to model fitting so as to safeguard the people on the receiving end of our models from bias. 
+The EAI `EqualityML` repository provides tools and guidance on how to include fairness and bias mitigation methods to model fitting so as to safeguard the people on the receiving end of our models from bias. 
 
 If you like what we're doing, give us a :star: and join our [EAI Manifesto!](https://equalityai.com/community/#manifesto)!</br>
 <img src="img/star.png" align="center" alt="" width="400" /><br></br>
@@ -74,22 +74,20 @@ Through these steps we <b>safeguard against bias</b> by:
 ## EAI `EqualityML` Workflow
 We have conducted extensive literature review and theoretical analysis on dozens of fairness metrics and mitigation methods. Theoretical properties of those fairness mitigation methods were analyzed to determine their suitability under various conditions to create our framework for a pre-processing workflow. 
 
-| Pre-processing Workflow                                      | Tool or Guidance provided                                                                                                                                                                                                               |
-|:-------------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1. Define Research Question                                  |                                                                                                                                                                                                                                         |
-| 2. Connect to Source Data                                    |                                                                                                                                                                                                                                         |
-| 3. Select Fairness Metric                             | Use our [Fairness Metric Selection Questionnaire & Tree](https://github.com/EqualityAI/EqualityML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf) to determine appropriate fairness metric(s) |
-| 4. Data Preparation                                          ||
-| 5. Fit Prediction Model                                      ||
-| 6. Compute Model Results and Evaluate Fairness Score      | Use `EqualityML` method `fairness_metric` to evaluate the fairness of a model                                                                                                                                                           |
-| 7. Run Mitigation                                            | Use `EqualityML` method `bias_mitigation` to run various bias mitigation methods on your dataset                                                                                                                                        |
-| 8. Compute Model Results and Fairness Score After Mitigation | `fairness_metric` `bias_mitigation`                                                                                                                                                                                                     |
-| 9. Compare Model Results and Fairness Score Before and After Mitigation| `fairness_metric` `bias_mitigation`                                                                                                                                                                                                     |
+| Pre-processing Workflow                                                  | Tool or Guidance provided                                                                                                                                                                                                               |
+|:-------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1. Select Fairness Metric                                                | Use our [Fairness Metric Selection Questionnaire & Tree](https://github.com/EqualityAI/EqualityML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf) to determine appropriate fairness metric(s) |
+| 2. Data Preparation                                                      ||
+| 3. Fit Prediction Model                                                  ||
+| 4. Compute Model Results and Evaluate Fairness Metric                    | Use `EqualityML` method `fairness_metric` to evaluate the fairness of a model                                                                                                                                                           |
+| 5. Run Bias Mitigation                                                   | Use `EqualityML` method `bias_mitigation` to run various bias mitigation methods on your dataset                                                                                                                                        |
+| 6. Compute Model Results and Fairness Metric After Mitigation            | `fairness_metric` `bias_mitigation`                                                                                                                                                                                                     |
+| 7. Compare Model Results and Fairness Metric Before and After Mitigation | `fairness_metric` `bias_mitigation`                                                                                                                                                                                                     |
 
-<sub><b>Table 2:</b> The Equality AI recommended pre-processing workflow and tools and guidance made available per step.
+<sub><b>Table 2:</b> The Equality AI recommended pre-processing workflow with tools and guidance made available per step.
 </sub> </br>
 
-We recommend assessing the fairness of the same ML model after bias is applied. By comparing the predictions before and after mitigation, we will be able to assess whether and to what extent the fairness can be improved. Furthermore, the trade-offs between the accuracy and fairness of the machine learning model will be examined.
+We recommend assessing the fairness of the same ML model after bias mitigation is applied. By comparing the predictions before and after mitigation, we will be able to assess whether and to what extent the fairness can be improved. Furthermore, the trade-offs between the accuracy and fairness of the machine learning model will be examined.
 
 > In-processing and Post-processing are still under development. Do you need this now? [Let us know!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
 
@@ -109,6 +107,23 @@ After identifying the important fairness criteria, we recommend you attempt to u
 pip install equalityml
 ```
 
+### Manual Installation
+Clone the last version of this repository:
+```bash
+https://github.com/EqualityAI/EqualityML.git
+```
+In the root directory of the project run the command:
+```bash
+pip install -e '.[all]'
+```
+
+### Package Testing
+To run the bunch of tests over the EqualityML package, dependencies shall be first installed before calling pytest.
+
+```sh
+pip install -e '.[tests]'
+pytest tests
+```
 ## Quick tour
 
 Check out the example below to see how EqualityML can be used to assess fairness metrics and mitigate unwanted bias in 
@@ -128,47 +143,40 @@ weight_col = [80, 75, 70, 65, 60, 85, 70, 75, 70, 70, 70, 80, 70, 70, 70, 80, 75
               70, 75, 80, 75, 75, 70, 65, 70, 75, 65]
 target_col = [1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1,
               0, 1, 0, 1, 1, 0, 0, 1, 1, 0]
-training_data = pd.DataFrame({"random": random_col, "sex": sex_col, "weight": weight_col, "Y": target_col})
+training_data = pd.DataFrame({"random": random_col, "sex": sex_col, "weight": weight_col, 
+                              "Y": target_col})
     
 # Train a machine learning model (for example LogisticRegression)
 ml_model = LogisticRegression()
 ml_model.fit(training_data.drop(columns="Y"), training_data["Y"])
 
 # Instantiate a FAIR object
-fair = FAIR(ml_model=ml_model, training_data=training_data,
+fair_obj = FAIR(ml_model=ml_model, training_data=training_data,
                                  target_variable="Y",
                                  protected_variable="sex", privileged_class=1)
 
-# Assess a fairness metric (for example statistical parity ratio)
+# Evaluate a fairness metric (for example statistical parity ratio)
 metric_name = 'statistical_parity_ratio'
-fairness_metric = fair.fairness_metric(metric_name)
+fairness_metric = fair_obj.fairness_metric(metric_name)
 
-# In case the model is unfair in terms of checked fairness metric score (Its value is not close to 1), 
+# In case the model is unfair in terms of checked fairness metric (value is not close to 1), 
 # EqualityML provides a range of methods to try to mitigate bias in Machine Learning models. 
 # For example, we can use 'resampling' to perform mitigation on training dataset.
 
 mitigation_method = "resampling"
-mitigation_result = fair.bias_mitigation(mitigation_method)
+mitigation_result = fair_obj.bias_mitigation(mitigation_method)
 
-# Then we can re-train again the machine learning model based on mitigated data and assess the fairness metric
+# Noe we can re-train the machine learning model based on mitigated data and 
+# evaluate again the fairness metric
 mitigated_data = mitigation_result['data']
 ml_model.fit(mitigated_data.drop(columns="Y"), mitigated_data["Y"])
 
-fair.update_classifier(ml_model)
-new_fairness_metric = fair.fairness_metric(metric_name)
+fair_obj.update_classifier(ml_model)
+new_fairness_metric = fair_obj.fairness_metric(metric_name)
 
 # All available fairness metrics and bias mitigation can be printed calling the methods:
-fair.print_fairness_metrics()
-fair.print_bias_mitigation_methods()
-```
-
-## Development setup
-
-Describe how to install all development dependencies and how to run an automated test-suite of some kind.
-
-```sh
-pip install -e '.[all, tests]'
-pytest tests
+fair_obj.print_fairness_metrics()
+fair_obj.print_bias_mitigation_methods()
 ```
 
 ## Responsible AI Takes a Community
@@ -177,7 +185,7 @@ The connections and trade-offs between fairness, explainability, and privacy req
 <img src="img/color logo only.PNG" align="left" alt="EqualityAI Logo" width="50"/>
 
 ## Contributing to the project
-Equality AI uses both GitHib and Slack to manage our open source community. To participate:
+Equality AI uses both GitHub and Slack to manage our open source community. To participate:
 
 1. Join the Slack community (https://equalityai.com/slack)
     + Introduce yourself in the #Introductions channel. We're all friendly people!
