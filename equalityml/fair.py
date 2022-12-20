@@ -75,10 +75,15 @@ class FAIR:
         super(FAIR, self).__init__()
 
         # Check input arguments
-        if target_variable not in training_data.columns or protected_variable not in training_data.columns:
-            raise TypeError(f"Target variable {target_variable} or protected variable {protected_variable} are not "
-                            f"part of Data")
+        if target_variable not in training_data.columns:
+            raise TypeError(f"Target variable {target_variable} is not part of training data")
+        if protected_variable not in training_data.columns:
+            raise TypeError(f"Protected variable {protected_variable} is not part of training data")
+        if features is not None:
+            if features not in training_data.columns:
+                raise TypeError(f"Features {features} are not part of training data")
 
+        privileged_class = float(privileged_class)
         if privileged_class not in training_data[protected_variable].values:
             raise TypeError(f"Privileged class {privileged_class} shall be on data column {protected_variable}")
 
@@ -158,16 +163,6 @@ class FAIR:
     def _cr_removing_data(self, alpha=1.0):
         """
         Filters out sensitive correlations in a dataset using 'CorrelationRemover' function from fairlearn package.
-
-        Parameters
-        ----------
-        alpha : float, default=1.0
-            Parameter to control how much to filter, for alpha=1.0 we filter out
-            all information while for alpha=0.0 we don't apply any.
-        Returns
-        ----------
-        T : dictionary-like of shape
-            Mitigated data.
         """
 
         # Getting correlation coefficient for mitigation_method 'correlation_remover'. The input alpha parameter is
@@ -211,15 +206,6 @@ class FAIR:
     def _disp_removing_data(self, repair_level=0.8):
         """
         Transforming input data using 'DisparateImpactRemover' from aif360 pacakge.
-
-        Parameters
-        ----------
-        repair_level : float, default=0.8
-            Repair amount. 0.0 is no repair while 1.0 is full repair.
-        Returns
-        ----------
-        T : dictionary-like of shape
-            Mitigated data
         """
 
         # putting data in specific standardize form required by the aif360 package
@@ -261,18 +247,6 @@ class FAIR:
     def _resampling_data(self, mitigation_method):
         """
         Resample the input data using dalex module function.
-
-        Parameters
-        ----------
-        mitigation_method : str
-            Name of the mitigation method. Accepted values:
-                "resampling",
-                "resampling-uniform",
-                "resampling-preferential"
-        Returns
-        ----------
-        T : dictionary-like of shape
-            Mitigated data.
         """
 
         # Uniform resampling
@@ -298,11 +272,6 @@ class FAIR:
     def _reweighing_model(self):
         """
         Obtain weights for model training using 'Reweighing' function from aif360 package.
-
-        Returns
-        ----------
-        T : dictionary-like of shape
-            Balanced model weights.
         """
         # putting data in specific standardize form required by the aif360 package
         aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
