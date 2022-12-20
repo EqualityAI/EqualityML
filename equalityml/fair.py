@@ -86,12 +86,14 @@ class FAIR:
 
         # testing data is used to assess fairness metrics.
         if testing_data is None:
-            self.testing_data = training_data
+            self.testing_data = training_data.copy()
+            self._use_testing_data = False
         else:
-            self.testing_data = testing_data
+            self.testing_data = testing_data.copy()
+            self._use_testing_data = True
 
         self.ml_model = ml_model
-        self.training_data = training_data
+        self.training_data = training_data.copy()
         self.target_variable = target_variable
         self.favorable_label = favorable_label
         self.unfavorable_label = unfavorable_label
@@ -106,23 +108,15 @@ class FAIR:
         else:
             self.unprivileged_class = unprivileged_class
 
-        # Compute predicted classes in case input argument 'pred_class' is None
-        if pred_class is None:
-            self.pred_class = self._get_binary_class(self.testing_data)
-        else:
-            self.pred_class = pred_class
-
-        # Compute probability estimates in case input argument 'pred_prob' is None
-        if pred_prob is None:
-            self.pred_prob = self._get_binary_prob(self.testing_data)
-        else:
-            self.pred_prob = pred_prob
-
+        self.pred_class = pred_class
+        self.pred_prob = pred_prob
         self.unprivileged_groups = [{self.protected_variable: [self.unprivileged_class]}]
         self.privileged_groups = [{self.protected_variable: [self.privileged_class]}]
         self.fairness_metrics = []
         self.metric_name = None
         self.cutoff = None
+        self.mitigated_testing_data = None
+        self.mitigated_training_data = None
 
     def update_classifier(self, ml_model, pred_class=None, pred_prob=None):
         """
@@ -138,18 +132,8 @@ class FAIR:
             Probability estimates for input 'data' applied on machine learning model object 'ml_model'.
         """
         self.ml_model = ml_model
-
-        # Compute predicted classes in case input argument 'pred_class' is None
-        if pred_class is None:
-            self.pred_class = self._get_binary_class(self.testing_data)
-        else:
-            self.pred_class = pred_class
-
-        # Compute probability estimates in case input argument 'pred_prob' is None
-        if pred_prob is None:
-            self.pred_prob = self._get_binary_prob(self.testing_data)
-        else:
-            self.pred_prob = pred_prob
+        self.pred_class = pred_class
+        self.pred_prob = pred_prob
 
     def _get_binary_prob(self, data):
 
@@ -244,10 +228,15 @@ class FAIR:
 
         fairness_metric = {}
 
+        if self.mitigated_testing_data is None:
+            testing_data = self.testing_data
+        else:
+            testing_data = self.mitigated_testing_data
+
         # create a dataset according to structure required by the package AIF360
         aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
                                       unfavorable_label=self.unfavorable_label,
-                                      df=self.testing_data,
+                                      df=testing_data,
                                       label_names=[self.target_variable],
                                       protected_attribute_names=[self.protected_variable],
                                       privileged_protected_attributes=[[self.privileged_class]],
@@ -255,8 +244,18 @@ class FAIR:
 
         # fairness metric computation
         aif_data_pred = aif_data.copy()
-        aif_data_pred.scores = self.pred_prob  # predicted  probability
-        aif_data_pred.labels = self.pred_class  # predicted class
+        # Get predicted classes in case input argument 'pred_class' is None
+        if self.pred_class is None:
+            aif_data_pred.labels = self._get_binary_class(testing_data)
+        else:
+            aif_data_pred.labels = self.pred_class
+
+        # Get probability estimates in case input argument 'pred_prob' is None
+        if self.pred_prob is None:
+            aif_data_pred.scores = self._get_binary_prob(testing_data)
+        else:
+            aif_data_pred.scores = self.pred_prob
+
         cm_pred_data = ClassificationMetric(aif_data,
                                             aif_data_pred,
                                             unprivileged_groups=self.unprivileged_groups,
@@ -317,7 +316,7 @@ class FAIR:
         T : dictionary-like of shape
             Mitigated data/weights
             Notes:
-            Output shouldn't have both 'data' and 'weights' keys i.e. if method only changes data then
+            Output shouldn't have both 'training_data' and 'weights' keys i.e. if method only changes data then
              key is 'data' and if method changes machine learning model weights then 'weights' is in key
 
         """
@@ -374,7 +373,7 @@ class FAIR:
                                     type='preferential', verbose=False,
                                     probs=_pred_prob)
 
-        return {'data': self.training_data.iloc[idx_resample, :]}
+        return {'training_data': self.training_data.iloc[idx_resample, :]}
 
     def _cr_removing_data(self, alpha=1.0):
         """
@@ -410,7 +409,7 @@ class FAIR:
         # Change train_data_mitigated columns order as training_data
         train_data_mitigated = train_data_mitigated[self.training_data.columns]
 
-        return {'data': train_data_mitigated}
+        return {'training_data': train_data_mitigated}
 
     def _reweighing_model(self):
         """
@@ -421,9 +420,6 @@ class FAIR:
         T : dictionary-like of shape
             Balanced model weights.
         """
-
-        mitigated_dataset = {}
-
         # putting data in specific standardize form required by the aif360 package
         aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
                                       unfavorable_label=self.unfavorable_label,
@@ -454,19 +450,37 @@ class FAIR:
         """
 
         # putting data in specific standardize form required by the aif360 package
-        aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
-                                      unfavorable_label=self.unfavorable_label,
-                                      df=self.training_data,
-                                      label_names=[self.target_variable],
-                                      protected_attribute_names=[self.protected_variable],
-                                      privileged_protected_attributes=[[self.privileged_class]],
-                                      unprivileged_protected_attributes=[[self.unprivileged_class]])
+        training_aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
+                                               unfavorable_label=self.unfavorable_label,
+                                               df=self.training_data,
+                                               label_names=[self.target_variable],
+                                               protected_attribute_names=[self.protected_variable],
+                                               privileged_protected_attributes=[[self.privileged_class]],
+                                               unprivileged_protected_attributes=[[self.unprivileged_class]])
 
         DIR = DisparateImpactRemover(repair_level=repair_level)
-        train_data_std = DIR.fit_transform(aif_data)
-        train_data_mitigated = train_data_std.convert_to_dataframe()[0]
+        training_data_std = DIR.fit_transform(training_aif_data)
+        mitigated_training_data = training_data_std.convert_to_dataframe()[0]
 
-        # Change train_data_mitigated columns order as training_data
-        train_data_mitigated = train_data_mitigated[self.training_data.columns]
+        # Change mitigated_training_data columns order as training_data
+        mitigated_training_data = mitigated_training_data[self.training_data.columns]
+        self.mitigated_training_data = mitigated_training_data.copy()
 
-        return {'data': train_data_mitigated}
+        if self._use_testing_data:
+            testing_aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
+                                                  unfavorable_label=self.unfavorable_label,
+                                                  df=self.testing_data,
+                                                  label_names=[self.target_variable],
+                                                  protected_attribute_names=[self.protected_variable],
+                                                  privileged_protected_attributes=[[self.privileged_class]],
+                                                  unprivileged_protected_attributes=[[self.unprivileged_class]])
+            testing_data_std = DIR.fit_transform(testing_aif_data)
+            mitigated_testing_data = testing_data_std.convert_to_dataframe()[0]
+
+            # Change mitigated_testing_data columns order as training_data
+            mitigated_testing_data = mitigated_testing_data[self.testing_data.columns]
+            self.mitigated_testing_data = mitigated_testing_data.copy()
+            return {'training_data': mitigated_training_data, 'testing_data': mitigated_testing_data}
+        else:
+            self.mitigated_testing_data = mitigated_training_data.copy()
+            return {'training_data': mitigated_training_data}

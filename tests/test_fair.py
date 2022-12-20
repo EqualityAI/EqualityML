@@ -49,18 +49,18 @@ def test_bias_mitigation(dataset, mitigation_method, estimator):
     _estimator.fit(dataset["training_data"].drop(columns=dataset["target_variable"]),
                    dataset["training_data"][dataset["target_variable"]])
 
-    fair = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
+    fair_object = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
                            target_variable=dataset["target_variable"],
                            protected_variable=dataset["protected_variable"], privileged_class=1)
 
     # call bias mitigation method
-    mitigation_result = fair.bias_mitigation(mitigation_method)
+    mitigation_result = fair_object.bias_mitigation(mitigation_method)
     if mitigation_method == "reweighing":
         mitigated_weights = mitigation_result['weights']
         assert len(mitigated_weights) == dataset["training_data"].shape[0]
         assert all(isinstance(weight, float) for weight in mitigated_weights)
     else:
-        mitigated_data = mitigation_result['data']
+        mitigated_data = mitigation_result['training_data']
         assert mitigated_data.shape == dataset["training_data"].shape
 
 
@@ -73,12 +73,12 @@ def test_fairness_metric_evaluation(dataset, metric, estimated_value):
     _estimator.fit(dataset["training_data"].drop(columns=dataset["target_variable"]),
                    dataset["training_data"][dataset["target_variable"]])
 
-    fair = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
+    fair_object = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
                            target_variable=dataset["target_variable"],
                            protected_variable=dataset["protected_variable"], privileged_class=1)
 
     # Compute fairness metric
-    fairness_metric = fair.fairness_metric(metric)
+    fairness_metric = fair_object.fairness_metric(metric)
     assert np.allclose(fairness_metric[metric], estimated_value, rtol=1.e-3)
 
 
@@ -94,30 +94,30 @@ def test_workflow(dataset, mitigation_method):
     _estimator = LogisticRegression()
     _estimator.fit(X_train, y_train)
 
-    fair = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
+    fair_object = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
                            target_variable=dataset["target_variable"],
                            protected_variable=dataset["protected_variable"], privileged_class=1)
 
     # Compute fairness metric
     metric = "statistical_parity_ratio"
-    prev_fairness_metric = fair.fairness_metric(metric)
+    prev_fairness_metric = fair_object.fairness_metric(metric)
 
     # Apply a bias mitigation method
-    mitigation_result = fair.bias_mitigation(mitigation_method)
+    mitigation_result = fair_object.bias_mitigation(mitigation_method)
     if mitigation_method == "reweighing":
         mitigated_weights = mitigation_result['weights']
-        # Re-train the machine learning model using the mitigate weights
+        # Re-train the machine learning model using mitigated weights
         _estimator.fit(X_train, y_train, sample_weight=mitigated_weights)
     else:
-        mitigated_data = mitigation_result['data']
+        mitigated_data = mitigation_result['training_data']
         X_train = mitigated_data.drop(columns=dataset["target_variable"])
         y_train = mitigated_data[dataset["target_variable"]]
 
         # Re-train the machine learning model based on mitigated data
         _estimator.fit(X_train, y_train)
 
-    fair.update_classifier(_estimator)
-    fairness_metric = fair.fairness_metric(metric)
+    fair_object.update_classifier(_estimator)
+    fairness_metric = fair_object.fairness_metric(metric)
 
     # The new fairness metric value shall be better than previous one
     assert prev_fairness_metric[metric] < fairness_metric[metric] < 1
