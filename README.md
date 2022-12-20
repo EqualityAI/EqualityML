@@ -1,5 +1,13 @@
 <img src="img/natural-bird.png"  align="left" alt="EqualityAI Logo" width="100"/>
 
+[![Continuous Integration](https://github.com/EqualityAI/EqualityML/actions/workflows/ci.yml/badge.svg)](https://github.com/EqualityAI/EqualityML/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/EqualityAI/EqualityML.svg?color=blue)](https://github.com/EqualityAI/EqualityML/blob/main/LICENSE)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](https://github.com/EqualityAI/EqualityML/blob/main/CODE_OF_CONDUCT.md)
+<!---
+[![Documentation](https://readthedocs.org/projects/aif360/badge/?version=latest)](http://aif360.readthedocs.io/en/latest/?badge=latest)
+[![PyPI version](https://badge.fury.io/py/equalityml.svg)](https://badge.fury.io/py/equalityml)
+[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/equalityml)](https://cran.r-project.org/package=equalityml)
+--->
 # Equality AI `EqualityML`
 
 ### Let's end algorithmic bias together! 
