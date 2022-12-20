@@ -50,8 +50,8 @@ def test_bias_mitigation(dataset, mitigation_method, estimator):
                    dataset["training_data"][dataset["target_variable"]])
 
     fair_object = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
-                           target_variable=dataset["target_variable"],
-                           protected_variable=dataset["protected_variable"], privileged_class=1)
+                       target_variable=dataset["target_variable"],
+                       protected_variable=dataset["protected_variable"], privileged_class=1)
 
     # call bias mitigation method
     mitigation_result = fair_object.bias_mitigation(mitigation_method)
@@ -74,8 +74,8 @@ def test_fairness_metric_evaluation(dataset, metric, estimated_value):
                    dataset["training_data"][dataset["target_variable"]])
 
     fair_object = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
-                           target_variable=dataset["target_variable"],
-                           protected_variable=dataset["protected_variable"], privileged_class=1)
+                       target_variable=dataset["target_variable"],
+                       protected_variable=dataset["protected_variable"], privileged_class=1)
 
     # Compute fairness metric
     fairness_metric = fair_object.fairness_metric(metric)
@@ -95,8 +95,8 @@ def test_workflow(dataset, mitigation_method):
     _estimator.fit(X_train, y_train)
 
     fair_object = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
-                           target_variable=dataset["target_variable"],
-                           protected_variable=dataset["protected_variable"], privileged_class=1)
+                       target_variable=dataset["target_variable"],
+                       protected_variable=dataset["protected_variable"], privileged_class=1)
 
     # Compute fairness metric
     metric = "statistical_parity_ratio"

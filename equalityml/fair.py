@@ -14,19 +14,11 @@ from aif360.algorithms.preprocessing import DisparateImpactRemover
 from fairlearn.preprocessing import CorrelationRemover
 
 
-# FairML
-# FairBoost
-# BiasMitigation
-# FairnessAssessmentCorrection - FAC
-# Fairness Assessment and Mitigation - FAM
-# Fairness Assessment and Bias Mitigation - FABM
-# Fairness Assessment and Inequality Reduction - FAIR
-
-
 class FAIR:
     """
-    FAIR empowers AI developers to assess fairness of their Machine Learning application  and mitigate any observed
-    bias in its application. It contains methods to assess fairness metrics as well as bias mitigation algorithms.
+    FAIR (Fairness Assessment and Inequality Reduction) empowers AI developers to assess fairness of their Machine
+    Learning application and mitigate any observed bias in its application. It contains methods to assess fairness
+    metrics as well as bias mitigation algorithms.
 
     Parameters
     ----------
@@ -80,8 +72,8 @@ class FAIR:
         if protected_variable not in training_data.columns:
             raise TypeError(f"Protected variable {protected_variable} is not part of training data")
         if features is not None:
-            if features not in training_data.columns:
-                raise TypeError(f"Features {features} are not part of training data")
+            if any([feature not in training_data.columns for feature in features]):
+                raise TypeError(f"At least one feature of {features} are not part of training data")
 
         privileged_class = float(privileged_class)
         if privileged_class not in training_data[protected_variable].values:
@@ -246,7 +238,7 @@ class FAIR:
 
     def _resampling_data(self, mitigation_method):
         """
-        Resample the input data using dalex module function.
+        Resample the input data using 'resample' function from dalex package.
         """
 
         # Uniform resampling
