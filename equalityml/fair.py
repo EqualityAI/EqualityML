@@ -86,11 +86,9 @@ class FAIR:
 
         # check if testing data is used to assess fairness metrics.
         if testing_data is None:
-            self.testing_data = training_data.copy()
-            self._use_testing_data = False
+            self.testing_data = None
         else:
             self.testing_data = testing_data.copy()
-            self._use_testing_data = True
 
         # Features used to train the model
         if features is None:
@@ -291,7 +289,7 @@ class FAIR:
             mitigated_dataset['training_data'] = mitigated_training_data
             self.mitigated_training_data = mitigated_training_data
 
-            if self._use_testing_data:
+            if self.testing_data is not None:
                 mitigated_testing_data = self._cr_removing_data(self.testing_data, alpha)
                 mitigated_dataset['testing_data'] = mitigated_testing_data
                 self.mitigated_testing_data = mitigated_testing_data
@@ -303,7 +301,7 @@ class FAIR:
             mitigated_dataset['training_data'] = mitigated_training_data
             self.mitigated_training_data = mitigated_training_data
 
-            if self._use_testing_data:
+            if self.testing_data is not None:
                 mitigated_testing_data = self._disp_removing_data(self.testing_data, repair_level)
                 mitigated_dataset['testing_data'] = mitigated_testing_data
                 self.mitigated_testing_data = mitigated_testing_data
@@ -354,7 +352,10 @@ class FAIR:
         fairness_metric = {}
 
         if self.mitigated_testing_data is None:
-            testing_data = self.testing_data
+            if self.testing_data is None:
+                testing_data = self.training_data
+            else:
+                testing_data = self.testing_data
         else:
             testing_data = self.mitigated_testing_data
 
