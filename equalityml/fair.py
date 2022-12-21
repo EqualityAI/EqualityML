@@ -33,10 +33,10 @@ class FAIR:
     privileged_class : float
         Subgroup that is suspected to have the most privilege.
         It needs to be a value present in `protected_variable` column.
-    features : list, default=None
-        Data attributes used to train the machine learning model
     testing_data : pd.DataFrame, default=None
         Data in pd.DataFrame format.
+    features : list, default=None
+        Data attributes used to train the machine learning model
     unprivileged_class : float, default=None
         Subgroup that is suspected to have the least privilege.
         It needs to be a value present in `protected_variable` column.
@@ -56,8 +56,8 @@ class FAIR:
                  target_variable,
                  protected_variable,
                  privileged_class,
-                 features=None,
                  testing_data=None,
+                 features=None,
                  unprivileged_class=None,
                  favorable_label=1,
                  unfavorable_label=0,
@@ -84,7 +84,7 @@ class FAIR:
                 sorted(list(set(training_data[target_variable]))) != sorted([favorable_label, unfavorable_label]):
             raise TypeError("Invalid value of favorable/unfavorable labels")
 
-        # testing data is used to assess fairness metrics.
+        # check if testing data is used to assess fairness metrics.
         if testing_data is None:
             self.testing_data = training_data.copy()
             self._use_testing_data = False
@@ -152,7 +152,7 @@ class FAIR:
 
         return _fairness_metric
 
-    def _cr_removing_data(self, alpha=1.0):
+    def _cr_removing_data(self, data, alpha=1.0):
         """
         Filters out sensitive correlations in a dataset using 'CorrelationRemover' function from fairlearn package.
         """
@@ -161,82 +161,48 @@ class FAIR:
         # used to control the level of filtering between the sensitive and non-sensitive features
 
         # remove the outcome variable and sensitive variable
-        train_data_rm_columns = self.training_data.columns.drop([self.protected_variable, self.target_variable])
+        data_rm_columns = data.columns.drop([self.protected_variable, self.target_variable])
 
-        cr = CorrelationRemover(sensitive_feature_ids=[self.protected_variable], alpha=alpha)
-        train_data_cr = cr.fit_transform(self.training_data.drop(columns=[self.target_variable]))
-        train_data_cr = pd.DataFrame(train_data_cr, columns=train_data_rm_columns)
+        if not hasattr(self, 'cr'):
+            self.cr = CorrelationRemover(sensitive_feature_ids=[self.protected_variable], alpha=alpha)
+            data_std = self.cr.fit_transform(data.drop(columns=[self.target_variable]))
+        else:
+            data_std = self.cr.transform(data.drop(columns=[self.target_variable]))
+        train_data_cr = pd.DataFrame(data_std, columns=data_rm_columns)
 
         # Concatenate data after correlation remover
-        mitigated_training_data = pd.concat(
-            [pd.DataFrame(self.training_data[self.target_variable]),
-             pd.DataFrame(self.training_data[self.protected_variable]),
+        mitigated_data = pd.concat(
+            [pd.DataFrame(data[self.target_variable]),
+             pd.DataFrame(data[self.protected_variable]),
              train_data_cr], axis=1)
 
-        # Change train_data_mitigated columns order as training_data
-        mitigated_training_data = mitigated_training_data[self.training_data.columns]
-        self.mitigated_training_data = mitigated_training_data.copy()
+        # Keep the same columns order
+        mitigated_data = mitigated_data[data.columns]
+        return mitigated_data
 
-        if self._use_testing_data:
-            testing_data_std = cr.transform(self.testing_data.drop(columns=[self.target_variable]))
-            testing_data_cr = pd.DataFrame(testing_data_std, columns=train_data_rm_columns)
-
-            # Concatenate data after correlation remover
-            mitigated_testing_data = pd.concat(
-                [pd.DataFrame(self.testing_data[self.target_variable]),
-                 pd.DataFrame(self.testing_data[self.protected_variable]),
-                 testing_data_cr], axis=1)
-
-            # Change mitigated_testing_data columns order as training_data
-            mitigated_testing_data = mitigated_testing_data[self.testing_data.columns]
-            self.mitigated_testing_data = mitigated_testing_data.copy()
-            return {'training_data': mitigated_training_data, 'testing_data': mitigated_testing_data}
-        else:
-            self.mitigated_testing_data = mitigated_training_data.copy()
-            return {'training_data': mitigated_training_data}
-
-    def _disp_removing_data(self, repair_level=0.8):
+    def _disp_removing_data(self, data, repair_level=0.8):
         """
         Transforming input data using 'DisparateImpactRemover' from aif360 pacakge.
         """
 
         # putting data in specific standardize form required by the aif360 package
-        training_aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
-                                               unfavorable_label=self.unfavorable_label,
-                                               df=self.training_data,
-                                               label_names=[self.target_variable],
-                                               protected_attribute_names=[self.protected_variable],
-                                               privileged_protected_attributes=[[self.privileged_class]],
-                                               unprivileged_protected_attributes=[[self.unprivileged_class]])
+        aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
+                                      unfavorable_label=self.unfavorable_label,
+                                      df=data,
+                                      label_names=[self.target_variable],
+                                      protected_attribute_names=[self.protected_variable],
+                                      privileged_protected_attributes=[[self.privileged_class]],
+                                      unprivileged_protected_attributes=[[self.unprivileged_class]])
 
         DIR = DisparateImpactRemover(repair_level=repair_level)
-        training_data_std = DIR.fit_transform(training_aif_data)
-        mitigated_training_data = training_data_std.convert_to_dataframe()[0]
+        data_std = DIR.fit_transform(aif_data)
+        mitigated_data = data_std.convert_to_dataframe()[0]
 
-        # Change mitigated_training_data columns order as training_data
-        mitigated_training_data = mitigated_training_data[self.training_data.columns]
-        self.mitigated_training_data = mitigated_training_data.copy()
+        # Keep the same columns order
+        mitigated_data = mitigated_data[data.columns]
+        return mitigated_data
 
-        if self._use_testing_data:
-            testing_aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
-                                                  unfavorable_label=self.unfavorable_label,
-                                                  df=self.testing_data,
-                                                  label_names=[self.target_variable],
-                                                  protected_attribute_names=[self.protected_variable],
-                                                  privileged_protected_attributes=[[self.privileged_class]],
-                                                  unprivileged_protected_attributes=[[self.unprivileged_class]])
-            testing_data_std = DIR.fit_transform(testing_aif_data)
-            mitigated_testing_data = testing_data_std.convert_to_dataframe()[0]
-
-            # Change mitigated_testing_data columns order as training_data
-            mitigated_testing_data = mitigated_testing_data[self.testing_data.columns]
-            self.mitigated_testing_data = mitigated_testing_data.copy()
-            return {'training_data': mitigated_training_data, 'testing_data': mitigated_testing_data}
-        else:
-            self.mitigated_testing_data = mitigated_training_data.copy()
-            return {'training_data': mitigated_training_data}
-
-    def _resampling_data(self, mitigation_method):
+    def _resampling_data(self, data, mitigation_method):
         """
         Resample the input data using 'resample' function from dalex package.
         """
@@ -244,31 +210,30 @@ class FAIR:
         # Uniform resampling
         idx_resample = 0
         if (mitigation_method == "resampling-uniform") or (mitigation_method == "resampling"):
-            idx_resample = resample(self.training_data[self.protected_variable],
-                                    self.training_data[self.target_variable],
+            idx_resample = resample(data[self.protected_variable],
+                                    data[self.target_variable],
                                     type='uniform',
                                     verbose=False)
-        # preferential resampling
+        # Preferential resampling
         elif mitigation_method == "resampling-preferential":
-            _pred_prob = self._get_binary_prob(self.training_data)
-            idx_resample = resample(self.training_data[self.protected_variable],
-                                    self.training_data[self.target_variable],
+            _pred_prob = self._get_binary_prob(data)
+            idx_resample = resample(data[self.protected_variable],
+                                    data[self.target_variable],
                                     type='preferential', verbose=False,
                                     probs=_pred_prob)
 
-        mitigated_training_data = self.training_data.iloc[idx_resample, :]
-        self.mitigated_training_data = mitigated_training_data.copy()
+        mitigated_data = data.iloc[idx_resample, :]
 
-        return {'training_data': mitigated_training_data}
+        return mitigated_data
 
-    def _reweighing_model(self):
+    def _reweighing_model(self, data):
         """
         Obtain weights for model training using 'Reweighing' function from aif360 package.
         """
         # putting data in specific standardize form required by the aif360 package
         aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
                                       unfavorable_label=self.unfavorable_label,
-                                      df=self.training_data,
+                                      df=data,
                                       label_names=[self.target_variable],
                                       protected_attribute_names=[self.protected_variable],
                                       privileged_protected_attributes=[[self.privileged_class]],
@@ -278,7 +243,7 @@ class FAIR:
                         privileged_groups=self.privileged_groups)
         dataset_transf_train = RW.fit_transform(aif_data)
 
-        return {'weights': dataset_transf_train.instance_weights}
+        return dataset_transf_train.instance_weights
 
     def bias_mitigation(self, mitigation_method, alpha=1.0, repair_level=0.8):
         """
@@ -318,13 +283,30 @@ class FAIR:
 
         mitigated_dataset = {}
         if "resampling" in mitigation_method:
-            mitigated_dataset = self._resampling_data(mitigation_method)
+            mitigated_training_data = self._resampling_data(self.training_data, mitigation_method)
+            mitigated_dataset['training_data'] = mitigated_training_data
+            self.mitigated_training_data = mitigated_training_data
         elif mitigation_method == "correlation-remover":
-            mitigated_dataset = self._cr_removing_data(alpha)
+            mitigated_training_data = self._cr_removing_data(self.training_data, alpha)
+            mitigated_dataset['training_data'] = mitigated_training_data
+            self.mitigated_training_data = mitigated_training_data
+
+            if self._use_testing_data:
+                mitigated_testing_data = self._cr_removing_data(self.testing_data, alpha)
+                mitigated_dataset['testing_data'] = mitigated_testing_data
+                self.mitigated_testing_data = mitigated_testing_data
         elif mitigation_method == "reweighing":
-            mitigated_dataset = self._reweighing_model()
+            mitigated_weights = self._reweighing_model(self.training_data)
+            mitigated_dataset['weights'] = mitigated_weights
         elif mitigation_method == "disparate-impact-remover":
-            mitigated_dataset = self._disp_removing_data(repair_level)
+            mitigated_training_data = self._disp_removing_data(self.training_data, repair_level)
+            mitigated_dataset['training_data'] = mitigated_training_data
+            self.mitigated_training_data = mitigated_training_data
+
+            if self._use_testing_data:
+                mitigated_testing_data = self._disp_removing_data(self.testing_data, repair_level)
+                mitigated_dataset['testing_data'] = mitigated_testing_data
+                self.mitigated_testing_data = mitigated_testing_data
 
         return mitigated_dataset
 
@@ -387,6 +369,7 @@ class FAIR:
 
         # fairness metric computation
         aif_data_pred = aif_data.copy()
+
         # Get predicted classes in case input argument 'pred_class' is None
         if self.pred_class is None:
             aif_data_pred.labels = self._get_binary_class(testing_data)
