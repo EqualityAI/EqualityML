@@ -109,7 +109,8 @@ After identifying the important fairness criteria, we recommend you attempt to u
 
 ## `EqualityML` Installation
 
-`EqualityML` can be installed from [PyPI](https://pypi.org/project/equalityml/).
+## Python
+The `EqualityML` python package can be installed from [PyPI](https://pypi.org/project/equalityml/).
 
 ```bash
 pip install equalityml
@@ -132,7 +133,7 @@ To run the bunch of tests over the EqualityML package, dependencies shall be fir
 pip install -e '.[tests]'
 pytest tests
 ```
-## Quick tour
+### Quick tour
 
 Check out the example below to see how EqualityML can be used to assess fairness metrics and mitigate unwanted bias in 
 the dataset.
@@ -186,6 +187,18 @@ new_fairness_metric = fair_obj.fairness_metric(metric_name)
 fair_obj.print_fairness_metrics()
 fair_obj.print_bias_mitigation_methods()
 ```
+
+## R
+The `EqualityML` R package can be installed from [CRAN](https://cran.r-project.org/web/packages/equalityml/index.html):
+```
+install.packages("equalityml")
+```
+or developer version from GitHub:
+```
+devtools::install_github("EqualityAI/equalityml/equalityml-r")
+```
+For more details regarding the R package, please check [here](https://github.com/EqualityAI/EqualityML/tree/main/equalityml-r). 
+
 
 ## Responsible AI Takes a Community
 The connections and trade-offs between fairness, explainability, and privacy require a holistic approach to Responsible AI development in the machine learning community. We are starting with the principle of fairness and working towards a solution that incorporates multiple aspects of Responsible AI for data scientists and healthcare professionals. We have much more in the works, and we want to know—what do you need? Do you have a Responsible AI challenge you need to solve? [Drop us a line and let’s see how we can help!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
