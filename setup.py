@@ -64,7 +64,7 @@ predictions (post-processing).
   
 | Use                                                         | Description          |
 |:-------------------------------------------------------------|:-------------------------------------------------|
-| As a metric                                      | Quanitfy a measure of fairness (a.k.a a fairness metric) targeting a bias |
+| As a metric                                      | Quantify a measure of fairness (a.k.a a fairness metric) targeting a bias |
 | Evaluate fairness                                            | Fairness metrics can be used to mathematically represent the fairness levels of a ML model. This can also be used to monitor a model. |
 | Create parity on fairness                                    | Unlike model performance metrics (e.g., loss, accuracy, etc.), fairness metrics affect your final model selection by creating parity (i.e., equality) on appropriate fairness metrics before model deployment. |
 | Select most fair model                                       | Balance fairness with performance metrics when selecting the final model.|
@@ -94,8 +94,8 @@ We have conducted extensive literature review and theoretical analysis on dozens
 | 3. Select Fairness Metric                             | Use our [Fairness Metric Selection Questionnaire & Tree](https://github.com/EqualityAI/EqualityML/blob/main/Equality%20AI%20Fairness%20Metric%20Selection%20Questionnaire%20%26%20Tree.pdf) to determine appropriate fairness metric(s) |
 | 4. Data Preparation                                          ||
 | 5. Fit Prediction Model                                      ||
-| 6. Compute Model Results and Evaluate Fairness Score      | Use `EqualityML` function `fairness_metric` to evaluate the fairness of a model                                                                                                                                                         |
-| 7. Run Mitigation                                            | Use `EqualityML` function `bias_mitigation` to run various bias mitigation methods on your dataset                                                                                                                                      |
+| 6. Compute Model Results and Evaluate Fairness Score      | Use `EqualityML` method `fairness_metric` to evaluate the fairness of a model                                                                                                                                                         |
+| 7. Run Mitigation                                            | Use `EqualityML` method `bias_mitigation` to run various bias mitigation methods on your dataset                                                                                                                                      |
 | 8. Compute Model Results and Fairness Score After Mitigation | `fairness_metric` `bias_mitigation`                                                                                                                                                                                                     |
 | 9. Compare Model Results and Fairness Score Before and After Mitigation| `fairness_metric` `bias_mitigation`                                                                                                                                                                                                     |
 
@@ -130,37 +130,50 @@ Check out the example below to see how EqualityML can be used to evaluate the fa
 
 ```python
 from sklearn.linear_model import LogisticRegression
-from equalityml import FairnessMetric
+from equalityml import FAIR
+import numpy as np
+import pandas as pd
 
+# Sample unfair dataset
+random_col = np.random.normal(size=30)
+sex_col = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+           0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+weight_col = [80, 75, 70, 65, 60, 85, 70, 75, 70, 70, 70, 80, 70, 70, 70, 80, 75, 70, 65, 70,
+              70, 75, 80, 75, 75, 70, 65, 70, 75, 65]
+target_col = [1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1,
+              0, 1, 0, 1, 1, 0, 0, 1, 1, 0]
+training_data = pd.DataFrame({"random": random_col, "sex": sex_col, "weight": weight_col, "Y": target_col})
+    
 # Train a machine learning model (for example LogisticRegression)
 ml_model = LogisticRegression()
-ml_model.fit(X_train, Y_train)
+ml_model.fit(training_data.drop(columns="Y"), training_data["Y"])
 
-fairness_metric = FairnessMetric(ml_model=ml_model, data=testing_data,
+# Instantiate a FAIR object
+fair = FAIR(ml_model=ml_model, training_data=training_data,
                                  target_variable="Y",
-                                 protected_variable="X1", privileged_class=1)
+                                 protected_variable="sex", privileged_class=1)
+
+# Assess a fairness metric (for example statistical parity ratio)
 metric_name = 'statistical_parity_ratio'
-fairness_metric_score = fairness_metric.fairness_score(metric_name)
-```
+fairness_metric = fair.fairness_metric(metric_name)
 
-In case the model is unfair in terms of checked fairness metric score, EqualityML provides a range of methods to try to
-mitigate bias in Machine Learning models. For example, we can use 'correlation-remover' to perform mitigation on 
-training dataset.
+# In case the model is unfair in terms of checked fairness metric score (Its value is not close to 1), 
+# EqualityML provides a range of methods to try to mitigate bias in Machine Learning models. 
+# For example, we can use 'resampling' to perform mitigation on training dataset.
 
-```python
-from sklearn.linear_model import LogisticRegression
-from equalityml import BiasMitigation
+mitigation_method = "resampling"
+mitigation_result = fair.bias_mitigation(mitigation_method)
 
-# Train a machine learning model (for example LogisticRegression)
-ml_model = LogisticRegression()
-ml_model.fit(X_train, Y_train)
+# Then we can re-train again the machine learning model based on mitigated data and assess the fairness metric
+mitigated_data = mitigation_result['data']
+ml_model.fit(mitigated_data.drop(columns="Y"), mitigated_data["Y"])
 
-mitigation_method = "correlation-remover"
-bias_mitigation = BiasMitigation(ml_model=ml_model, data=train_data,
-                                 target_variable="Y",
-                                 protected_variable="X1", privileged_class=1)
+fair.update_classifier(ml_model)
+new_fairness_metric = fair.fairness_metric(metric_name)
 
-mitigation_res = bias_mitigation.fit_transform(mitigation_method=mitigation_method)
+# All available fairness metrics and bias mitigation can be printed calling the methods:
+fair.print_fairness_metrics()
+fair.print_bias_mitigation_methods()
 ```
 
 ## Responsible AI Takes a Community
