@@ -15,8 +15,7 @@ test_that("test fairness metric evaluation", {
   fairness_score <- fairness_metric(ml_model = ml_model, input_data = df, 
                                     target_variable = target_variable, 
                                     protected_variable = protected_variable,
-                                    privileged_class = "M",
-                                    ignore_protected = FALSE)
+                                    privileged_class = "M")
   
   expect_equal(fairness_score$'Predictive Equality', 0.4)
   expect_equal(fairness_score$'Equal Opportunity', 0.25)
