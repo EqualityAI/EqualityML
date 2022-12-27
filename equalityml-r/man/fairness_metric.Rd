@@ -10,7 +10,7 @@ fairness_metric(
   target_variable,
   protected_variable,
   privileged_class,
-  ignore_protected = TRUE
+  features = NULL
 )
 }
 \arguments{
@@ -24,7 +24,7 @@ fairness_metric(
 
 \item{privileged_class}{character,  Privileged class from protected variable : "privileged"}
 
-\item{ignore_protected}{bool, if TRUE, ignore protected variable for model explanation}
+\item{features}{character, Data columns}
 }
 \value{
 Fairness metric score (list)
@@ -52,7 +52,6 @@ fairness_score <- fairness_metric(
   input_data = custom_data,
   target_variable = "target",
   protected_variable = "sex",
-  privileged_class = "M",
-  ignore_protected = FALSE
+  privileged_class = "M"
 )
 }
