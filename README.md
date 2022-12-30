@@ -133,7 +133,7 @@ To run the bunch of tests over the EqualityML package, dependencies shall be fir
 pip install -e '.[tests]'
 pytest tests
 ```
-### Quick tour
+### Quick Tour
 
 Check out the example below to see how EqualityML can be used to assess fairness metrics and mitigate unwanted bias in 
 the dataset.
@@ -160,9 +160,11 @@ ml_model = LogisticRegression()
 ml_model.fit(training_data.drop(columns="Y"), training_data["Y"])
 
 # Instantiate a FAIR object
-fair_obj = FAIR(ml_model=ml_model, training_data=training_data,
-                                 target_variable="Y",
-                                 protected_variable="sex", privileged_class=1)
+fair_obj = FAIR(ml_model=ml_model, 
+                training_data=training_data,
+                target_variable="Y",
+                protected_variable="sex", 
+                privileged_class=1)
 
 # Evaluate a fairness metric (for example statistical parity ratio)
 metric_name = 'statistical_parity_ratio'
@@ -175,13 +177,19 @@ fairness_metric = fair_obj.fairness_metric(metric_name)
 mitigation_method = "resampling"
 mitigation_result = fair_obj.bias_mitigation(mitigation_method)
 
-# Noe we can re-train the machine learning model based on mitigated data and 
+# Now we can re-train the machine learning model based on that mitigated data and 
 # evaluate again the fairness metric
-mitigated_data = mitigation_result['data']
+mitigated_data = mitigation_result['training_data']
 ml_model.fit(mitigated_data.drop(columns="Y"), mitigated_data["Y"])
 
 fair_obj.update_classifier(ml_model)
 new_fairness_metric = fair_obj.fairness_metric(metric_name)
+
+# print the unmitigated fairness metric
+print(f"Unmitigated fairness metric = {fairness_metric}")
+
+# print the mitigated fairness metric
+print(f"Mitigated fairness metric = {new_fairness_metric}")
 
 # All available fairness metrics and bias mitigation can be printed calling the methods:
 fair_obj.print_fairness_metrics()
