@@ -261,7 +261,7 @@ extras = {'tests': ["pytest>=3.5.0", "pytest-cov>=2.8.1"], 'doc': ["sphinx"]}
 
 setuptools.setup(
     name="equalityml",
-    version="0.1.0-alpha",
+    version="0.1.0a1",
     author="Ben Brintz, Mark Zhang, James Ng, Janice Davis, Jared Hansen, Ji won Chang, João Granja, Rizwan Muhammad",
     author_email="support@equalityai.com",
     description="Algorithms for evaluating fairness metrics and mitigating unfairness in supervised machine learning",
