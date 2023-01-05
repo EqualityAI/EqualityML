@@ -7,7 +7,7 @@
 #' @param target_variable character, Target variable
 #' @param protected_variable character, Data column name which contains sensitive information such as gender, race etc...
 #' @param privileged_class character,  Privileged class from protected variable : "privileged"
-#' @param features character, Data columns 
+#' @param features character, Data columns   used to train the model
 #'
 #'
 #' @return Fairness metric score (list)

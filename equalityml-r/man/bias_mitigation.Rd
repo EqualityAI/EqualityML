@@ -22,22 +22,22 @@ bias_mitigation(
 2. "reweighing"
 3. "resampling"}
 
-\item{training_data}{\code{data.frame}, data to be transformed}
+\item{training_data}{\code{data.frame}, Data to be transformed}
 
-\item{target_variable}{character, target variable}
+\item{target_variable}{character, Target variable}
 
-\item{protected_variable}{character, data column name which contains sensitive information such as gender, race etc...}
+\item{protected_variable}{character, Data column name which contains sensitive information such as gender, race etc...}
 
-\item{testing_data}{\code{data.frame}, data to be transformed}
+\item{testing_data}{\code{data.frame}, Data to be transformed}
 
-\item{probs}{numeric, vector with probabilities for preferential sampling}
+\item{probs}{numeric, Vector with probabilities for preferential sampling}
 
-\item{lambda}{numeric, amount of repair desired for disparate-impact-remover. 
+\item{lambda}{numeric, Amount of repair desired for disparate-impact-remover. 
 Value from 0 to 1, where 0 will return almost unchanged dataset and 1 fully repaired dataset}
 
-\item{cutoff}{numeric, threshold for probabilities for sampling.  Value from 0 to 1.}
+\item{cutoff}{numeric, Threshold for probabilities for sampling.  Value from 0 to 1.}
 
-\item{features}{character, Data columns}
+\item{features}{character, Data columns used to train the model}
 }
 \value{
 Data/weights after the mitigation (list)

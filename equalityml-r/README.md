@@ -171,11 +171,6 @@ mitigation_method <- "resampling"
 data_transformed <- bias_mitigation(mitigation_method, df, target_variable, protected_variable)
 ```
 
-## Release History
-
-* 0.0.1
-    * Work in progress
-
 ## Responsible AI Takes a Community
 The connections and trade-offs between fairness, explainability, and privacy require a holistic approach to Responsible AI development in the machine learning community. We are starting with the principle of fairness and working towards a solution that incorporates multiple aspects of Responsible AI for data scientists and healthcare professionals. We have much more in the works, and we want to know—what do you need? Do you have a Responsible AI challenge you need to solve? [Drop us a line and let’s see how we can help!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)
 

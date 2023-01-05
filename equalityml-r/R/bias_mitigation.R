@@ -6,15 +6,15 @@
 #'                                    1. "disparate-impact-remover"
 #'                                    2. "reweighing"
 #'                                    3. "resampling"
-#' @param training_data \code{data.frame}, data to be transformed
-#' @param target_variable character, target variable
-#' @param protected_variable character, data column name which contains sensitive information such as gender, race etc...
-#' @param testing_data \code{data.frame}, data to be transformed
-#' @param probs numeric, vector with probabilities for preferential sampling 
-#' @param cutoff numeric, threshold for probabilities for sampling.  Value from 0 to 1.
-#' @param lambda numeric, amount of repair desired for disparate-impact-remover. 
+#' @param training_data \code{data.frame}, Data to be transformed
+#' @param target_variable character, Target variable
+#' @param protected_variable character, Data column name which contains sensitive information such as gender, race etc...
+#' @param testing_data \code{data.frame}, Data to be transformed
+#' @param probs numeric, Vector with probabilities for preferential sampling 
+#' @param cutoff numeric, Threshold for probabilities for sampling.  Value from 0 to 1.
+#' @param lambda numeric, Amount of repair desired for disparate-impact-remover. 
 #' Value from 0 to 1, where 0 will return almost unchanged dataset and 1 fully repaired dataset
-#' @param features character, Data columns 
+#' @param features character, Data columns used to train the model
 #' 
 #' @return Data/weights after the mitigation (list)
 #' @export

@@ -24,7 +24,7 @@ fairness_metric(
 
 \item{privileged_class}{character,  Privileged class from protected variable : "privileged"}
 
-\item{features}{character, Data columns}
+\item{features}{character, Data columns   used to train the model}
 }
 \value{
 Fairness metric score (list)
