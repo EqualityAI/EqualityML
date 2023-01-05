@@ -146,7 +146,9 @@ fairness_score <- fairness_metric(ml_model = ml_model, input_data = df,
                                 privileged_class = "M")
 print(fairness_score)                              
 
-#In case the model is unfair in terms of checked fairness metric score, EqualityML provides a range of methods to try to mitigate bias in Machine Learning models. For example, we can 'resampling' the training dataset and re-evaluate the fairness metric
+# In case the model is unfair in terms of checked fairness metric score, EqualityML provides a range of methods
+# to try to mitigate bias in Machine Learning models. For example, we can 'resampling' the training dataset 
+# and re-evaluate the fairness metric
 
 # resampling
 mitigation_method <- "resampling"
