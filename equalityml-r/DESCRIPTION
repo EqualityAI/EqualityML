@@ -27,7 +27,7 @@ Imports:
 Suggests:
     testthat (>= 3.0.0),
     gbm
-RoxygenNote: 7.2.2
+RoxygenNote: 7.2.3
 URL: https://equalityai.com
 BugReports: https://github.com/EqualityAI/EqualityML/issues
 Language: en-US

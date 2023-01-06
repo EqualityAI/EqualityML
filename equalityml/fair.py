@@ -161,11 +161,8 @@ class FAIR:
         # remove the outcome variable and sensitive variable
         data_rm_columns = data.columns.drop([self.protected_variable, self.target_variable])
 
-        if not hasattr(self, 'cr'):
-            self.cr = CorrelationRemover(sensitive_feature_ids=[self.protected_variable], alpha=alpha)
-            data_std = self.cr.fit_transform(data.drop(columns=[self.target_variable]))
-        else:
-            data_std = self.cr.transform(data.drop(columns=[self.target_variable]))
+        cr = CorrelationRemover(sensitive_feature_ids=[self.protected_variable], alpha=alpha)
+        data_std = cr.fit_transform(data.drop(columns=[self.target_variable]))
         train_data_cr = pd.DataFrame(data_std, columns=data_rm_columns)
 
         # Concatenate data after correlation remover

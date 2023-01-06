@@ -6,12 +6,14 @@
 \usage{
 bias_mitigation(
   method,
-  data_input,
+  training_data,
   target_variable,
   protected_variable,
+  testing_data = NULL,
   probs = NULL,
   lambda = 1,
-  cutoff = 0.5
+  cutoff = 0.5,
+  features = NULL
 )
 }
 \arguments{
@@ -20,21 +22,25 @@ bias_mitigation(
 2. "reweighing"
 3. "resampling"}
 
-\item{data_input}{\code{data.frame}, data to be transformed}
+\item{training_data}{\code{data.frame}, Data to be transformed}
 
-\item{target_variable}{character, target variable}
+\item{target_variable}{character, Target variable}
 
-\item{protected_variable}{character, data column name which contains sensitive information such as gender, race etc...}
+\item{protected_variable}{character, Data column name which contains sensitive information such as gender, race etc...}
 
-\item{probs}{numeric, vector with probabilities for preferential sampling}
+\item{testing_data}{\code{data.frame}, Data to be transformed}
 
-\item{lambda}{numeric, amount of repair desired for disparate-impact-remover. 
+\item{probs}{numeric, Vector with probabilities for preferential sampling}
+
+\item{lambda}{numeric, Amount of repair desired for disparate-impact-remover. 
 Value from 0 to 1, where 0 will return almost unchanged dataset and 1 fully repaired dataset}
 
-\item{cutoff}{numeric, threshold for probabilities for sampling.  Value from 0 to 1.}
+\item{cutoff}{numeric, Threshold for probabilities for sampling.  Value from 0 to 1.}
+
+\item{features}{character, Data columns used to train the model}
 }
 \value{
-Data/indices/weights after the mitigation (list)
+Data/weights after the mitigation (list)
 }
 \description{
 Bias mitigation is a wrapper with several options to make a dataset more balanced.
@@ -54,7 +60,7 @@ custom_data <- data.frame(
 
 mitigation_result <- bias_mitigation(
   method = "disparate-impact-remover",
-  data_input = custom_data,
+  training_data = custom_data,
   target_variable = "target",
   protected_variable = "sex"
 )

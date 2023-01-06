@@ -6,15 +6,17 @@
 #'                                    1. "disparate-impact-remover"
 #'                                    2. "reweighing"
 #'                                    3. "resampling"
-#' @param data_input \code{data.frame}, data to be transformed
-#' @param target_variable character, target variable
-#' @param protected_variable character, data column name which contains sensitive information such as gender, race etc...
-#' @param probs numeric, vector with probabilities for preferential sampling 
-#' @param cutoff numeric, threshold for probabilities for sampling.  Value from 0 to 1.
-#' @param lambda numeric, amount of repair desired for disparate-impact-remover. 
+#' @param training_data \code{data.frame}, Data to be transformed
+#' @param target_variable character, Target variable
+#' @param protected_variable character, Data column name which contains sensitive information such as gender, race etc...
+#' @param testing_data \code{data.frame}, Data to be transformed
+#' @param probs numeric, Vector with probabilities for preferential sampling 
+#' @param cutoff numeric, Threshold for probabilities for sampling.  Value from 0 to 1.
+#' @param lambda numeric, Amount of repair desired for disparate-impact-remover. 
 #' Value from 0 to 1, where 0 will return almost unchanged dataset and 1 fully repaired dataset
-#'
-#' @return Data/indices/weights after the mitigation (list)
+#' @param features character, Data columns used to train the model
+#' 
+#' @return Data/weights after the mitigation (list)
 #' @export
 #'
 #' @examples
@@ -32,34 +34,53 @@
 #'
 #' mitigation_result <- bias_mitigation(
 #'   method = "disparate-impact-remover",
-#'   data_input = custom_data,
+#'   training_data = custom_data,
 #'   target_variable = "target",
 #'   protected_variable = "sex"
 #' )
-bias_mitigation <- function(method, data_input, target_variable, protected_variable, probs = NULL, lambda = 1, cutoff = 0.5){
+bias_mitigation <- function(method, training_data, target_variable, protected_variable, testing_data = NULL, probs = NULL, lambda = 1, cutoff = 0.5, features = NULL){
 
   # Check input arguments
   stopifnot(method == "disparate-impact-remover" | method == "reweighing" | method == "resampling" | 
               method == "resampling-uniform"  | method == "resampling-preferential")
   
+  if(is.null(features)){
+    features = colnames(training_data)
+  }
+  
   # conversion of protected variable to factor
-  data_input[[protected_variable]] <- as.factor(data_input[[protected_variable]])
+  training_data[[protected_variable]] <- as.factor(training_data[[protected_variable]])
 
   # conversion of targeted variable to numeric
-  data_input[[target_variable]] <- as.numeric(as.character(data_input[[target_variable]]))
+  training_data[[target_variable]] <- as.numeric(as.character(training_data[[target_variable]]))
 
+  if(!is.null(testing_data)){
+    # conversion of protected variable to factor
+    testing_data[[protected_variable]] <- as.factor(testing_data[[protected_variable]])
+    
+    # conversion of targeted variable to numeric
+    testing_data[[target_variable]] <- as.numeric(as.character(testing_data[[target_variable]]))
+  }
+  
   method <- tolower(method)
   # ----------------------------------------------------------------------------
   if(method == "disparate-impact-remover"){
-    results <- disp_removing_data(data_input, target_variable, protected_variable, lambda)
+    training_data_transformed <- disp_removing_data(training_data, features, target_variable, protected_variable, lambda)
+    results = list("training_data" = training_data_transformed)
+    if(!is.null(testing_data)){
+      testing_data_transformed <- disp_removing_data(testing_data, features, target_variable, protected_variable, lambda)
+      results <- append(results,list("testing_data" = testing_data_transformed)) 
+    }
   }
   else if(method == "reweighing")
   {
-    results <- reweighing_model_weights(data_input, target_variable, protected_variable)
+    data_weights <- reweighing_model_weights(training_data, target_variable, protected_variable)
+    results = list("weights" = data_weights)
   }
   else if((method == "resampling") || (method == "resampling-uniform") || (method == "resampling-preferential"))
   {
-    results <- resampling_data(method, data_input, target_variable, protected_variable, probs, cutoff)
+    training_data_transformed <- resampling_data(method, training_data, target_variable, protected_variable, probs, cutoff)
+    results = list("training_data" = training_data_transformed)  
   } else{
     print('Mitigation Method - Invalid/Not Available')
   }
@@ -71,28 +92,26 @@ bias_mitigation <- function(method, data_input, target_variable, protected_varia
 #' This function mitigates bias with disparate impact remover pre-processing method (Feldman et al. (2015))
 #' Filters out sensitive correlations in a dataset using 'disparate_impact_remover' function from fairmodels package.
 #' @noRd
-disp_removing_data <- function(data_input, target_variable, protected_variable, lambda){
+disp_removing_data <- function(input_data, features, target_variable, protected_variable, lambda){
 
     if (lambda > 1 || lambda < 0) {
         lambda = 1
         print("The lambda value for disparate impact factor has been changed to 1 since lambda>1 or lambda<0")
     }
+  
+    x <- input_data[features != target_variable]
 
     # finding list of numeric features
-    features_transform <- colnames(data_input[sapply(data_input, is.numeric)])
-    
-    # removing target variable from the features transform list
-    features_transform <- features_transform[features_transform != target_variable[1]]
+    features_transform <- colnames(x[sapply(x, is.numeric)])
     if(length(features_transform) == 0){
       print("Features to transform are empty")
     }
       
 
     # Data transformation using Disparate Impact Remover
-    data_transformed <- fairmodels::disparate_impact_remover(data = data_input, protected = get(protected_variable[1], data_input),
+    data_transformed <- fairmodels::disparate_impact_remover(data = input_data, protected = get(protected_variable[1], input_data),
                                                  features_to_transform = features_transform,
                                                  lambda = lambda)
-    data_transformed = list("data" = data_transformed)
     return(data_transformed)
 }
 
@@ -101,11 +120,10 @@ disp_removing_data <- function(data_input, target_variable, protected_variable, 
 #' Function returns weights for model training. The purpose of this weights is to mitigate bias in statistical parity.
 #' Obtain weights for machine learning modelusing 'reweight' function from fairmodels package.
 #' @noRd
-reweighing_model_weights <- function(data_input, target_variable, protected_variable){
+reweighing_model_weights <- function(input_data, target_variable, protected_variable){
 
     # data weights calculations
-    data_weights <- fairmodels::reweight(protected = get(protected_variable[1], data_input), y = get(target_variable[1], data_input))
-    data_weights = list("weights" = data_weights)
+    data_weights <- fairmodels::reweight(protected = get(protected_variable[1], input_data), y = get(target_variable[1], input_data))
 
     return(data_weights)
 }
@@ -114,7 +132,7 @@ reweighing_model_weights <- function(data_input, target_variable, protected_vari
 #'
 #' Resample the input data using 'resample' function from fairmodels package.
 #' @noRd
-resampling_data <- function(method, data_input, target_variable, protected_variable, probs = NULL, cutoff = 0.5){
+resampling_data <- function(method, input_data, target_variable, protected_variable, probs = NULL, cutoff = 0.5){
 
   if (cutoff > 1 || cutoff < 0) {
     cutoff = 0.5
@@ -122,14 +140,13 @@ resampling_data <- function(method, data_input, target_variable, protected_varia
   }
   
   if((method == "resampling") || (method == "resampling-uniform")){
-    data_index <- fairmodels::resample(protected = get(protected_variable[1], data_input), y = get(target_variable[1], data_input), type = "uniform", cutoff = cutoff)
+    data_index <- fairmodels::resample(protected = get(protected_variable[1], input_data), y = get(target_variable[1], input_data), type = "uniform", cutoff = cutoff)
   }
   else{
     stopifnot(!is.null(probs))
-    data_index <- fairmodels::resample(protected = get(protected_variable[1], data_input), y = get(target_variable[1], data_input), type = "preferential", probs = probs, cutoff = cutoff)
+    data_index <- fairmodels::resample(protected = get(protected_variable[1], input_data), y = get(target_variable[1], input_data), type = "preferential", probs = probs, cutoff = cutoff)
   }
-  data_transformed <- data_input[data_index,] # mitigated training data
-  data_transformed = list("data" = data_transformed)
+  data_transformed <- input_data[data_index,] # mitigated training data
   
   return(data_transformed)
   

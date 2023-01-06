@@ -118,7 +118,7 @@ devtools::install_github("EqualityAI/equalityml/equalityml-r")
 
 ## Quick tour
 
-Check out the example below to see how EqualityML can be used to evaluate the fairness of a Ml model and dataset.
+Check out the example below to see how EqualityML can be used to evaluate the fairness of a ML application and how to mitigate their dataset.
 
 ```
 library(fairmodels)
@@ -135,47 +135,38 @@ df <- data.frame(
     )
 )
   
+target_variable = "target"
+protected_variable = "sex"
   
 ml_model <- glm(target ~ sex + age, data = df, family = 'binomial')
   
 fairness_score <- fairness_metric(ml_model = ml_model, input_data = df, 
                                 target_variable = target_variable, 
                                 protected_variable = protected_variable,
-                                privileged_class = "M",
-                                ignore_protected = FALSE)
+                                privileged_class = "M")
 print(fairness_score)                              
-```
 
-In case the model is unfair in terms of checked fairness metric score, EqualityML provides a range of methods to try to
-mitigate bias in Machine Learning models. For example, we can use 'resampling' to perform mitigation on 
-training dataset.
-
-```
-library(fairmodels)
-library(DALEX)
-library(equalityml)
-
-df <- data.frame(
-    sex = c(rep("M", 140), rep("F", 60)),
-    age = c(rep(1:20,10)),
-    target = c(
-      c(rep(c(1, 1, 1, 1, 1, 1, 1, 0, 0, 0),14)),
-      c(rep(c(0, 1, 0, 1, 0, 0, 1, 0, 0, 1),6))
-    )
-)
-
-target_variable = "target"
-protected_variable = "sex"
+# In case the model is unfair in terms of checked fairness metric score, EqualityML provides a range of methods
+# to try to mitigate bias in Machine Learning models. For example, we can 'resampling' the training dataset 
+# and re-evaluate the fairness metric
 
 # resampling
 mitigation_method <- "resampling"
 data_transformed <- bias_mitigation(mitigation_method, df, target_variable, protected_variable)
+
+new_fairness_score <- fairness_metric(ml_model = ml_model, input_data = data_transformed$training_data, 
+                                target_variable = target_variable, 
+                                protected_variable = protected_variable,
+                                privileged_class = "M")
+                                
+# print the unmitigated fairness metric
+print("Unmitigated fairness metric:")
+print(fairness_score)
+
+# print the mitigated fairness metric
+print("Mitigated fairness metric:")
+print(new_fairness_score)
 ```
-
-## Release History
-
-* 0.0.1
-    * Work in progress
 
 ## Responsible AI Takes a Community
 The connections and trade-offs between fairness, explainability, and privacy require a holistic approach to Responsible AI development in the machine learning community. We are starting with the principle of fairness and working towards a solution that incorporates multiple aspects of Responsible AI for data scientists and healthcare professionals. We have much more in the works, and we want to know—what do you need? Do you have a Responsible AI challenge you need to solve? [Drop us a line and let’s see how we can help!](https://equalityai.slack.com/join/shared_invite/zt-1claqpebo-MnGnGoqCM9Do~40HqbSaww#/shared-invite/email)

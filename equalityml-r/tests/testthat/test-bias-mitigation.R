@@ -11,7 +11,7 @@ test_that("test resampling bias mitigation method", {
   # resampling-uniform
   mitigation_method <- "resampling-uniform"
   data_transformed <- bias_mitigation(mitigation_method, df, target_variable, protected_variable)
-  df_1 <-data_transformed$data
+  df_1 <-data_transformed$training_data
   expect_equal(nrow(df_1), nrow(df))
   expect_equal(ncol(df_1), ncol(df))
   
@@ -23,7 +23,7 @@ test_that("test resampling bias mitigation method", {
   probs = c(0.9, 0.82, 0.56, 0.78, 0.45, 0.12, 0.48, 0.63, 0.48, 0.88)
   mitigation_method <- "resampling-preferential"
   data_transformed <- bias_mitigation(mitigation_method, df, target_variable, protected_variable, probs = probs)
-  df_2 <-data_transformed$data
+  df_2 <-data_transformed$training_data
   
   expect_equal(nrow(df_2), nrow(df))
   expect_equal(ncol(df_2), ncol(df))
@@ -66,7 +66,7 @@ test_that("test disparate-impact-remover bias mitigation method", {
   
   mitigation_method <- "disparate-impact-remover"
   data_transformed <- bias_mitigation(mitigation_method, df, target_variable, protected_variable)
-  df_1 <-data_transformed$data
+  df_1 <-data_transformed$training_data
   
   expect_equal(nrow(df_1), nrow(df))
   expect_equal(ncol(df_1), ncol(df))
