@@ -1,21 +1,10 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
-    branches: [ main ]
-    paths:
-      - '**.R'
-      - '**.r'
-      - '*DESCRIPTION'
-      - '**.Rmd'
-      - '**.rmd'
-      - '**.rda'
-      - '**.Rda'
-      - '**.rds'
-      - '**.Rds'
+    branches: [main, master]
   pull_request:
-    branches: [ main ]
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+    branches: [main, master]
 
 name: R-CMD-check
 
@@ -52,18 +41,9 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          working-directory: "equalityml-r"
           extra-packages: any::rcmdcheck
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2
         with:
-          working-directory: "equalityml-r"
           upload-snapshots: true
-
-      - name: Upload check results
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ runner.os }}-r${{ matrix.config.r }}-results
-          path: check

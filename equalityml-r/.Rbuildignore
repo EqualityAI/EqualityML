@@ -6,3 +6,5 @@
 ^LICENSE$
 ^\.github$
 .*\.PNG$
+^example$
+^cran-comments\.md$
