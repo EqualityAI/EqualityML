@@ -1,21 +1,31 @@
 import numpy as np
+import pandas as pd
 from scipy import stats
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import train_test_split
+from fair import FAIR
 
 
-def compare_models(model_1, model_2, data, target_variable, score="binary_classification",  scoring=None, random_seed=None):
+## TODO Add discrimination threshold computation
+
+
+def compare_models(model_1, model_2, data, target_variable, fair_object=None, score="binary_classification",  scoring=None, random_seed=None):
     X = data.drop(columns=target_variable)
     y = data[target_variable]
 
     if score == "binary_classification":
+        # model_1 can have the same architecture as model_2
         tb = mcnemar_table(model_1, model_2, X, y)
         if tb[0, 1] + tb[1, 0] > 25:
             chi2, p = mcnemar(tb)
         else:
             chi2, p = mcnemar(tb, exact_binomial_test=True)
     elif score == "probability":
-        chi2, p = paired_ttest_5x2cv(model_1, model_2, X, y, scoring=scoring, random_seed=random_seed)
+        # model_1 can not have the same architecture as model_2
+        mitigation_method = "reweighing"
+        chi2, p = paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, scoring=scoring, random_seed=random_seed)
+        # Fairness metric
+        #-chi2, p = paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, scoring=scoring, random_seed=random_seed)
     return chi2, p
 
 
@@ -44,6 +54,7 @@ def mcnemar_table(model_1, model_2, X, y):
     """
 
     # Compute predictions for model 1 and 2
+    ## TODO add discrimination Threshold
     y_model1 = model_1.predict(X)
     y_model2 = model_2.predict(X)
 
@@ -105,7 +116,7 @@ def mcnemar(tb, corrected=True, exact_binomial_test=False):
     return chi2, p
 
 
-def paired_ttest_5x2cv(model_1, model_2, X, y, scoring=None, random_seed=None):
+def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, scoring=None, random_seed=None):
     """
     Implements the 5x2cv paired t test for comparing the performance of two models (classifier or regressors).
     This test was proposed by Dieterrich (1998).
@@ -147,10 +158,6 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, scoring=None, random_seed=None):
     if model_1._estimator_type != model_2._estimator_type:
         raise AttributeError("Models must be of the same type")
 
-    if (type(model_1) == type(model_2)) and (model_1.get_params(deep=True) == model_2.get_params(deep=True)):
-        print("Model 1 and model 2 are of the same type with the same parameters")
-        return 0, 1
-
     if scoring is None:
         if model_1._estimator_type == "classifier":
             scoring = "accuracy"
@@ -159,17 +166,28 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, scoring=None, random_seed=None):
         else:
             raise AttributeError("Model must be a Classifier or Regressor.")
 
+    ## TODO add fairness_metric call
     if isinstance(scoring, str):
         scorer = get_scorer(scoring)
+    elif scoring == "fairness_metric":
+        scorer = scoring
     else:
         scorer = scoring
 
     def _score_diff(_model_1, _model_2, _X_train, _y_train, _X_test, _y_test):
 
         _model_1.fit(_X_train, _y_train)
-        _model_2.fit(_X_train, _y_train)
         score_1 = scorer(_model_1, _X_test, _y_test)
-        score_2 = scorer(_model_2, _X_test, _y_test)
+
+        # apply bias mitigation to the new dataset
+        fair_object.training_data = pd.concat([_X_train, _y_train], axis=1)
+        fair_object.testing_data = pd.concat([_X_test, _y_test], axis=1)
+        fair_object.update_classifier(_model_1)
+        _model_2 = fair_object.model_mitigation(mitigation_method=mitigation_method)
+
+        _mitigated_X_test = fair_object.mitigated_testing_data.drop(columns=fair_object.target_variable)
+        _mitigated_y_test = fair_object.mitigated_testing_data[fair_object.target_variable]
+        score_2 = scorer(_model_2, _mitigated_X_test, _mitigated_y_test)
         score_diff = score_1 - score_2
         return score_diff
 
@@ -189,7 +207,7 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, scoring=None, random_seed=None):
         if first_score_diff is None:
             first_score_diff = score_diff_A
 
-    if first_score_diff < 1e-10 or sum_variance < 1e-10:
+    if abs(first_score_diff) < 1e-10 or sum_variance < 1e-10:
         print("No relevant difference exists between model 1 and model 2")
         return 0, 1
 

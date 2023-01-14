@@ -13,6 +13,8 @@ from aif360.algorithms.preprocessing import Reweighing
 from aif360.algorithms.preprocessing import DisparateImpactRemover
 from fairlearn.preprocessing import CorrelationRemover
 
+from sklearn.metrics import get_scorer
+
 
 class FAIR:
     """
@@ -453,3 +455,94 @@ class FAIR:
         self.ml_model = ml_model
         self.pred_class = pred_class
         self.pred_prob = pred_prob
+
+    def model_mitigation(self, mitigation_method):
+
+        mitigation_res = self.bias_mitigation(mitigation_method=mitigation_method)
+        if mitigation_method == "reweighing":
+            mitigated_weights = mitigation_res['weights']
+            X_train = self.training_data.drop(columns=self.target_variable)
+            y_train = self.training_data[self.target_variable]
+            self.ml_model.fit(X_train, y_train, sample_weight=mitigated_weights)
+        else:
+            mitigated_data = mitigation_res['training_data']
+            X_train = mitigated_data.drop(columns=self.target_variable)
+            y_train = mitigated_data[self.target_variable]
+
+            # ReTrain Machine Learning model based on mitigated data
+            self.ml_model.fit(X_train, y_train)
+
+        return self.ml_model
+
+    @property
+    def map_bias_mitigation(self):
+        return {'treatment_equality_ratio': [''],
+                'treatment_equality_difference': [''],
+                'balance_positive_class': [''],
+                'balance_negative_class': [''],
+                'equal_opportunity_ratio': [''],
+                'accuracy_equality_ratio': [''],
+                'predictive_parity_ratio': [''],
+                'predictive_equality_ratio': [''],
+                'statistical_parity_ratio': ['disparate-impact-remover', 'resampling',
+                                             'resampling-preferential', 'reweighing']}
+
+    def compare_mitigation_methods(self, scoring=None, mitigation_methods=None):
+        """
+        Update Machine Learning model classifier typically after applying a bias mitigation method.
+
+        Parameters
+        ----------
+        ml_model : object
+        """
+
+        if mitigation_methods is None:
+            mitigation_methods = self.map_bias_mitigation[self.metric_name]
+        else:
+            for mitigation_method in mitigation_methods:
+                if mitigation_method not in self.bias_mitigation_list:
+                    print(f"Bias mitigation method {mitigation_method} is not available")
+
+
+        if scoring is None:
+            if self.ml_model._estimator_type == "classifier":
+                scoring = "accuracy"
+            elif self.ml_model._estimator_type == "regressor":
+                scoring = "r2"
+            else:
+                raise AttributeError("Model must be a Classifier or Regressor.")
+
+        if isinstance(scoring, str):
+            scorer = get_scorer(scoring)
+        else:
+            scorer = scoring
+
+        comparison_df = pd.DataFrame(index=[str(scoring), self.metric_name])
+        if self.testing_data is None:
+            testing_data = self.training_data
+        else:
+            testing_data = self.testing_data
+        X_test = testing_data.drop(columns=self.target_variable)
+        y_test = testing_data[self.target_variable]
+        score = scorer(self.ml_model, X_test, y_test)
+        fairness_metric = self.fairness_metric(self.metric_name)
+        comparison_df['reference'] = [score, fairness_metric[self.metric_name]]
+
+        # Iterate over suggested mitigation_methods and re-evaluate score and fairness metric
+        for mitigation_method in mitigation_methods:
+            self.model_mitigation(mitigation_method=mitigation_method)
+
+            if self.mitigated_testing_data is not None:
+                testing_data = self.mitigated_testing_data
+            elif self.testing_data is not None:
+                testing_data = self.testing_data
+            else:
+                testing_data = self.training_data
+            X_test = testing_data.drop(columns=self.target_variable)
+            y_test = testing_data[self.target_variable]
+            score = scorer(self.ml_model, X_test, y_test)
+            fairness_metric = self.fairness_metric(self.metric_name)
+
+            comparison_df[mitigation_method] = [score, fairness_metric[self.metric_name]]
+
+        return comparison_df
