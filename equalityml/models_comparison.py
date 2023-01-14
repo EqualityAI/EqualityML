@@ -3,33 +3,26 @@ import pandas as pd
 from scipy import stats
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import train_test_split
-from fair import FAIR
 
 
 ## TODO Add discrimination threshold computation
 
-
-def compare_models(model_1, model_2, data, target_variable, fair_object=None, score="binary_classification",  scoring=None, random_seed=None):
+def compare_models(model_1, model_2, data, target_variable, method="mcnemar", fair_object=None, mitigation_method=None, scoring=None, random_seed=None):
     X = data.drop(columns=target_variable)
     y = data[target_variable]
 
-    if score == "binary_classification":
-        # model_1 can have the same architecture as model_2
-        tb = mcnemar_table(model_1, model_2, X, y)
-        if tb[0, 1] + tb[1, 0] > 25:
-            chi2, p = mcnemar(tb)
-        else:
-            chi2, p = mcnemar(tb, exact_binomial_test=True)
-    elif score == "probability":
-        # model_1 can not have the same architecture as model_2
-        mitigation_method = "reweighing"
+    if method == "mcnemar":
+        chi2, p = mcnemar(model_1, model_2, X, y, discrimination_threshold=0.5)
+    elif method == "5x2cv":
         chi2, p = paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, scoring=scoring, random_seed=random_seed)
+        print(chi2, p)
         # Fairness metric
-        #-chi2, p = paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, scoring=scoring, random_seed=random_seed)
+        chi2, p = paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, scoring="statistical_parity_ratio", random_seed=random_seed)
+        print(chi2, p)
     return chi2, p
 
 
-def mcnemar_table(model_1, model_2, X, y):
+def mcnemar_table(model_1, model_2, X, y, discrimination_threshold=0.5):
     """
     Compute a 2x2 contigency table for McNemar's test.
     Parameters
@@ -54,10 +47,8 @@ def mcnemar_table(model_1, model_2, X, y):
     """
 
     # Compute predictions for model 1 and 2
-    ## TODO add discrimination Threshold
-    y_model1 = model_1.predict(X)
-    y_model2 = model_2.predict(X)
-
+    y_model1 = list(map(lambda x: 1 if x > discrimination_threshold else 0, model_1.predict_proba(X)[:, -1]))
+    y_model2 = list(map(lambda x: 1 if x > discrimination_threshold else 0, model_2.predict_proba(X)[:, -1]))
     model1_true = (y == y_model1)
     model2_true = (y == y_model2)
 
@@ -70,18 +61,12 @@ def mcnemar_table(model_1, model_2, X, y):
     return tb
 
 
-def mcnemar(tb, corrected=True, exact_binomial_test=False):
+def mcnemar(model_1, model_2, X, y, discrimination_threshold=0.5, corrected=True, exact_binomial_test=False):
     """
     McNemar's test used on paired nominal data.
     Parameters
     -----------
-    tb : array-like, shape=[2, 2]
-        2 x 2 contigency table (as returned by mcnemar_table),
-        where
-        a: tb[0, 0]: # of samples that both models predicted correctly
-        b: tb[0, 1]: # of samples that model 1 got right and model 2 got wrong
-        c: tb[1, 0]: # of samples that model 2 got right and model 1 got wrong
-        d: tb[1, 1]: # of samples that both models predicted incorrectly
+
     corrected : bool (default: True)
         True to use Edward's continuity correction for chi-squared
     exact_binomial_test : bool, (default: False)
@@ -96,8 +81,7 @@ def mcnemar(tb, corrected=True, exact_binomial_test=False):
         if `exact_binomial_test=True`, `chi2` is `None`
     """
 
-    if tb.shape != (2, 2):
-        raise ValueError("Input array must be a 2x2 array.")
+    tb = mcnemar_table(model_1, model_2, X, y, discrimination_threshold=discrimination_threshold)
 
     b = tb[0, 1]
     c = tb[1, 0]
@@ -166,28 +150,40 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
         else:
             raise AttributeError("Model must be a Classifier or Regressor.")
 
-    ## TODO add fairness_metric call
-    if isinstance(scoring, str):
-        scorer = get_scorer(scoring)
-    elif scoring == "fairness_metric":
-        scorer = scoring
+    if scoring in fair_object.fairness_metrics:
+        def scorer(model, x, y):
+            fair_object.mitigated_testing_data = pd.concat([x, y], axis=1)
+            fair_object.ml_model = model
+            return fair_object.fairness_metric(scoring)
     else:
-        scorer = scoring
+        if isinstance(scoring, str):
+            scorer = get_scorer(scoring)
+        else:
+            scorer = scoring
 
     def _score_diff(_model_1, _model_2, _X_train, _y_train, _X_test, _y_test):
 
+        # Train model 1 and get score 1
         _model_1.fit(_X_train, _y_train)
         score_1 = scorer(_model_1, _X_test, _y_test)
 
-        # apply bias mitigation to the new dataset
+        # Update training/testing data and reference ml model
         fair_object.training_data = pd.concat([_X_train, _y_train], axis=1)
         fair_object.testing_data = pd.concat([_X_test, _y_test], axis=1)
         fair_object.update_classifier(_model_1)
-        _model_2 = fair_object.mitigate_model(mitigation_method=mitigation_method)
 
-        _mitigated_X_test = fair_object.mitigated_testing_data.drop(columns=fair_object.target_variable)
-        _mitigated_y_test = fair_object.mitigated_testing_data[fair_object.target_variable]
+        # Apply bias mitigation to get mitigated model 2
+        _model_2 = fair_object.mitigate_model(mitigation_method=mitigation_method)
+        if fair_object.mitigated_testing_data is not None:
+            testing_data = fair_object.mitigated_testing_data
+        else:
+            testing_data = fair_object.testing_data
+
+        # Get score 2
+        _mitigated_X_test = testing_data.drop(columns=fair_object.target_variable)
+        _mitigated_y_test = testing_data[fair_object.target_variable]
         score_2 = scorer(_model_2, _mitigated_X_test, _mitigated_y_test)
+
         score_diff = score_1 - score_2
         return score_diff
 

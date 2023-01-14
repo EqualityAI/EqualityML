@@ -2,6 +2,7 @@ import pandas as pd
 import logging
 import matplotlib.pyplot as plt
 import os
+import copy
 
 # Ignore aif360 warnings
 logger = logging.getLogger()
@@ -100,7 +101,7 @@ class FAIR:
         else:
             self.features = features
 
-        self.ml_model = ml_model
+        self.ml_model = copy.deepcopy(ml_model)
         self.training_data = training_data.copy()
         self.target_variable = target_variable
         self.favorable_label = favorable_label
@@ -120,7 +121,6 @@ class FAIR:
         self.pred_prob = pred_prob
         self.unprivileged_groups = [{self.protected_variable: [self.unprivileged_class]}]
         self.privileged_groups = [{self.protected_variable: [self.privileged_class]}]
-        self.fairness_metrics = []
         self.metric_name = None
         self.cutoff = None
         self.mitigated_testing_data = None
@@ -415,8 +415,6 @@ class FAIR:
         if metric_name == 'statistical_parity_ratio':
             fairness_metric = cm_pred_data.selection_rate(False) / cm_pred_data.selection_rate(True)
 
-        self.fairness_metrics.append(fairness_metric)
-
         return fairness_metric
 
     def print_fairness_metrics(self):
@@ -473,6 +471,18 @@ class FAIR:
             self.ml_model.fit(X_train, y_train)
 
         return self.ml_model
+
+    @property
+    def fairness_metrics(self):
+        return ['treatment_equality_ratio',
+                'treatment_equality_difference',
+                'balance_positive_class',
+                'balance_negative_class',
+                'equal_opportunity_ratio',
+                'accuracy_equality_ratio',
+                'predictive_parity_ratio',
+                'predictive_equality_ratio',
+                'statistical_parity_ratio']
 
     @property
     def map_bias_mitigation(self):
