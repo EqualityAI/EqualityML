@@ -1,5 +1,7 @@
 import pandas as pd
 import logging
+import matplotlib.pyplot as plt
+import os
 
 # Ignore aif360 warnings
 logger = logging.getLogger()
@@ -324,7 +326,6 @@ class FAIR:
                7. 'predictive_parity_ratio':  Predictive parity ratio
                8. 'predictive_equality_ratio': Predictive equality ratio
                9. 'statistical_parity_ratio': Statistical parity ratio
-               10. 'all'
         cutoff : float, default=0.5
             Cutoff for predictions in classification models. Needed for measures like recall, precision, acc, f1
 
@@ -339,7 +340,7 @@ class FAIR:
                         'predictive_parity_ratio', 'predictive_equality_ratio', 'statistical_parity_ratio']
 
         metric_name = metric_name.lower()
-        if metric_name not in metrics_list and metric_name != 'all':
+        if metric_name not in metrics_list:
             raise ValueError(f"Provided invalid metric name {metric_name}")
 
         if cutoff < 0.0:
@@ -395,25 +396,24 @@ class FAIR:
         privileged_metrics = cm_pred_data.performance_measures(True)
         unprivileged_metrics = cm_pred_data.performance_measures(False)
 
-        if (metric_name == 'treatment_equality_ratio') or (metric_name == 'all'):
-            fairness_metric['treatment_equality_ratio'] = unprivileged_ratio / privileged_ratio
-        if (metric_name == 'treatment_equality_difference') or (metric_name == 'all'):
-            fairness_metric['treatment_equality_difference'] = unprivileged_ratio - privileged_ratio
-        if (metric_name == 'balance_negative_class') or (metric_name == 'all'):
-            fairness_metric['balance_negative_class'] = unprivileged_metrics['GFPR'] / privileged_metrics['GFPR']
-        if (metric_name == 'balance_positive_class') or (metric_name == 'all'):
-            fairness_metric['balance_positive_class'] = unprivileged_metrics['GTPR'] / privileged_metrics['GTPR']
-        if (metric_name == 'equal_opportunity_ratio') or (metric_name == 'all'):
-            fairness_metric['equal_opportunity_ratio'] = unprivileged_metrics['TPR'] / privileged_metrics['TPR']
-        if (metric_name == 'accuracy_equality_ratio') or (metric_name == 'all'):
-            fairness_metric['accuracy_equality_ratio'] = unprivileged_metrics['ACC'] / privileged_metrics['ACC']
-        if (metric_name == 'predictive_parity_ratio') or (metric_name == 'all'):
-            fairness_metric['predictive_parity_ratio'] = unprivileged_metrics['PPV'] / privileged_metrics['PPV']
-        if (metric_name == 'predictive_equality_ratio') or (metric_name == 'all'):
-            fairness_metric['predictive_equality_ratio'] = unprivileged_metrics['FPR'] / privileged_metrics['FPR']
-        if (metric_name == 'statistical_parity_ratio') or (metric_name == 'all'):
-            fairness_metric['statistical_parity_ratio'] = cm_pred_data.selection_rate(False) / \
-                                                          cm_pred_data.selection_rate(True)
+        if metric_name == 'treatment_equality_ratio':
+            fairness_metric = unprivileged_ratio / privileged_ratio
+        if metric_name == 'treatment_equality_difference':
+            fairness_metric = unprivileged_ratio - privileged_ratio
+        if metric_name == 'balance_negative_class':
+            fairness_metric = unprivileged_metrics['GFPR'] / privileged_metrics['GFPR']
+        if metric_name == 'balance_positive_class':
+            fairness_metric = unprivileged_metrics['GTPR'] / privileged_metrics['GTPR']
+        if metric_name == 'equal_opportunity_ratio':
+            fairness_metric = unprivileged_metrics['TPR'] / privileged_metrics['TPR']
+        if metric_name == 'accuracy_equality_ratio':
+            fairness_metric = unprivileged_metrics['ACC'] / privileged_metrics['ACC']
+        if metric_name == 'predictive_parity_ratio':
+            fairness_metric = unprivileged_metrics['PPV'] / privileged_metrics['PPV']
+        if metric_name == 'predictive_equality_ratio':
+            fairness_metric = unprivileged_metrics['FPR'] / privileged_metrics['FPR']
+        if metric_name == 'statistical_parity_ratio':
+            fairness_metric = cm_pred_data.selection_rate(False) / cm_pred_data.selection_rate(True)
 
         self.fairness_metrics.append(fairness_metric)
 
@@ -456,7 +456,7 @@ class FAIR:
         self.pred_class = pred_class
         self.pred_prob = pred_prob
 
-    def model_mitigation(self, mitigation_method):
+    def mitigate_model(self, mitigation_method):
 
         mitigation_res = self.bias_mitigation(mitigation_method=mitigation_method)
         if mitigation_method == "reweighing":
@@ -487,7 +487,7 @@ class FAIR:
                 'statistical_parity_ratio': ['disparate-impact-remover', 'resampling',
                                              'resampling-preferential', 'reweighing']}
 
-    def compare_mitigation_methods(self, scoring=None, mitigation_methods=None):
+    def compare_mitigation_methods(self, scoring=None, mitigation_methods=None, plot=False, save_plot=False):
         """
         Update Machine Learning model classifier typically after applying a bias mitigation method.
 
@@ -503,7 +503,7 @@ class FAIR:
                 if mitigation_method not in self.bias_mitigation_list:
                     print(f"Bias mitigation method {mitigation_method} is not available")
 
-
+        # Check scoring/scorer
         if scoring is None:
             if self.ml_model._estimator_type == "classifier":
                 scoring = "accuracy"
@@ -517,7 +517,8 @@ class FAIR:
         else:
             scorer = scoring
 
-        comparison_df = pd.DataFrame(index=[str(scoring), self.metric_name])
+        # Create the Dataframe for comparing models performance and fairness metrics
+        comparison_df = pd.DataFrame(columns=[str(scoring), self.metric_name])
         if self.testing_data is None:
             testing_data = self.training_data
         else:
@@ -526,11 +527,11 @@ class FAIR:
         y_test = testing_data[self.target_variable]
         score = scorer(self.ml_model, X_test, y_test)
         fairness_metric = self.fairness_metric(self.metric_name)
-        comparison_df['reference'] = [score, fairness_metric[self.metric_name]]
+        comparison_df.loc['reference'] = [score, fairness_metric]
 
         # Iterate over suggested mitigation_methods and re-evaluate score and fairness metric
         for mitigation_method in mitigation_methods:
-            self.model_mitigation(mitigation_method=mitigation_method)
+            self.mitigate_model(mitigation_method=mitigation_method)
 
             if self.mitigated_testing_data is not None:
                 testing_data = self.mitigated_testing_data
@@ -543,6 +544,26 @@ class FAIR:
             score = scorer(self.ml_model, X_test, y_test)
             fairness_metric = self.fairness_metric(self.metric_name)
 
-            comparison_df[mitigation_method] = [score, fairness_metric[self.metric_name]]
+            comparison_df.loc[mitigation_method] = [score, fairness_metric]
+
+        if plot:
+            score = comparison_df.loc['reference'][str(scoring)]
+            fairness_metric = comparison_df.loc['reference'][str(self.metric_name)]
+            plt.plot(score, fairness_metric, marker='*', linestyle='')
+            plt.annotate('reference', (score, fairness_metric))
+            for mitigation_method in mitigation_methods:
+                score = comparison_df.loc[mitigation_method][str(scoring)]
+                fairness_metric = comparison_df.loc[mitigation_method][str(self.metric_name)]
+                plt.plot(score, fairness_metric, marker='+', linestyle='')
+                plt.annotate(mitigation_method, (score, fairness_metric))
+            title = f"{str(scoring)} vs {str(self.metric_name)}"
+            plt.title(title)
+            plt.xlabel(str(scoring))
+            plt.ylabel(str(self.metric_name))
+            plt.show()
+
+            if save_plot:
+                filename = os.path.join(os.getcwd(), "compare_mitigation_methods")
+                plt.savefig(filename)
 
         return comparison_df

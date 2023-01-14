@@ -183,7 +183,7 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
         fair_object.training_data = pd.concat([_X_train, _y_train], axis=1)
         fair_object.testing_data = pd.concat([_X_test, _y_test], axis=1)
         fair_object.update_classifier(_model_1)
-        _model_2 = fair_object.model_mitigation(mitigation_method=mitigation_method)
+        _model_2 = fair_object.mitigate_model(mitigation_method=mitigation_method)
 
         _mitigated_X_test = fair_object.mitigated_testing_data.drop(columns=fair_object.target_variable)
         _mitigated_y_test = fair_object.mitigated_testing_data[fair_object.target_variable]
