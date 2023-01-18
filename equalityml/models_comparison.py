@@ -5,7 +5,6 @@ from sklearn.metrics import get_scorer
 from sklearn.model_selection import train_test_split
 
 
-## TODO Add discrimination threshold computation
 
 def compare_models(model_1, model_2, data, target_variable, method="mcnemar", fair_object=None, mitigation_method=None, scoring=None, random_seed=None):
     X = data.drop(columns=target_variable)

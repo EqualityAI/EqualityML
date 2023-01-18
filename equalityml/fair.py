@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import logging
 import matplotlib.pyplot as plt
 import os
@@ -66,6 +67,7 @@ class FAIR:
                  unprivileged_class=None,
                  favorable_label=1,
                  unfavorable_label=0,
+                 threshold=0.5,
                  pred_class=None,
                  pred_prob=None):
 
@@ -108,6 +110,7 @@ class FAIR:
         self.unfavorable_label = unfavorable_label
         self.protected_variable = protected_variable
         self.privileged_class = privileged_class
+        self.threshold = threshold
 
         if unprivileged_class is None:
             _unprivileged_classes = list(set(training_data[protected_variable]).difference([privileged_class]))
@@ -126,6 +129,9 @@ class FAIR:
         self.mitigated_testing_data = None
         self.mitigated_training_data = None
 
+    def set_threshold(self, threshold):
+        self.threshold = threshold
+
     def _get_binary_prob(self, data):
 
         try:
@@ -139,20 +145,12 @@ class FAIR:
     def _get_binary_class(self, data):
 
         try:
-            _pred_class = self.ml_model.predict(data[self.features])
+            _pred_class = np.asarray(list(map(lambda x: 1 if x > self.threshold else 0,
+                                                self.ml_model.predict_proba(data[self.features])[:, -1])))
         except Exception:
             raise Exception("Not possible to predict classes using the input machine learning model")
 
         return _pred_class
-
-    def _get_fairness_metric(self, df_fairness, metric):
-
-        try:
-            _fairness_metric = df_fairness[df_fairness[metric] != 1.][metric][0]
-        except IndexError:
-            _fairness_metric = float("NaN")
-
-        return _fairness_metric
 
     def _cr_removing_data(self, data, alpha=1.0):
         """
@@ -387,33 +385,41 @@ class FAIR:
                                             aif_data_pred,
                                             unprivileged_groups=self.unprivileged_groups,
                                             privileged_groups=self.privileged_groups)
+
+        def try_division(x, y):
+            if abs(y) < 1e-10:
+                return 0
+            else:
+                return x/y
+
+
         # Treatment equality
         # Note that both treatment equality ratio and treatment equality difference are calculated
-        privileged_ratio = cm_pred_data.num_false_negatives(True) / cm_pred_data.num_false_positives(True)
-        unprivileged_ratio = cm_pred_data.num_false_negatives(False) / cm_pred_data.num_false_positives(False)
+        privileged_ratio = try_division(cm_pred_data.num_false_negatives(True), cm_pred_data.num_false_positives(True))
+        unprivileged_ratio = try_division(cm_pred_data.num_false_negatives(False), cm_pred_data.num_false_positives(False))
 
         # Get privileged_metrics and unprivileged_metrics to compute required ratios
         privileged_metrics = cm_pred_data.performance_measures(True)
         unprivileged_metrics = cm_pred_data.performance_measures(False)
 
         if metric_name == 'treatment_equality_ratio':
-            fairness_metric = unprivileged_ratio / privileged_ratio
+            fairness_metric = try_division(unprivileged_ratio, privileged_ratio)
         if metric_name == 'treatment_equality_difference':
             fairness_metric = unprivileged_ratio - privileged_ratio
         if metric_name == 'balance_negative_class':
-            fairness_metric = unprivileged_metrics['GFPR'] / privileged_metrics['GFPR']
+            fairness_metric = try_division(unprivileged_metrics['GFPR'], privileged_metrics['GFPR'])
         if metric_name == 'balance_positive_class':
-            fairness_metric = unprivileged_metrics['GTPR'] / privileged_metrics['GTPR']
+            fairness_metric = try_division(unprivileged_metrics['GTPR'], privileged_metrics['GTPR'])
         if metric_name == 'equal_opportunity_ratio':
-            fairness_metric = unprivileged_metrics['TPR'] / privileged_metrics['TPR']
+            fairness_metric = try_division(unprivileged_metrics['TPR'], privileged_metrics['TPR'])
         if metric_name == 'accuracy_equality_ratio':
-            fairness_metric = unprivileged_metrics['ACC'] / privileged_metrics['ACC']
+            fairness_metric = try_division(unprivileged_metrics['ACC'], privileged_metrics['ACC'])
         if metric_name == 'predictive_parity_ratio':
-            fairness_metric = unprivileged_metrics['PPV'] / privileged_metrics['PPV']
+            fairness_metric = try_division(unprivileged_metrics['PPV'], privileged_metrics['PPV'])
         if metric_name == 'predictive_equality_ratio':
-            fairness_metric = unprivileged_metrics['FPR'] / privileged_metrics['FPR']
+            fairness_metric = try_division(unprivileged_metrics['FPR'], privileged_metrics['FPR'])
         if metric_name == 'statistical_parity_ratio':
-            fairness_metric = cm_pred_data.selection_rate(False) / cm_pred_data.selection_rate(True)
+            fairness_metric = try_division(cm_pred_data.selection_rate(False), cm_pred_data.selection_rate(True))
 
         return fairness_metric
 
