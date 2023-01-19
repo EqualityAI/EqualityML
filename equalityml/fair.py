@@ -385,6 +385,13 @@ class FAIR:
             else:
                 return x/y
 
+        def scale_division(x,y):
+            result = try_division(x, y)
+            if result > 1:
+                return 1/result
+            else:
+                return result
+
 
         # Treatment equality
         # Note that both treatment equality ratio and treatment equality difference are calculated
@@ -396,23 +403,23 @@ class FAIR:
         unprivileged_metrics = cm_pred_data.performance_measures(False)
 
         if metric_name == 'treatment_equality_ratio':
-            fairness_metric = try_division(unprivileged_ratio, privileged_ratio)
+            fairness_metric = scale_division(unprivileged_ratio, privileged_ratio)
         if metric_name == 'treatment_equality_difference':
             fairness_metric = unprivileged_ratio - privileged_ratio
         if metric_name == 'balance_negative_class':
-            fairness_metric = try_division(unprivileged_metrics['GFPR'], privileged_metrics['GFPR'])
+            fairness_metric = scale_division(unprivileged_metrics['GFPR'], privileged_metrics['GFPR'])
         if metric_name == 'balance_positive_class':
-            fairness_metric = try_division(unprivileged_metrics['GTPR'], privileged_metrics['GTPR'])
+            fairness_metric = scale_division(unprivileged_metrics['GTPR'], privileged_metrics['GTPR'])
         if metric_name == 'equal_opportunity_ratio':
-            fairness_metric = try_division(unprivileged_metrics['TPR'], privileged_metrics['TPR'])
+            fairness_metric = scale_division(unprivileged_metrics['TPR'], privileged_metrics['TPR'])
         if metric_name == 'accuracy_equality_ratio':
-            fairness_metric = try_division(unprivileged_metrics['ACC'], privileged_metrics['ACC'])
+            fairness_metric = scale_division(unprivileged_metrics['ACC'], privileged_metrics['ACC'])
         if metric_name == 'predictive_parity_ratio':
-            fairness_metric = try_division(unprivileged_metrics['PPV'], privileged_metrics['PPV'])
+            fairness_metric = scale_division(unprivileged_metrics['PPV'], privileged_metrics['PPV'])
         if metric_name == 'predictive_equality_ratio':
-            fairness_metric = try_division(unprivileged_metrics['FPR'], privileged_metrics['FPR'])
+            fairness_metric = scale_division(unprivileged_metrics['FPR'], privileged_metrics['FPR'])
         if metric_name == 'statistical_parity_ratio':
-            fairness_metric = try_division(cm_pred_data.selection_rate(False), cm_pred_data.selection_rate(True))
+            fairness_metric = scale_division(cm_pred_data.selection_rate(False), cm_pred_data.selection_rate(True))
 
         return fairness_metric
 
