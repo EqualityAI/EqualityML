@@ -1,7 +1,7 @@
+import matplotlib
 import pandas as pd
 import numpy as np
 import logging
-import matplotlib.pyplot as plt
 import os
 import copy
 
@@ -18,7 +18,7 @@ from aif360.algorithms.preprocessing import DisparateImpactRemover
 from fairlearn.preprocessing import CorrelationRemover
 
 from sklearn.metrics import get_scorer
-
+import matplotlib.pyplot as plt
 
 class FAIR:
     """
@@ -125,7 +125,6 @@ class FAIR:
         self.unprivileged_groups = [{self.protected_variable: [self.unprivileged_class]}]
         self.privileged_groups = [{self.protected_variable: [self.privileged_class]}]
         self.metric_name = None
-        self.cutoff = None
         self.mitigated_testing_data = None
         self.mitigated_training_data = None
 
@@ -307,7 +306,7 @@ class FAIR:
 
         return mitigated_dataset
 
-    def fairness_metric(self, metric_name, cutoff=0.5):
+    def fairness_metric(self, metric_name):
         """
         Fairness metric assessment based on privileged/unprivileged classes.
 
@@ -324,8 +323,6 @@ class FAIR:
                7. 'predictive_parity_ratio':  Predictive parity ratio
                8. 'predictive_equality_ratio': Predictive equality ratio
                9. 'statistical_parity_ratio': Statistical parity ratio
-        cutoff : float, default=0.5
-            Cutoff for predictions in classification models. Needed for measures like recall, precision, acc, f1
 
         Returns
         ----------
@@ -341,11 +338,7 @@ class FAIR:
         if metric_name not in metrics_list:
             raise ValueError(f"Provided invalid metric name {metric_name}")
 
-        if cutoff < 0.0:
-            raise ValueError("Cutoff value shall be positive.")
-
         self.metric_name = metric_name
-        self.cutoff = cutoff
 
         fairness_metric = {}
 
@@ -479,7 +472,7 @@ class FAIR:
         return self.ml_model
 
     @property
-    def fairness_metrics(self):
+    def fairness_metrics_list(self):
         return ['treatment_equality_ratio',
                 'treatment_equality_difference',
                 'balance_positive_class',
@@ -489,6 +482,11 @@ class FAIR:
                 'predictive_parity_ratio',
                 'predictive_equality_ratio',
                 'statistical_parity_ratio']
+
+    @property
+    def bias_mitigations_list(self):
+        return ['disparate-impact-remover', 'resampling', 'resampling-uniform', 'resampling-preferential', 'reweighing',
+                'correlation-remover']
 
     @property
     def map_bias_mitigation(self):
@@ -503,20 +501,23 @@ class FAIR:
                 'statistical_parity_ratio': ['disparate-impact-remover', 'resampling',
                                              'resampling-preferential', 'reweighing']}
 
-    def compare_mitigation_methods(self, scoring=None, mitigation_methods=None, plot=False, save_plot=False):
+    def compare_mitigation_methods(self, scoring=None, mitigation_methods=None, draw_plot=False, save_figure=False):
         """
         Update Machine Learning model classifier typically after applying a bias mitigation method.
 
         Parameters
         ----------
-        ml_model : object
+        save_figure
+        mitigation_methods
+        scoring
+        draw_plot
         """
 
         if mitigation_methods is None:
             mitigation_methods = self.map_bias_mitigation[self.metric_name]
         else:
             for mitigation_method in mitigation_methods:
-                if mitigation_method not in self.bias_mitigation_list:
+                if mitigation_method not in self.bias_mitigations_list:
                     print(f"Bias mitigation method {mitigation_method} is not available")
 
         # Check scoring/scorer
@@ -547,38 +548,41 @@ class FAIR:
 
         # Iterate over suggested mitigation_methods and re-evaluate score and fairness metric
         for mitigation_method in mitigation_methods:
-            self.mitigate_model(mitigation_method=mitigation_method)
+             self.mitigate_model(mitigation_method=mitigation_method)
+             if self.mitigated_testing_data is not None:
+                 testing_data = self.mitigated_testing_data
+             elif self.testing_data is not None:
+                 testing_data = self.testing_data
+             else:
+                 testing_data = self.training_data
+             X_test = testing_data.drop(columns=self.target_variable)
+             y_test = testing_data[self.target_variable]
+             score = scorer(self.ml_model, X_test, y_test)
+             fairness_metric = self.fairness_metric(self.metric_name)
 
-            if self.mitigated_testing_data is not None:
-                testing_data = self.mitigated_testing_data
-            elif self.testing_data is not None:
-                testing_data = self.testing_data
-            else:
-                testing_data = self.training_data
-            X_test = testing_data.drop(columns=self.target_variable)
-            y_test = testing_data[self.target_variable]
-            score = scorer(self.ml_model, X_test, y_test)
-            fairness_metric = self.fairness_metric(self.metric_name)
+             comparison_df.loc[mitigation_method] = [score, fairness_metric]
 
-            comparison_df.loc[mitigation_method] = [score, fairness_metric]
-
-        if plot:
+        if draw_plot:
+            # aif360 sets matplotlib to use agg. Revert it to use Tkinter agg (a GUI backend)
+            matplotlib.use('TkAgg')
+            cmap = plt.get_cmap("tab10")
             score = comparison_df.loc['reference'][str(scoring)]
             fairness_metric = comparison_df.loc['reference'][str(self.metric_name)]
-            plt.plot(score, fairness_metric, marker='*', linestyle='')
-            plt.annotate('reference', (score, fairness_metric))
-            for mitigation_method in mitigation_methods:
-                score = comparison_df.loc[mitigation_method][str(scoring)]
-                fairness_metric = comparison_df.loc[mitigation_method][str(self.metric_name)]
-                plt.plot(score, fairness_metric, marker='+', linestyle='')
-                plt.annotate(mitigation_method, (score, fairness_metric))
-            title = f"{str(scoring)} vs {str(self.metric_name)}"
-            plt.title(title)
-            plt.xlabel(str(scoring))
-            plt.ylabel(str(self.metric_name))
+            fig = plt.gcf()
+            ax = plt.gca()
+            ax.plot(score, fairness_metric, marker='*', linestyle='', color=cmap(0), label='reference')
+            for idx, mitigation_method in enumerate(mitigation_methods):
+                 score = comparison_df.loc[mitigation_method][str(scoring)]
+                 fairness_metric = comparison_df.loc[mitigation_method][str(self.metric_name)]
+                 ax.plot(score, fairness_metric, marker='o', linestyle='', color=cmap(1+idx), label=mitigation_method)
+
+            ax.legend(frameon=True, loc="best")
+            ax.set_title(f"{str(scoring)} vs {str(self.metric_name)}")
+            ax.set_xlabel(str(scoring))
+            ax.set_ylabel(str(self.metric_name))
             plt.show()
 
-            if save_plot:
+            if save_figure:
                 filename = os.path.join(os.getcwd(), "compare_mitigation_methods")
                 plt.savefig(filename)
 

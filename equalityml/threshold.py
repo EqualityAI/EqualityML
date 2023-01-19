@@ -28,7 +28,7 @@ def discrimination_threshold(model, data, target_variable, metric="score", scori
     elif metric == "fairness_metric":
         if fair_object is None:
             raise "FAIR object can not be None"
-        if metric_name not in fair_object.fairness_metrics:
+        if metric_name not in fair_object.fairness_metrics_list:
             raise f"Invalid metric name {metric_name}. It's not available in FAIR class"
 
         def get_metrics(threshold):
@@ -120,7 +120,7 @@ class DiscriminationThreshold:
         self.random_seed = random_seed
         self.test_size = test_size
         self.num_thresholds = 50
-        self.n_iterations = 10
+        self.n_iterations = 2
 
         self._thresholds = np.linspace(0.0, 1.0, num=self.num_thresholds)
         self._max_metric = 'fscore'
@@ -134,7 +134,7 @@ class DiscriminationThreshold:
         if fair_object is None:
             self.fairness_metric = False
         else:
-            if fairness_metric_name not in fair_object.fairness_metrics:
+            if fairness_metric_name not in fair_object.fairness_metrics_list:
                 raise f"Invalid metric name {fairness_metric_name}. It's not available in FAIR class"
         self.fairness_metric = True
 
@@ -217,19 +217,10 @@ class DiscriminationThreshold:
                 argmax = median.argmax()
                 self.discrimination_threshold = self._thresholds[argmax]
 
-        plot = True
-        if plot:
-            # Draw and always return self
-
-            ax = self.draw()
-            savefig = False
-            if savefig:
-                plt.savefig()
-            else:
-                plt.show()
-            clear_figure = False
-            if clear_figure:
-                self.fig.clear()
+        draw_plot = True
+        if draw_plot:
+            # Draw
+            self.draw()
 
         return self.discrimination_threshold
 
@@ -240,6 +231,7 @@ class DiscriminationThreshold:
                                                             random_state=randint)
         self.model.fit(X_train, y_train)
         predicted_prob = self.model.predict_proba(X_test)[:, 1]
+        self.fair_object.update_classifier(self.model)
 
         precisions = []
         recalls = []
@@ -286,8 +278,8 @@ class DiscriminationThreshold:
         """
         # Set the colors from the supplied values or reasonable defaults
         cmap = plt.get_cmap("tab10")
-        self.fig = plt.gcf()
-        self.ax = plt.gca()
+        fig = plt.gcf()
+        ax = plt.gca()
         for idx, metric in enumerate(self._metrics_quantiles.keys()):
 
             # Get the color ensuring every metric has a static color
@@ -303,19 +295,19 @@ class DiscriminationThreshold:
                 label = metric.replace("_", " ")
 
             # Draw the metric values
-            self.ax.plot(
+            ax.plot(
                 self._thresholds, self._metrics_quantiles[metric]["median"], color=color, label=label
             )
 
             # Draw the upper and lower bounds
-            self.ax.fill_between(
+            ax.fill_between(
                 self._thresholds, self._metrics_quantiles[metric]["upper"], self._metrics_quantiles[metric]["lower"],
                 alpha=0.35, linewidth=0, color=color
             )
 
             # Annotate the graph with the maximizing value
             if self._max_metric and self._max_metric == metric:
-                self.ax.axvline(
+                ax.axvline(
                     self.discrimination_threshold,
                     ls="--",
                     c="k",
@@ -323,13 +315,21 @@ class DiscriminationThreshold:
                     label="$t_{}={:0.2f}$".format(metric[0], self.discrimination_threshold),
                 )
         # Set the title of the threshold visualization
-        self.ax.set_title("Threshold Plot for {}".format(self.model.__class__.__name__))
+        ax.set_title("Threshold Plot for {}".format(self.model.__class__.__name__))
 
-        self.ax.legend(frameon=True, loc="best")
-        self.ax.set_xlabel("discrimination threshold")
-        self.ax.set_ylabel("score")
-        self.ax.set_xlim(0.0, 1.0)
-        self.ax.set_ylim(0.0, 1.0)
+        ax.legend(frameon=True, loc="best")
+        ax.set_xlabel("discrimination threshold")
+        ax.set_ylabel("score")
+        ax.set_xlim(0.0, 1.0)
+        ax.set_ylim(0.0, 1.0)
 
-        return self.ax
+        savefig = False
+        if savefig:
+            plt.savefig()
+        else:
+            plt.show()
+
+        clear_figure = False
+        if clear_figure:
+            fig.clear()
 
