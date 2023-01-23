@@ -18,7 +18,9 @@ from aif360.algorithms.preprocessing import DisparateImpactRemover
 from fairlearn.preprocessing import CorrelationRemover
 
 from sklearn.metrics import get_scorer
+from sklearn.utils.multiclass import type_of_target
 import matplotlib.pyplot as plt
+
 
 class FAIR:
     """
@@ -28,8 +30,9 @@ class FAIR:
 
     Parameters
     ----------
-    ml_model : object
-        Trained Machine Learning model object (for example LogisticRegression object).
+    ml_model : a Scikit-Learn estimator
+        A scikit-learn estimator that should be a classifier. If the model is
+        not a classifier, an exception is raised.
     training_data : pd.DataFrame
         Data in pd.DataFrame format.
     target_variable : str
@@ -82,6 +85,12 @@ class FAIR:
             if any([feature not in training_data.columns for feature in features]):
                 raise TypeError(f"At least one feature of {features} are not part of training data")
 
+        # Check ml_model and type of target
+        if getattr(ml_model, "_estimator_type", None) != "classifier":
+            raise TypeError("Model has to be a classifier")
+        if type_of_target(training_data[target_variable]) != "binary":
+            raise ValueError("Multiclass format is not supported")
+
         privileged_class = float(privileged_class)
         if privileged_class not in training_data[protected_variable].values:
             raise TypeError(f"Privileged class {privileged_class} shall be on data column {protected_variable}")
@@ -110,7 +119,7 @@ class FAIR:
         self.unfavorable_label = unfavorable_label
         self.protected_variable = protected_variable
         self.privileged_class = privileged_class
-        self.threshold = threshold
+        self._threshold = threshold
 
         if unprivileged_class is None:
             _unprivileged_classes = list(set(training_data[protected_variable]).difference([privileged_class]))
@@ -128,10 +137,47 @@ class FAIR:
         self.mitigated_testing_data = None
         self.mitigated_training_data = None
 
-    def set_threshold(self, threshold):
-        self.threshold = threshold
+    @property
+    def fairness_metrics_list(self):
+        return ['treatment_equality_ratio',
+                'treatment_equality_difference',
+                'balance_positive_class',
+                'balance_negative_class',
+                'equal_opportunity_ratio',
+                'accuracy_equality_ratio',
+                'predictive_parity_ratio',
+                'predictive_equality_ratio',
+                'statistical_parity_ratio']
 
-    def _get_binary_prob(self, data):
+    @property
+    def bias_mitigations_list(self):
+        return ['disparate-impact-remover', 'resampling', 'resampling-uniform', 'resampling-preferential', 'reweighing',
+                'correlation-remover']
+
+    @property
+    def map_bias_mitigation(self):
+        return {'treatment_equality_ratio': [''],
+                'treatment_equality_difference': [''],
+                'balance_positive_class': [''],
+                'balance_negative_class': [''],
+                'equal_opportunity_ratio': [''],
+                'accuracy_equality_ratio': [''],
+                'predictive_parity_ratio': [''],
+                'predictive_equality_ratio': [''],
+                'statistical_parity_ratio': ['disparate-impact-remover', 'resampling',
+                                             'resampling-preferential', 'reweighing']}
+
+    @property
+    def threshold(self):
+        """Get discrimination threshold"""
+        return getattr(self, '_threshold', 0.5)
+
+    @threshold.setter
+    def threshold(self, value):
+        """Set discrimination threshold"""
+        self._threshold = value
+
+    def _predict_binary_prob(self, data):
 
         try:
             _pred_prob = self.ml_model.predict_proba(data[self.features])
@@ -141,11 +187,11 @@ class FAIR:
 
         return _pred_prob
 
-    def _get_binary_class(self, data):
+    def _predict_binary_class(self, data):
 
         try:
-            _pred_class = np.asarray(list(map(lambda x: 1 if x > self.threshold else 0,
-                                                self.ml_model.predict_proba(data[self.features])[:, -1])))
+            _pred_class = np.asarray(list(map(lambda x: 1 if x > self._threshold else 0,
+                                              self.ml_model.predict_proba(data[self.features])[:, -1])))
         except Exception:
             raise Exception("Not possible to predict classes using the input machine learning model")
 
@@ -212,7 +258,7 @@ class FAIR:
                                     verbose=False)
         # Preferential resampling
         elif mitigation_method == "resampling-preferential":
-            _pred_prob = self._get_binary_prob(data)
+            _pred_prob = self._predict_binary_prob(data)
             idx_resample = resample(data[self.protected_variable],
                                     data[self.target_variable],
                                     type='preferential', verbose=False,
@@ -364,13 +410,13 @@ class FAIR:
 
         # Get predicted classes in case input argument 'pred_class' is None
         if self.pred_class is None:
-            aif_data_pred.labels = self._get_binary_class(testing_data)
+            aif_data_pred.labels = self._predict_binary_class(testing_data)
         else:
             aif_data_pred.labels = self.pred_class
 
         # Get probability estimates in case input argument 'pred_prob' is None
         if self.pred_prob is None:
-            aif_data_pred.scores = self._get_binary_prob(testing_data)
+            aif_data_pred.scores = self._predict_binary_prob(testing_data)
         else:
             aif_data_pred.scores = self.pred_prob
 
@@ -383,20 +429,20 @@ class FAIR:
             if abs(y) < 1e-10:
                 return 0
             else:
-                return x/y
+                return x / y
 
-        def scale_division(x,y):
+        def scale_division(x, y):
             result = try_division(x, y)
             if result > 1:
-                return 1/result
+                return 1 / result
             else:
                 return result
-
 
         # Treatment equality
         # Note that both treatment equality ratio and treatment equality difference are calculated
         privileged_ratio = try_division(cm_pred_data.num_false_negatives(True), cm_pred_data.num_false_positives(True))
-        unprivileged_ratio = try_division(cm_pred_data.num_false_negatives(False), cm_pred_data.num_false_positives(False))
+        unprivileged_ratio = try_division(cm_pred_data.num_false_negatives(False),
+                                          cm_pred_data.num_false_positives(False))
 
         # Get privileged_metrics and unprivileged_metrics to compute required ratios
         privileged_metrics = cm_pred_data.performance_measures(True)
@@ -449,27 +495,60 @@ class FAIR:
 
         Parameters
         ----------
-        ml_model : object
-            Trained Machine Learning model object (for example LogisticRegression object).
+        ml_model : a Scikit-Learn estimator
+            A scikit-learn estimator that should be a classifier. If the model is
+            not a classifier, an exception is raised.
         pred_class : list, default=None
-            Predicted class labels for input 'data' applied on machine learning model object 'ml_model'.
+            Predicted class labels for input 'data' applied on machine learning model 'ml_model'.
         pred_prob : list, default=None
-            Probability estimates for input 'data' applied on machine learning model object 'ml_model'.
+            Probability estimates for input 'data' applied on machine learning model 'ml_model'.
         """
+        if getattr(ml_model, "_estimator_type", None) != "classifier":
+            raise TypeError("Model has to be a classifier")
         self.ml_model = ml_model
+
+        if len(set(pred_class)) != 2:
+            raise TypeError("Only binary classes are available")
+
         self.pred_class = pred_class
+
+        # TODO Add probabilities check
         self.pred_prob = pred_prob
 
-    def mitigate_model(self, mitigation_method):
+    def model_mitigation(self, mitigation_method, alpha=1.0, repair_level=0.8):
+        """
+        Apply a mitigation method to data to make it more balanced.
 
-        mitigation_res = self.bias_mitigation(mitigation_method=mitigation_method)
+        Parameters
+        ----------
+        mitigation_method : str
+             Name of the mitigation method. Accepted values:
+             "resampling"
+             "resampling-preferential"
+             "reweighing"
+             "disparate-impact-remover"
+             "correlation-remover"
+        alpha : float, default=1.0
+            parameter to control how much to filter, for alpha=1.0 we filter out
+            all information while for alpha=0.0 we don't apply any.
+        repair_level : float, default=0.8
+            Repair amount. 0.0 is no repair while 1.0 is full repair.
+        Returns
+        ----------
+        model : a Scikit-Learn estimator
+            Mitigated Machine Learning model
+
+        """
+        mitigation_result = self.bias_mitigation(mitigation_method=mitigation_method, alpha=alpha, repair_level=repair_level)
         if mitigation_method == "reweighing":
-            mitigated_weights = mitigation_res['weights']
+            mitigated_weights = mitigation_result['weights']
             X_train = self.training_data.drop(columns=self.target_variable)
             y_train = self.training_data[self.target_variable]
+
+            # ReTrain Machine Learning model based on mitigated weights
             self.ml_model.fit(X_train, y_train, sample_weight=mitigated_weights)
         else:
-            mitigated_data = mitigation_res['training_data']
+            mitigated_data = mitigation_result['training_data']
             X_train = mitigated_data.drop(columns=self.target_variable)
             y_train = mitigated_data[self.target_variable]
 
@@ -478,46 +557,17 @@ class FAIR:
 
         return self.ml_model
 
-    @property
-    def fairness_metrics_list(self):
-        return ['treatment_equality_ratio',
-                'treatment_equality_difference',
-                'balance_positive_class',
-                'balance_negative_class',
-                'equal_opportunity_ratio',
-                'accuracy_equality_ratio',
-                'predictive_parity_ratio',
-                'predictive_equality_ratio',
-                'statistical_parity_ratio']
-
-    @property
-    def bias_mitigations_list(self):
-        return ['disparate-impact-remover', 'resampling', 'resampling-uniform', 'resampling-preferential', 'reweighing',
-                'correlation-remover']
-
-    @property
-    def map_bias_mitigation(self):
-        return {'treatment_equality_ratio': [''],
-                'treatment_equality_difference': [''],
-                'balance_positive_class': [''],
-                'balance_negative_class': [''],
-                'equal_opportunity_ratio': [''],
-                'accuracy_equality_ratio': [''],
-                'predictive_parity_ratio': [''],
-                'predictive_equality_ratio': [''],
-                'statistical_parity_ratio': ['disparate-impact-remover', 'resampling',
-                                             'resampling-preferential', 'reweighing']}
-
-    def compare_mitigation_methods(self, scoring=None, mitigation_methods=None, draw_plot=False, save_figure=False):
+    def compare_mitigation_methods(self, scoring=None, mitigation_methods=None, draw_plot=False, save_figure=False,
+                                   fairness_threshold=0.8):
         """
-        Update Machine Learning model classifier typically after applying a bias mitigation method.
 
         Parameters
         ----------
-        save_figure
-        mitigation_methods
         scoring
+        mitigation_methods
         draw_plot
+        save_figure
+        fairness_threshold
         """
 
         if mitigation_methods is None:
@@ -526,15 +576,16 @@ class FAIR:
             for mitigation_method in mitigation_methods:
                 if mitigation_method not in self.bias_mitigations_list:
                     print(f"Bias mitigation method {mitigation_method} is not available")
+                    mitigation_methods.remove(mitigation_method)
 
         # Check scoring/scorer
         if scoring is None:
             if self.ml_model._estimator_type == "classifier":
                 scoring = "accuracy"
-            elif self.ml_model._estimator_type == "regressor":
-                scoring = "r2"
+            #elif self.ml_model._estimator_type == "regressor":
+            #    scoring = "r2"
             else:
-                raise AttributeError("Model must be a Classifier or Regressor.")
+                raise AttributeError("Model must be a Classifier.")
 
         if isinstance(scoring, str):
             scorer = get_scorer(scoring)
@@ -547,6 +598,7 @@ class FAIR:
             testing_data = self.training_data
         else:
             testing_data = self.testing_data
+
         X_test = testing_data.drop(columns=self.target_variable)
         y_test = testing_data[self.target_variable]
         score = scorer(self.ml_model, X_test, y_test)
@@ -555,19 +607,19 @@ class FAIR:
 
         # Iterate over suggested mitigation_methods and re-evaluate score and fairness metric
         for mitigation_method in mitigation_methods:
-             self.mitigate_model(mitigation_method=mitigation_method)
-             if self.mitigated_testing_data is not None:
-                 testing_data = self.mitigated_testing_data
-             elif self.testing_data is not None:
-                 testing_data = self.testing_data
-             else:
-                 testing_data = self.training_data
-             X_test = testing_data.drop(columns=self.target_variable)
-             y_test = testing_data[self.target_variable]
-             score = scorer(self.ml_model, X_test, y_test)
-             fairness_metric = self.fairness_metric(self.metric_name)
+            self.model_mitigation(mitigation_method=mitigation_method)
+            if self.mitigated_testing_data is not None:
+                testing_data = self.mitigated_testing_data
+            elif self.testing_data is not None:
+                testing_data = self.testing_data
+            else:
+                testing_data = self.training_data
+            X_test = testing_data.drop(columns=self.target_variable)
+            y_test = testing_data[self.target_variable]
+            score = scorer(self.ml_model, X_test, y_test)
+            fairness_metric = self.fairness_metric(self.metric_name)
 
-             comparison_df.loc[mitigation_method] = [score, fairness_metric]
+            comparison_df.loc[mitigation_method] = [score, fairness_metric]
 
         if draw_plot:
             # aif360 sets matplotlib to use agg. Revert it to use Tkinter agg (a GUI backend)
@@ -579,14 +631,23 @@ class FAIR:
             ax = plt.gca()
             ax.plot(score, fairness_metric, marker='*', linestyle='', color=cmap(0), label='reference')
             for idx, mitigation_method in enumerate(mitigation_methods):
-                 score = comparison_df.loc[mitigation_method][str(scoring)]
-                 fairness_metric = comparison_df.loc[mitigation_method][str(self.metric_name)]
-                 ax.plot(score, fairness_metric, marker='o', linestyle='', color=cmap(1+idx), label=mitigation_method)
+                score = comparison_df.loc[mitigation_method][str(scoring)]
+                fairness_metric = comparison_df.loc[mitigation_method][str(self.metric_name)]
+                ax.plot(score, fairness_metric, marker='o', linestyle='', color=cmap(1 + idx), label=mitigation_method)
+
+            ax.axhline(
+                fairness_threshold,
+                ls="--",
+                c="r",
+                lw=1,
+                label="fairness threshold",
+            )
 
             ax.legend(frameon=True, loc="best")
             ax.set_title(f"{str(scoring)} vs {str(self.metric_name)}")
             ax.set_xlabel(str(scoring))
             ax.set_ylabel(str(self.metric_name))
+            ax.set_ylim(0.0, 1.0)
             plt.show()
 
             if save_figure:
