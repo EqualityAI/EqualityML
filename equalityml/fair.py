@@ -507,7 +507,7 @@ class FAIR:
             raise TypeError("Model has to be a classifier")
         self.ml_model = ml_model
 
-        if len(set(pred_class)) != 2:
+        if pred_class is not None and len(set(pred_class)) != 2:
             raise TypeError("Only binary classes are available")
 
         self.pred_class = pred_class

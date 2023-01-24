@@ -5,19 +5,50 @@ from sklearn.metrics import get_scorer
 from sklearn.model_selection import train_test_split
 
 
+def paired_ttest(model_1,
+                 model_2,
+                 data,
+                 target_variable,
+                 method="mcnemar",
+                 discrimination_threshold=0.5,
+                 fair_object=None,
+                 mitigation_method=None,
+                 scoring=None,
+                 random_seed=None):
+    """
+    XXXX
 
-def compare_models(model_1, model_2, data, target_variable, method="mcnemar", fair_object=None, mitigation_method=None, scoring=None, random_seed=None):
+    Parameters
+    ----------
+    model_1 : a Scikit-Learn estimator
+        A scikit-learn estimator that should be a classifier. If the model is
+        not a classifier, an exception is raised.
+    model_2 : a Scikit-Learn estimator
+        A scikit-learn estimator that should be a classifier. If the model is
+        not a classifier, an exception is raised.
+    data
+    target_variable
+    method
+    discrimination_threshold
+    fair_object
+    mitigation_method
+    scoring
+    random_seed
+    """
     X = data.drop(columns=target_variable)
     y = data[target_variable]
 
     if method == "mcnemar":
-        chi2, p = mcnemar(model_1, model_2, X, y, discrimination_threshold=0.5)
+        chi2, p = mcnemar(model_1, model_2, X, y, discrimination_threshold=discrimination_threshold)
     elif method == "5x2cv":
-        chi2, p = paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, scoring=scoring, random_seed=random_seed)
-        print(chi2, p)
-        # Fairness metric
-        chi2, p = paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, scoring="statistical_parity_ratio", random_seed=random_seed)
-        print(chi2, p)
+        # Threshold setter
+        fair_object.threshold = discrimination_threshold
+        chi2, p = paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, scoring=scoring,
+                                     random_seed=random_seed)
+    else:
+        print(f"Invalid method {method}")
+        chi2, p = (0, 1)
+
     return chi2, p
 
 
@@ -26,15 +57,18 @@ def mcnemar_table(model_1, model_2, X, y, discrimination_threshold=0.5):
     Compute a 2x2 contigency table for McNemar's test.
     Parameters
     -----------
-    model_1 : object
-        Trained Machine Learning model 1 object
-    model_2 : object
-        Trained Machine Learning model 2 object
+    model_1 : a Scikit-Learn estimator
+        A scikit-learn estimator that should be a classifier. If the model is
+        not a classifier, an exception is raised.
+    model_2 : a Scikit-Learn estimator
+        A scikit-learn estimator that should be a classifier. If the model is
+        not a classifier, an exception is raised.
     X : {array-like, sparse matrix}, shape = [n_samples, n_features]
         Training vectors, where n_samples is the number of samples and
         n_features is the number of features.
     y : array-like, shape = [n_samples]
         Target values.
+    discrimination_threshold
     Returns
     ----------
     tb : array-like, shape=[2, 2]
@@ -44,6 +78,12 @@ def mcnemar_table(model_1, model_2, X, y, discrimination_threshold=0.5):
        c: tb[1, 0]: # of samples that model 2 got right and model 1 got wrong
        d: tb[1, 1]: # of samples that both models predicted incorrectly
     """
+
+    if getattr(model_1, "_estimator_type", None) != "classifier":
+        raise TypeError("Model has to be a classifier")
+
+    if getattr(model_2, "_estimator_type", None) != "classifier":
+        raise TypeError("Model has to be a classifier")
 
     # Compute predictions for model 1 and 2
     y_model1 = list(map(lambda x: 1 if x > discrimination_threshold else 0, model_1.predict_proba(X)[:, -1]))
@@ -65,7 +105,16 @@ def mcnemar(model_1, model_2, X, y, discrimination_threshold=0.5, corrected=True
     McNemar's test used on paired nominal data.
     Parameters
     -----------
-
+    model_1 : a Scikit-Learn estimator
+        A scikit-learn estimator that should be a classifier.
+    model_2 : a Scikit-Learn estimator
+        A scikit-learn estimator that should be a classifier.
+    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        Training vectors, where n_samples is the number of samples and
+        n_features is the number of features.
+    y : array-like, shape = [n_samples]
+        Target values.
+    discrimination_threshold : float (default: 0.5)
     corrected : bool (default: True)
         True to use Edward's continuity correction for chi-squared
     exact_binomial_test : bool, (default: False)
@@ -112,6 +161,8 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
         n_features is the number of features.
     y : array-like, shape = [n_samples]
         Target values.
+    fair_object
+    mitigation_method
     scoring : str, callable, or None (default: None)
         If None (default), uses 'accuracy' for sklearn classifiers
         and 'r2' for sklearn regressors.
@@ -138,9 +189,11 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
     """
     rng = np.random.RandomState(random_seed)
 
+    # Check models type
     if model_1._estimator_type != model_2._estimator_type:
         raise AttributeError("Models must be of the same type")
 
+    # Get scoring when is None
     if scoring is None:
         if model_1._estimator_type == "classifier":
             scoring = "accuracy"
@@ -149,7 +202,8 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
         else:
             raise AttributeError("Model must be a Classifier or Regressor.")
 
-    if scoring in fair_object.fairness_metrics:
+    # Get scorer call function
+    if scoring in fair_object.fairness_metrics_list:
         def scorer(model, x, y):
             fair_object.mitigated_testing_data = pd.concat([x, y], axis=1)
             fair_object.ml_model = model
@@ -161,6 +215,7 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
             scorer = scoring
 
     def _score_diff(_model_1, _model_2, _X_train, _y_train, _X_test, _y_test):
+        """ Compute score difference between  model 1 and model 2"""
 
         # Train model 1 and get score 1
         _model_1.fit(_X_train, _y_train)
@@ -172,7 +227,7 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
         fair_object.update_classifier(_model_1)
 
         # Apply bias mitigation to get mitigated model 2
-        _model_2 = fair_object.mitigate_model(mitigation_method=mitigation_method)
+        _model_2 = fair_object.model_mitigation(mitigation_method=mitigation_method)
         if fair_object.mitigated_testing_data is not None:
             testing_data = fair_object.mitigated_testing_data
         else:
