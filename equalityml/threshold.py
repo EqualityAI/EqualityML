@@ -1,80 +1,14 @@
-from sklearn.metrics import get_scorer
-from yellowbrick.classifier.threshold import discrimination_threshold as dt
-import numpy as np
-import matplotlib.pyplot as plt
-
-
-## TODO Add discrimination threshold computation
-
-def discrimination_threshold(model, data, target_variable, metric="score", scoring=None, fair_object=None, metric_name=None):
-    X = data.drop(columns=target_variable)
-    y = data[target_variable]
-
-    if metric == "score":
-        #1- For infinite resource cases: Threshold based on metrics we find interesting (F1, etc)
-        if scoring is None:
-            if model._estimator_type == "classifier":
-                scoring = "accuracy"
-            else:
-                raise AttributeError("Model must be a Classifier.")
-
-        dt(model, X, y, )
-    elif metric == "queue_rate":
-        # 2- For rationed resources: Top N ("Queue rate")
-        dt(model, X, y)
-    elif metric == "cost":
-        # 3- For business use cases (with expenses): Utility (cost) optimization
-        dt(model, X, y)
-    elif metric == "fairness_metric":
-        if fair_object is None:
-            raise "FAIR object can not be None"
-        if metric_name not in fair_object.fairness_metrics_list:
-            raise f"Invalid metric name {metric_name}. It's not available in FAIR class"
-
-        def get_metrics(threshold):
-            fair_object.set_threshold(threshold)
-            fairness_metric = fair_object.fairness_metric(metric_name)
-
-            # # Compute metrics
-            # predicted_prob = model.predict_proba(X)[:, 1]
-            # pred_label = (predicted_prob >= threshold).astype(int)
-            # tp = np.sum((pred_label == 1) & (y == 1))
-            # fp = np.sum((pred_label == 1) & (y == 0))
-            # fn = np.sum((pred_label == 0) & (y == 1))
-            # pr = tp / (tp + fp) if tp + fp != 0 else 1
-            # rec = tp / (tp + fn) if tp + fn != 0 else 0
-            # f1 = 2 / (pr ** (-1) + rec ** (-1)) if pr * rec != 0 else 0
-            # queue_rate = np.mean(predicted_prob >= threshold)
-
-            return fairness_metric
-
-        thresholds = np.arange(0, 1.01, 0.02)
-        metrics = list(map(get_metrics, thresholds))
-
-        plot = True
-        if plot:
-            plt.scatter(thresholds, metrics)
-            title = f"Fairness metric '{metric_name}' vs discrimination threshold"
-            plt.title(title)
-            plt.xlabel("discrimination threshold")
-            plt.ylabel(metric_name)
-            plt.show()
-
-
-"""The module contains the class InteractiveDiscriminationThreshold
-for constructing Plotly dashboard with an interactive DT plot.
-"""
-
 import numpy as np
 import pandas as pd
-from sklearn.base import ClassifierMixin
+from sklearn.base import ClassifierMixin, BaseEstimator
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 from tqdm import tqdm
-from typing import Tuple, Union
+from typing import Tuple, Union, Dict
 from scipy.stats import mstats
 from sklearn.utils.multiclass import type_of_target
 from collections import defaultdict
+import matplotlib.pyplot as plt
 
 
 # Quantiles for lower bound, curve, and upper bound
@@ -86,18 +20,22 @@ class DiscriminationThreshold:
     """
 
     def __init__(self,
-                 model: ClassifierMixin,
+                 model: BaseEstimator,
                  data: pd.DataFrame,
                  target_variable: str,
                  fair_object: None,
-                 fairness_metric_name: "",
+                 fairness_metric_name: str = "",
+                 decision_threshold: Union = ('f1', 'max'),
+                 fbeta: float = 1.0,
                  test_size: float = 0.2,
+                 num_thresholds: int = 25,
+                 num_iterations: int = 10,
                  random_seed: int = None):
         """Constructs and checks the values of all the necessary attributes for
         creating a class instance.
         Parameters
         ----------
-            model: sklearn.base.ClassifierMixin
+            model: sklearn.base.BaseEstimator
                 Any binary classification model from scikit-learn (or scikit-
                 learn pipeline with such a model as the last step) containing
                 the method predict_proba() for predicting probability of the
@@ -119,36 +57,37 @@ class DiscriminationThreshold:
         self.y = data[target_variable]
         self.random_seed = random_seed
         self.test_size = test_size
-        self.num_thresholds = 50
-        self.n_iterations = 2
+        self.num_thresholds = num_thresholds
+        self.num_iterations = num_iterations
 
         self._thresholds = np.linspace(0.0, 1.0, num=self.num_thresholds)
-        self._max_metric = 'fscore'
-        self.fbeta = 1.0
+        self.decision_threshold = decision_threshold
+        self.fbeta = fbeta
         self.discrimination_threshold = None
         self._metrics_quantiles = {}
-        self.metrics_name = ["precision", "recall", "fscore", "queue_rate"]
+        self.metrics_name = ["precision", "recall", "f1", "queue_rate"]
         self.fair_object = fair_object
         self.fairness_metric_name = fairness_metric_name
 
         if fair_object is None:
-            self.fairness_metric = False
+            self.evaluate_fairness_metric = False
         else:
             if fairness_metric_name not in fair_object.fairness_metrics_list:
                 raise f"Invalid metric name {fairness_metric_name}. It's not available in FAIR class"
-        self.fairness_metric = True
+            else:
+                self.evaluate_fairness_metric = True
 
         # Check input arguments
-        # Check target before metrics raise crazy exceptions
+        # Check target before metrics raise exceptions
         if getattr(model, "_estimator_type", None) != "classifier":
             raise TypeError("Model has to be a classifier")
+
         if type_of_target(self.y) != "binary":
             raise ValueError("multiclass format is not supported")
 
         # Check the various inputs
         #self._check_quantiles(quantiles)
         #self._check_cv(cv)
-        #self._check_exclude(exclude)
         #self._check_argmax(argmax, exclude)
 
         if self.X.shape[0] != self.y.shape[0]:
@@ -163,32 +102,17 @@ class DiscriminationThreshold:
             print('Make sure that the model is trained and the input data '
                   'is properly transformed.')
 
-    def fit(self,):
+    def fit(self):
         """
-        Fit is the entry point for the visualizer. Given instances described
-        by X and binary classes described in the target y, fit performs n
-        trials by shuffling and splitting the dataset then computing the
-        precision, recall, f1, and queue rate scores for each trial. The
-        scores are aggregated by the quantiles expressed then drawn.
+        Fit
         Parameters
         ----------
-        X : ndarray or DataFrame of shape n x m
-            A matrix of n instances with m features
-        y : ndarray or Series of length n
-            An array or series of target or class values. The target y must
-            be a binary classification target.
-        kwargs: dict
-            keyword arguments passed to Scikit-Learn API.
         Returns
         -------
-        self : instance
-            Returns the instance of the visualizer
-        raises: YellowbrickValueError
-            If the target y is not a binary classification target.
         """
         rng = np.random.RandomState(self.random_seed)
         metrics = defaultdict(list)
-        for iter in tqdm(range(self.n_iterations)):
+        for _ in tqdm(range(self.num_iterations)):
             randint = rng.randint(low=0, high=32768)
             trial = self._get_metrics(randint)
             for metric, values in trial.items():
@@ -213,9 +137,22 @@ class DiscriminationThreshold:
             self._metrics_quantiles[metric]["upper"] = upper
 
             # Compute discrimination threshold for metric to maximize
-            if self._max_metric and self._max_metric == metric:
-                argmax = median.argmax()
-                self.discrimination_threshold = self._thresholds[argmax]
+            if self.decision_threshold and self.decision_threshold[0] == metric:
+                if self.decision_threshold[1] == 'max':
+                    idx = median.argmax()
+                    self.discrimination_threshold = self._thresholds[idx]
+                elif self.decision_threshold[1] == 'min':
+                    idx = median.argmin()
+                    self.discrimination_threshold = self._thresholds[idx]
+                elif self.decision_threshold[1] == 'limit' and metric in ["queue_rate", "recall"]:
+                    idx = next(x[0] for x in enumerate(median) if x[1] <= float(self.decision_threshold[2]))
+                    if 0 <= idx < self.num_thresholds:
+                        self.discrimination_threshold = self._thresholds[idx]
+                elif self.decision_threshold[1] == 'limit' and metric in ["precision", "f1"]:
+                    idx = next(x[0] for x in enumerate(median) if x[1] >= float(self.decision_threshold[2]))
+                    print(idx)
+                    if 0 <= idx < self.num_thresholds:
+                        self.discrimination_threshold = self._thresholds[idx]
 
         draw_plot = True
         if draw_plot:
@@ -224,9 +161,10 @@ class DiscriminationThreshold:
 
         return self.discrimination_threshold
 
-    def _get_metrics(self, randint: int) -> Tuple:
+    def _get_metrics(self, randint: int) -> Dict:
         """Helper function
         """
+
         X_train, X_test, y_train, y_test = train_test_split(self.X, self.y, test_size=self.test_size,
                                                             random_state=randint)
         self.model.fit(X_train, y_train)
@@ -235,9 +173,9 @@ class DiscriminationThreshold:
 
         precisions = []
         recalls = []
-        f_scores = []
+        f1_scores = []
         queue_rates = []
-        if self.fairness_metric:
+        if self.evaluate_fairness_metric:
             fairness_metrics = []
 
         for threshold in self._thresholds:
@@ -253,21 +191,21 @@ class DiscriminationThreshold:
 
             precisions.append(pr)
             recalls.append(rec)
-            f_scores.append(f1)
+            f1_scores.append(f1)
             queue_rates.append(queue_rate)
 
-            if self.fairness_metric:
-                self.fair_object.set_threshold(threshold)
+            if self.evaluate_fairness_metric:
+                self.fair_object.threshold = threshold
                 fairness_metric = self.fair_object.fairness_metric(self.fairness_metric_name)
                 fairness_metrics.append(fairness_metric)
 
         result = {
             "precision": precisions,
             "recall": recalls,
-            "fscore": f_scores,
+            "f1": f1_scores,
             "queue_rate": queue_rates,
         }
-        if self.fairness_metric:
+        if self.evaluate_fairness_metric:
             result[self.fairness_metric_name] = fairness_metrics
 
         return result
@@ -286,7 +224,7 @@ class DiscriminationThreshold:
             color = cmap(idx)
 
             # Make the label pretty
-            if metric == "fscore":
+            if metric == "f1":
                 if self.fbeta == 1.0:
                     label = "$f_1$"
                 else:
@@ -306,7 +244,7 @@ class DiscriminationThreshold:
             )
 
             # Annotate the graph with the maximizing value
-            if self._max_metric and self._max_metric == metric:
+            if self.discrimination_threshold and self.decision_threshold[0] == metric:
                 ax.axvline(
                     self.discrimination_threshold,
                     ls="--",
