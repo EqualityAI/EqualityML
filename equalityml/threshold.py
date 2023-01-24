@@ -171,6 +171,8 @@ class DiscriminationThreshold:
         predicted_prob = self.model.predict_proba(X_test)[:, 1]
         self.fair_object.update_classifier(self.model)
 
+        # TODO add utility cost
+
         precisions = []
         recalls = []
         f1_scores = []

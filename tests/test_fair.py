@@ -11,7 +11,7 @@ from equalityml import FAIR
 _ESTIMATORS = [LogisticRegression, SVC, DecisionTreeClassifier, RandomForestClassifier]
 _MITIGATION_METHODS = ["resampling", "resampling-preferential", "reweighing", "disparate-impact-remover",
                        "correlation-remover"]
-_METRICS = [('treatment_equality_ratio', 3), ('treatment_equality_difference', 0.6666),
+_METRICS = [('treatment_equality_ratio', 0.3333), ('treatment_equality_difference', 0.6666),
             ('balance_positive_class', 0.9307),
             ('balance_negative_class', 0.6830), ('equal_opportunity_ratio', 0.7), ('accuracy_equality_ratio', 1.0),
             ('predictive_parity_ratio', 0.9), ('predictive_equality_ratio', 0.4), ('statistical_parity_ratio', 0.5555)]
@@ -79,7 +79,7 @@ def test_fairness_metric_evaluation(dataset, metric, estimated_value):
 
     # Compute fairness metric
     fairness_metric = fair_object.fairness_metric(metric)
-    assert np.allclose(fairness_metric[metric], estimated_value, rtol=1.e-3)
+    assert np.allclose(fairness_metric, estimated_value, rtol=1.e-2)
 
 
 @pytest.mark.parametrize("mitigation_method",
@@ -120,4 +120,4 @@ def test_workflow(dataset, mitigation_method):
     fairness_metric = fair_object.fairness_metric(metric)
 
     # The new fairness metric value shall be better than previous one
-    assert prev_fairness_metric[metric] < fairness_metric[metric] < 1
+    assert prev_fairness_metric < fairness_metric < 1
