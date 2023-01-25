@@ -2,7 +2,7 @@
 
 from .fair import FAIR
 from .stats import paired_ttest
-from .threshold import DiscriminationThreshold
+from .threshold import DiscriminationThreshold, discrimination_threshold
 
 
 __name__ = "equalityml"

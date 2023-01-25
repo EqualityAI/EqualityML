@@ -10,7 +10,6 @@ from sklearn.utils.multiclass import type_of_target
 from collections import defaultdict
 import matplotlib.pyplot as plt
 
-
 # Quantiles for lower bound, curve, and upper bound
 QUANTILES_MEDIAN_80 = np.array([0.1, 0.5, 0.9])
 
@@ -26,6 +25,7 @@ class DiscriminationThreshold:
                  fair_object: None,
                  fairness_metric_name: str = "",
                  decision_threshold: Union = ('f1', 'max'),
+                 utility_costs: list = None,
                  fbeta: float = 1.0,
                  test_size: float = 0.2,
                  num_thresholds: int = 25,
@@ -68,6 +68,13 @@ class DiscriminationThreshold:
         self.metrics_name = ["precision", "recall", "f1", "queue_rate"]
         self.fair_object = fair_object
         self.fairness_metric_name = fairness_metric_name
+        self.utility_costs = None
+
+        if utility_costs is not None:
+            if len(utility_costs) == 4 and all(isinstance(x, (int, float)) for x in utility_costs):
+                self.utility_costs = utility_costs
+            else:
+                print("Invalid utility costs")
 
         if fair_object is None:
             self.evaluate_fairness_metric = False
@@ -86,9 +93,9 @@ class DiscriminationThreshold:
             raise ValueError("multiclass format is not supported")
 
         # Check the various inputs
-        #self._check_quantiles(quantiles)
-        #self._check_cv(cv)
-        #self._check_argmax(argmax, exclude)
+        # self._check_quantiles(quantiles)
+        # self._check_cv(cv)
+        # self._check_argmax(argmax, exclude)
 
         if self.X.shape[0] != self.y.shape[0]:
             raise ValueError('Prediction and response variables have'
@@ -120,13 +127,17 @@ class DiscriminationThreshold:
 
         # Convert metrics to metric arrays
         metrics = {
-         metric: np.array(values) for metric, values in metrics.items()
+            metric: np.array(values) for metric, values in metrics.items()
         }
 
         # Perform aggregation and store cv_scores_
         quantiles = QUANTILES_MEDIAN_80
 
         for metric, values in metrics.items():
+
+            if metric == 'cost':
+                values = (values - np.min(values)) / (np.max(values) - np.min(values))
+
             # Compute the lower, median, and upper plots
             lower, median, upper = mstats.mquantiles(values, prob=quantiles, axis=0)
 
@@ -154,11 +165,6 @@ class DiscriminationThreshold:
                     if 0 <= idx < self.num_thresholds:
                         self.discrimination_threshold = self._thresholds[idx]
 
-        draw_plot = True
-        if draw_plot:
-            # Draw
-            self.draw()
-
         return self.discrimination_threshold
 
     def _get_metrics(self, randint: int) -> Dict:
@@ -171,14 +177,15 @@ class DiscriminationThreshold:
         predicted_prob = self.model.predict_proba(X_test)[:, 1]
         self.fair_object.update_classifier(self.model)
 
-        # TODO add utility cost
-
         precisions = []
         recalls = []
         f1_scores = []
         queue_rates = []
         if self.evaluate_fairness_metric:
             fairness_metrics = []
+
+        if self.utility_costs:
+            costs = []
 
         for threshold in self._thresholds:
             pred_label = [1 if (prob >= threshold) else 0 for prob in predicted_prob]
@@ -196,6 +203,12 @@ class DiscriminationThreshold:
             f1_scores.append(f1)
             queue_rates.append(queue_rate)
 
+            if self.utility_costs:
+                array1 = np.array(self.utility_costs)
+                array2 = CM.flatten()
+                cost = np.sum(array1 * array2)
+                costs.append(cost)
+
             if self.evaluate_fairness_metric:
                 self.fair_object.threshold = threshold
                 fairness_metric = self.fair_object.fairness_metric(self.fairness_metric_name)
@@ -210,9 +223,12 @@ class DiscriminationThreshold:
         if self.evaluate_fairness_metric:
             result[self.fairness_metric_name] = fairness_metrics
 
+        if self.utility_costs:
+            result['cost'] = costs
+
         return result
 
-    def draw(self):
+    def show(self):
         """
         Draws the scores as a line chart on the current axes.
         """
@@ -260,8 +276,8 @@ class DiscriminationThreshold:
         ax.legend(frameon=True, loc="best")
         ax.set_xlabel("discrimination threshold")
         ax.set_ylabel("score")
-        ax.set_xlim(0.0, 1.0)
-        ax.set_ylim(0.0, 1.0)
+        # ax.set_xlim(0.0, 1.0)
+        # ax.set_ylim(0.0, 1.0)
 
         savefig = False
         if savefig:
@@ -273,3 +289,144 @@ class DiscriminationThreshold:
         if clear_figure:
             fig.clear()
 
+
+def discrimination_threshold(
+        model: BaseEstimator,
+        data: pd.DataFrame,
+        target_variable: str,
+        fair_object: None,
+        fairness_metric_name: str = "",
+        decision_threshold: Union = ('f1', 'max'),
+        utility_costs: list = None,
+        fbeta: float = 1.0,
+        show: bool = False,
+        test_size: float = 0.2,
+        num_thresholds: int = 25,
+        num_iterations: int = 10,
+        random_seed: int = None
+):
+    """Discrimination Threshold
+    Visualizes how precision, recall, f1 score, and queue rate change as the
+    discrimination threshold increases. For probabilistic, binary classifiers,
+    the discrimination threshold is the probability at which you choose the
+    positive class over the negative. Generally this is set to 50%, but
+    adjusting the discrimination threshold will adjust sensitivity to false
+    positives which is described by the inverse relationship of precision and
+    recall with respect to the threshold.
+    Parameters
+    ----------
+    estimator : estimator
+        A scikit-learn estimator that should be a classifier. If the model is
+        not a classifier, an exception is raised. If the internal model is not
+        fitted, it is fit when the visualizer is fitted, unless otherwise specified
+        by ``is_fitted``.
+    X : ndarray or DataFrame of shape n x m
+        A matrix of n instances with m features
+    y : ndarray or Series of length n
+        An array or series of target or class values. The target y must
+        be a binary classification target.
+    ax : matplotlib Axes, default: None
+        The axes to plot the figure on. If not specified the current axes will be
+        used (or generated if required).
+    n_trials : integer, default: 50
+        Number of times to shuffle and split the dataset to account for noise
+        in the threshold metrics curves. Note if cv provides > 1 splits,
+        the number of trials will be n_trials * cv.get_n_splits()
+    cv : float or cross-validation generator, default: 0.1
+        Determines the splitting strategy for each trial. Possible inputs are:
+        - float, to specify the percent of the test split
+        - object to be used as cross-validation generator
+        This attribute is meant to give flexibility with stratified splitting
+        but if a splitter is provided, it should only return one split and
+        have shuffle set to True.
+    fbeta : float, 1.0 by default
+        The strength of recall versus precision in the F-score.
+    argmax : str or None, default: 'fscore'
+        Annotate the threshold maximized by the supplied metric (see exclude
+        for the possible metrics to use). If None or passed to exclude,
+        will not annotate the graph.
+    exclude : str or list, optional
+        Specify metrics to omit from the graph, can include:
+        - ``"precision"``
+        - ``"recall"``
+        - ``"queue_rate"``
+        - ``"fscore"``
+        Excluded metrics will not be displayed in the graph, nor will they
+        be available in ``thresholds_``; however, they will be computed on fit.
+    quantiles : sequence, default: np.array([0.1, 0.5, 0.9])
+        Specify the quantiles to view model variability across a number of
+        trials. Must be monotonic and have three elements such that the first
+        element is the lower bound, the second is the drawn curve, and the
+        third is the upper bound. By default the curve is drawn at the median,
+        and the bounds from the 10th percentile to the 90th percentile.
+    random_state : int, optional
+        Used to seed the random state for shuffling the data while composing
+        different train and test splits. If supplied, the random state is
+        incremented in a deterministic fashion for each split.
+        Note that if a splitter is provided, it's random state will also be
+        updated with this random state, even if it was previously set.
+    is_fitted : bool or str, default="auto"
+        Specify if the wrapped estimator is already fitted. If False, the estimator
+        will be fit when the visualizer is fit, otherwise, the estimator will not be
+        modified. If "auto" (default), a helper method will check if the estimator
+        is fitted before fitting it again.
+    force_model : bool, default: False
+        Do not check to ensure that the underlying estimator is a classifier. This
+        will prevent an exception when the visualizer is initialized but may result
+        in unexpected or unintended behavior.
+    show : bool, default: True
+        If True, calls ``show()``, which in turn calls ``plt.show()`` however you cannot
+        call ``plt.savefig`` from this signature, nor ``clear_figure``. If False, simply
+        calls ``finalize()``
+    kwargs : dict
+        Keyword arguments passed to the visualizer base classes.
+    Notes
+    -----
+    The term "discrimination threshold" is rare in the literature. Here, we
+    use it to mean the probability at which the positive class is selected
+    over the negative class in binary classification.
+    Classification models must implement either a ``decision_function`` or
+    ``predict_proba`` method in order to be used with this class. A
+    ``YellowbrickTypeError`` is raised otherwise.
+    .. seealso::
+        For a thorough explanation of discrimination thresholds, see:
+        `Visualizing Machine Learning Thresholds to Make Better Business
+        Decisions
+        <http://blog.insightdatalabs.com/visualizing-classifier-thresholds/>`_
+        by Insight Data.
+    Examples
+    --------
+    >>> from yellowbrick.classifier.threshold import discrimination_threshold
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from yellowbrick.datasets import load_occupancy
+    >>> X, y = load_occupancy()
+    >>> model = LogisticRegression(multi_class="auto", solver="liblinear")
+    >>> discrimination_threshold(model, X, y)
+    Returns
+    -------
+    threshold : float
+        Returns the discrimination threshold based on decision threhsold input
+    """
+
+    # Instantiate the DiscriminationThreshold
+    dt = DiscriminationThreshold(model,
+                                 data,
+                                 target_variable,
+                                 fair_object,
+                                 fairness_metric_name,
+                                 decision_threshold,
+                                 utility_costs,
+                                 fbeta,
+                                 test_size,
+                                 num_thresholds,
+                                 num_iterations,
+                                 random_seed)
+
+    # Fit the DiscriminationThreshold
+    threshold = dt.fit()
+
+    if show:
+        dt.show()
+
+    # Return the discrimination threshold value
+    return threshold
