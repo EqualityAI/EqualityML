@@ -71,6 +71,7 @@ class FAIR:
                  favorable_label=1,
                  unfavorable_label=0,
                  threshold=0.5,
+                 metric_name=None,
                  pred_class=None,
                  pred_prob=None):
 
@@ -120,6 +121,7 @@ class FAIR:
         self.protected_variable = protected_variable
         self.privileged_class = privileged_class
         self._threshold = threshold
+        self._metric_name = metric_name
 
         if unprivileged_class is None:
             _unprivileged_classes = list(set(training_data[protected_variable]).difference([privileged_class]))
@@ -133,7 +135,6 @@ class FAIR:
         self.pred_prob = pred_prob
         self.unprivileged_groups = [{self.protected_variable: [self.unprivileged_class]}]
         self.privileged_groups = [{self.protected_variable: [self.privileged_class]}]
-        self.metric_name = None
         self.mitigated_testing_data = None
         self.mitigated_training_data = None
 
@@ -176,6 +177,16 @@ class FAIR:
     def threshold(self, value):
         """Set discrimination threshold"""
         self._threshold = value
+
+    @property
+    def metric_name(self):
+        """Get fairness metric name"""
+        return getattr(self, '_metric_name')
+
+    @metric_name.setter
+    def metric_name(self, name):
+        """Set fairness metric name"""
+        self._metric_name = name
 
     def _predict_binary_prob(self, data):
 
@@ -289,7 +300,9 @@ class FAIR:
 
     def bias_mitigation(self, mitigation_method, alpha=1.0, repair_level=0.8):
         """
-        Apply a mitigation method to data to make it more balanced.
+        Apply a mitigation method to the bias in Machine Learning application to make it more balanced.
+        A set of mitigation method is available which mitigates the dataset or calculates mitigated weights to be used in
+        the machine learning model.
 
         Parameters
         ----------
@@ -311,7 +324,7 @@ class FAIR:
             Mitigated data/weights
             Notes:
             Output shouldn't have both 'training_data' and 'weights' keys i.e. if method only changes data then
-             key is 'data' and if method changes machine learning model weights then 'weights' is in key
+             key is 'training_data' and if method changes machine learning model weights then 'weights' is in key
 
         """
 
@@ -384,7 +397,7 @@ class FAIR:
         if metric_name not in metrics_list:
             raise ValueError(f"Provided invalid metric name {metric_name}")
 
-        self.metric_name = metric_name
+        self._metric_name = metric_name
 
         fairness_metric = {}
 
@@ -512,12 +525,16 @@ class FAIR:
 
         self.pred_class = pred_class
 
-        # TODO Add probabilities check
+        if pred_prob is not None and any(i < 0 or i > 1 for i in pred_prob):
+            raise TypeError("Probability estimates shall be between 0 and 1")
+
         self.pred_prob = pred_prob
 
     def model_mitigation(self, mitigation_method, alpha=1.0, repair_level=0.8):
         """
-        Apply a mitigation method to data to make it more balanced.
+        Apply a mitigation method to the bias in Machine Learning application to make it more balanced. After mitigating
+        the dataset or weights, based on input mitigation method, the machine learning model is properly fitted and
+        returned.
 
         Parameters
         ----------
@@ -560,7 +577,7 @@ class FAIR:
     def compare_mitigation_methods(self, scoring=None, mitigation_methods=None, draw_plot=False, save_figure=False,
                                    fairness_threshold=0.8):
         """
-
+        TODO
         Parameters
         ----------
         scoring
@@ -570,8 +587,11 @@ class FAIR:
         fairness_threshold
         """
 
+        if self._metric_name is None:
+            raise AttributeError("Fairness metric is unknown.")
+
         if mitigation_methods is None:
-            mitigation_methods = self.map_bias_mitigation[self.metric_name]
+            mitigation_methods = self.map_bias_mitigation[self._metric_name]
         else:
             for mitigation_method in mitigation_methods:
                 if mitigation_method not in self.bias_mitigations_list:
@@ -593,7 +613,7 @@ class FAIR:
             scorer = scoring
 
         # Create the Dataframe for comparing models performance and fairness metrics
-        comparison_df = pd.DataFrame(columns=[str(scoring), self.metric_name])
+        comparison_df = pd.DataFrame(columns=[str(scoring), self._metric_name])
         if self.testing_data is None:
             testing_data = self.training_data
         else:
@@ -602,7 +622,7 @@ class FAIR:
         X_test = testing_data.drop(columns=self.target_variable)
         y_test = testing_data[self.target_variable]
         score = scorer(self.ml_model, X_test, y_test)
-        fairness_metric = self.fairness_metric(self.metric_name)
+        fairness_metric = self.fairness_metric(self._metric_name)
         comparison_df.loc['reference'] = [score, fairness_metric]
 
         # Iterate over suggested mitigation_methods and re-evaluate score and fairness metric
@@ -617,7 +637,7 @@ class FAIR:
             X_test = testing_data.drop(columns=self.target_variable)
             y_test = testing_data[self.target_variable]
             score = scorer(self.ml_model, X_test, y_test)
-            fairness_metric = self.fairness_metric(self.metric_name)
+            fairness_metric = self.fairness_metric(self._metric_name)
 
             comparison_df.loc[mitigation_method] = [score, fairness_metric]
 
@@ -626,13 +646,13 @@ class FAIR:
             matplotlib.use('TkAgg')
             cmap = plt.get_cmap("tab10")
             score = comparison_df.loc['reference'][str(scoring)]
-            fairness_metric = comparison_df.loc['reference'][str(self.metric_name)]
+            fairness_metric = comparison_df.loc['reference'][str(self._metric_name)]
             fig = plt.gcf()
             ax = plt.gca()
             ax.plot(score, fairness_metric, marker='*', linestyle='', color=cmap(0), label='reference')
             for idx, mitigation_method in enumerate(mitigation_methods):
                 score = comparison_df.loc[mitigation_method][str(scoring)]
-                fairness_metric = comparison_df.loc[mitigation_method][str(self.metric_name)]
+                fairness_metric = comparison_df.loc[mitigation_method][str(self._metric_name)]
                 ax.plot(score, fairness_metric, marker='o', linestyle='', color=cmap(1 + idx), label=mitigation_method)
 
             ax.axhline(
@@ -644,9 +664,9 @@ class FAIR:
             )
 
             ax.legend(frameon=True, loc="best")
-            ax.set_title(f"{str(scoring)} vs {str(self.metric_name)}")
+            ax.set_title(f"{str(scoring)} vs {str(self._metric_name)}")
             ax.set_xlabel(str(scoring))
-            ax.set_ylabel(str(self.metric_name))
+            ax.set_ylabel(str(self._metric_name))
             ax.set_ylim(0.0, 1.0)
             plt.show()
 

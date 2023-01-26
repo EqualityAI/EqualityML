@@ -121,3 +121,60 @@ def test_workflow(dataset, mitigation_method):
 
     # The new fairness metric value shall be better than previous one
     assert prev_fairness_metric < fairness_metric < 1
+
+
+@pytest.mark.parametrize("mitigation_method",
+                         ["resampling", "resampling-preferential", "reweighing", "disparate-impact-remover"])
+def test_model_mitigation(dataset, mitigation_method):
+    np.random.seed(0)
+
+    X_train = dataset["training_data"].drop(columns=dataset["target_variable"])
+    y_train = dataset["training_data"][dataset["target_variable"]]
+
+    # Train a machine learning model
+    _estimator = LogisticRegression()
+    _estimator.fit(X_train, y_train)
+
+    fair_object = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
+                       target_variable=dataset["target_variable"],
+                       protected_variable=dataset["protected_variable"], privileged_class=1)
+
+    # Compute fairness metric
+    metric = "statistical_parity_ratio"
+    prev_fairness_metric = fair_object.fairness_metric(metric)
+
+    # Apply a bias mitigation method over ml model
+    fair_object.model_mitigation(mitigation_method)
+    fairness_metric = fair_object.fairness_metric(metric)
+
+    # The new fairness metric value shall be better than previous one
+    assert prev_fairness_metric < fairness_metric < 1
+
+
+@pytest.mark.parametrize("metric_name",
+                         ["statistical_parity_ratio"])
+def test_compare_mitigation_methods(dataset, metric_name):
+    np.random.seed(0)
+
+    X_train = dataset["training_data"].drop(columns=dataset["target_variable"])
+    y_train = dataset["training_data"][dataset["target_variable"]]
+
+    # Train a machine learning model
+    _estimator = LogisticRegression()
+    _estimator.fit(X_train, y_train)
+
+    fair_object = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
+                       target_variable=dataset["target_variable"],
+                       protected_variable=dataset["protected_variable"], privileged_class=1)
+
+    # Set fairness metric name
+    fair_object.metric_name = metric_name
+
+    # Compare mitigation methods
+    comparison_df = fair_object.compare_mitigation_methods(scoring='accuracy')
+
+    # Assert dataframe columns
+    assert set(comparison_df.columns) == {metric_name, 'accuracy'}
+
+    # Assert dataframe types
+    assert comparison_df.select_dtypes(include=["float", 'int']).all().all()
