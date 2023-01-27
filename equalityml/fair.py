@@ -221,7 +221,7 @@ class FAIR:
 
         cr = CorrelationRemover(sensitive_feature_ids=[self.protected_variable], alpha=alpha)
         data_std = cr.fit_transform(data.drop(columns=[self.target_variable]))
-        train_data_cr = pd.DataFrame(data_std, columns=data_rm_columns)
+        train_data_cr = pd.DataFrame(data_std, columns=data_rm_columns, index=data.index)
 
         # Concatenate data after correlation remover
         mitigated_data = pd.concat(
@@ -574,17 +574,30 @@ class FAIR:
 
         return self.ml_model
 
-    def compare_mitigation_methods(self, scoring=None, mitigation_methods=None, draw_plot=False, save_figure=False,
-                                   fairness_threshold=0.8):
+    def compare_mitigation_methods(self, scoring=None, mitigation_methods=None, show=False, save_figure=False,
+                                   fairness_threshold=0.8, **kwargs):
         """
-        TODO
+        Compare the performance of the models
         Parameters
         ----------
-        scoring
-        mitigation_methods
-        draw_plot
-        save_figure
-        fairness_threshold
+        scoring : str, default=None
+            Score to compute the performance of the model
+        mitigation_methods : list, default=None
+            List of possible mitigation methods to mitigate the model. If this mitigation method is not available in
+            FAIR class, it will be removed from the list. In case it's None, the default list will be used.
+        show : bool, default=False
+            If True, plots a figure with. If False, simply computes the dataframe
+        save_figure : bool, default=False
+            If True, save the figure.
+        fairness_threshold : float, default=0.8
+            Non-discrimination value
+        kwargs : dict
+            Keyword arguments passed to the bias mitigation method.
+                Returns
+        ----------
+        comparison_df : pd.DataFrame
+            pd.Dataframe
+
         """
 
         if self._metric_name is None:
@@ -627,7 +640,7 @@ class FAIR:
 
         # Iterate over suggested mitigation_methods and re-evaluate score and fairness metric
         for mitigation_method in mitigation_methods:
-            self.model_mitigation(mitigation_method=mitigation_method)
+            self.model_mitigation(mitigation_method=mitigation_method, **kwargs)
             if self.mitigated_testing_data is not None:
                 testing_data = self.mitigated_testing_data
             elif self.testing_data is not None:
@@ -641,7 +654,7 @@ class FAIR:
 
             comparison_df.loc[mitigation_method] = [score, fairness_metric]
 
-        if draw_plot:
+        if show:
             # aif360 sets matplotlib to use agg. Revert it to use Tkinter agg (a GUI backend)
             matplotlib.use('TkAgg')
             cmap = plt.get_cmap("tab10")
