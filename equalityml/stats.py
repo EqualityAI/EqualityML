@@ -17,6 +17,7 @@ def paired_ttest(model_1,
                  scoring=None,
                  random_seed=None):
     """
+    TODO
     XXXX
 
     Parameters
@@ -69,7 +70,8 @@ def mcnemar_table(model_1, model_2, X, y, discrimination_threshold=0.5):
         n_features is the number of features.
     y : array-like, shape = [n_samples]
         Target values.
-    discrimination_threshold
+    discrimination_threshold: float, default=0.5
+        XXX.
     Returns
     ----------
     tb : array-like, shape=[2, 2]
@@ -115,10 +117,11 @@ def mcnemar(model_1, model_2, X, y, discrimination_threshold=0.5, corrected=True
         n_features is the number of features.
     y : array-like, shape = [n_samples]
         Target values.
-    discrimination_threshold : float (default: 0.5)
-    corrected : bool (default: True)
+    discrimination_threshold : float, default=0.5
+        CCC
+    corrected : bool, default=True
         True to use Edward's continuity correction for chi-squared
-    exact_binomial_test : bool, (default: False)
+    exact_binomial_test : bool, default=False
         If `True`, uses an exact binomial test comparing b to
         a binomial distribution with n = b + c and p = 0.5.
         It is highly recommended to use `exact=True` for sample sizes < 25
