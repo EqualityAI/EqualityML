@@ -17,29 +17,27 @@ def paired_ttest(model_1,
                  scoring=None,
                  random_seed=None):
     """
-    TODO
-    XXXX
+    Statistical paired t test for classifier comparisons. 2 methods are provided: McNemar's test and paired ttest 5x2cv.
 
     Parameters
     ----------
     model_1 : a Scikit-Learn estimator
-        A scikit-learn estimator that should be a classifier. If the model is
-        not a classifier, an exception is raised.
+        A scikit-learn estimator that should be a classifier. If the model is not a classifier, an exception is raised.
     model_2 : a Scikit-Learn estimator
-        A scikit-learn estimator that should be a classifier. If the model is
-        not a classifier, an exception is raised.
+        A scikit-learn estimator that should be a classifier. If the model is not a classifier, an exception is raised.
     data : pd.DataFrame
         Data in the form of a pd.DataFrame, which will be used to evaluate the paired t-test.
     target_variable : str
         Name of the target variable column in the training data.
     method : str, default="mcnemar"
-
+        If `mcnemar` uses McNemar's test, if "5x2cv" uses paired ttest 5x2cv.
     discrimination_threshold : float, default=0.5
         Discrimination threshold for predicting the favorable class.
     fair_object: FAIR, default=None
-
-    mitigation_method : str
-         Name of the mitigation method. Accepted values:
+        FAIR object with methods to apply bias mitigation and evaluate fairness metric.
+    mitigation_method : str, default=None
+         Name of the bias mitigation method to reduce unfairness of the Machine Learning model using `fair_object`.
+         Accepted values:
          "resampling"
          "resampling-preferential"
          "reweighing"
@@ -55,6 +53,14 @@ def paired_ttest(model_1,
         for more information.
     random_seed : int, default=None
         Random seed for creating the test/train splits.
+    Returns
+    ----------
+    chi2 : float
+        Chi-squared value
+    pvalue : float
+        Two-tailed p-value.
+        If the chosen significance level is larger than the p-value, we reject the null hypothesis and accept that
+        there are significant differences in the two compared models.
     """
     X = data.drop(columns=target_variable)
     y = data[target_variable]
@@ -62,7 +68,7 @@ def paired_ttest(model_1,
     if method == "mcnemar":
         chi2, p = mcnemar(model_1, model_2, X, y, discrimination_threshold=discrimination_threshold)
     elif method == "5x2cv":
-        # Threshold setter
+        # Set Threshold
         fair_object.threshold = discrimination_threshold
         chi2, p = paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, scoring=scoring,
                                      random_seed=random_seed)
@@ -79,11 +85,9 @@ def mcnemar_table(model_1, model_2, X, y, discrimination_threshold=0.5):
     Parameters
     -----------
     model_1 : a Scikit-Learn estimator
-        A scikit-learn estimator that should be a classifier. If the model is
-        not a classifier, an exception is raised.
+        A scikit-learn estimator that should be a classifier. If the model is not a classifier, an exception is raised.
     model_2 : a Scikit-Learn estimator
-        A scikit-learn estimator that should be a classifier. If the model is
-        not a classifier, an exception is raised.
+        A scikit-learn estimator that should be a classifier. If the model is not a classifier, an exception is raised.
     X : {array-like, sparse matrix}, shape = [n_samples, n_features]
         Training vectors, where n_samples is the number of samples and
         n_features is the number of features.
@@ -139,17 +143,20 @@ def mcnemar(model_1, model_2, X, y, discrimination_threshold=0.5, corrected=True
     discrimination_threshold : float, default=0.5
         Discrimination threshold for predicting the favorable class.
     corrected : bool, default=True
-        True to use Edward's continuity correction for chi-squared
+        If `True`, uses Edward's continuity correction for chi-squared
     exact_binomial_test : bool, default=False
         If `True`, uses an exact binomial test comparing b to
         a binomial distribution with n = b + c and p = 0.5.
-        It is highly recommended to use `exact=True` for sample sizes < 25
+        It is highly recommended to use `exact_binomial_test=True` for sample sizes < 25
         since chi-squared is not well-approximated by the chi-squared distribution.
     Returns
-    -----------
-    chi2, p : float or None, float
-        Returns the chi-squared value and the p-value;
-        if `exact_binomial_test=True`, `chi2` is `None`
+    ----------
+    chi2 : float
+        Chi-squared value
+    pvalue : float
+        Two-tailed p-value.
+        If the chosen significance level is larger than the p-value, we reject the null hypothesis and accept that
+        there are significant differences in the two compared models.
     """
 
     tb = mcnemar_table(model_1, model_2, X, y, discrimination_threshold=discrimination_threshold)
@@ -177,15 +184,25 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
     This test was proposed by Dieterrich (1998).
     Parameters
     ----------
-    model_1 : scikit-learn classifier or regressor
-    model_2 : scikit-learn classifier or regressor
+    model_1 : a Scikit-Learn estimator
+        A scikit-learn estimator that can be a classifier or regressor.
+    model_2 : a Scikit-Learn estimator
+        A scikit-learn estimator that can be a classifier or regressor.
     X : {array-like, sparse matrix}, shape = [n_samples, n_features]
         Training vectors, where n_samples is the number of samples and
         n_features is the number of features.
     y : array-like, shape = [n_samples]
         Target values.
-    fair_object
-    mitigation_method
+    fair_object: FAIR, default=None
+        FAIR object with methods to apply bias mitigation and evaluate fairness metric.
+    mitigation_method : str, default=None
+         Name of the bias mitigation method to reduce unfairness of the Machine Learning model using `fair_object`.
+         Accepted values:
+         "resampling"
+         "resampling-preferential"
+         "reweighing"
+         "disparate-impact-remover"
+         "correlation-remover"
     scoring : str, callable. Default=None
         If None (default), uses 'accuracy' for sklearn classifiers
         If str, uses a sklearn scoring metric string identifier, for example
@@ -198,8 +215,8 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
         Random seed for creating the test/train splits.
     Returns
     ----------
-    t : float
-        The t-statistic
+    chi2 : float
+        Chi-squared value
     pvalue : float
         Two-tailed p-value.
         If the chosen significance level is larger than the p-value, we reject the null hypothesis and accept that
@@ -233,7 +250,7 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
             scorer = scoring
 
     def _score_diff(_model_1, _model_2, _X_train, _y_train, _X_test, _y_test):
-        """ Compute score difference between  model 1 and model 2"""
+        """ Compute score difference between model 1 and model 2"""
 
         # Train model 1 and get score 1
         _model_1.fit(_X_train, _y_train)
