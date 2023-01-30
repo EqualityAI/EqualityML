@@ -167,11 +167,8 @@ def test_compare_mitigation_methods(dataset, metric_name):
                        target_variable=dataset["target_variable"],
                        protected_variable=dataset["protected_variable"], privileged_class=1)
 
-    # Set fairness metric name
-    fair_object.metric_name = metric_name
-
     # Compare mitigation methods
-    comparison_df = fair_object.compare_mitigation_methods(scoring='accuracy')
+    comparison_df = fair_object.compare_mitigation_methods(scoring='accuracy', metric_name=metric_name)
 
     # Assert dataframe columns
     assert set(comparison_df.columns) == {metric_name, 'accuracy'}

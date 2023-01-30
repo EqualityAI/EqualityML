@@ -26,7 +26,7 @@ class FAIR:
     """
     FAIR (Fairness Assessment and Inequality Reduction) empowers AI developers to assess fairness of their Machine
     Learning application and mitigate any observed bias in its application. It contains methods to assess fairness
-    metrics as well as bias mitigation algorithms.
+    metrics as well as a set of bias algorithms for mitigating unfairness.
 
     Parameters
     ----------
@@ -34,29 +34,31 @@ class FAIR:
         A scikit-learn estimator that should be a classifier. If the model is
         not a classifier, an exception is raised.
     training_data : pd.DataFrame
-        Data in pd.DataFrame format.
+        Training data in the form of a pd.DataFrame, which was used to train the machine learning model.
     target_variable : str
-        Target column of the data with outputs / scores.
+        Name of the target variable column in the training data.
     protected_variable : str
-        Data attribute for which fairness is desired.
+        Name of the protected variable column in the training data.
     privileged_class : float
         Subgroup that is suspected to have the most privilege.
         It needs to be a value present in `protected_variable` column.
     testing_data : pd.DataFrame, default=None
-        Data in pd.DataFrame format.
+        Testing data in the form of a pd.DataFrame, which will be used to make predictions.
     features : list, default=None
         Data attributes used to train the machine learning model
     unprivileged_class : float, default=None
         Subgroup that is suspected to have the least privilege.
         It needs to be a value present in `protected_variable` column.
     favorable_label : float, default=1
-        Label value which is considered favorable (i.e. "positive").
+        The favorable label value in the target variable which is considered favorable (i.e. "positive").
     unfavorable_label : float, default=0
-        Label value which is considered unfavorable (i.e. "negative").
+        The favorable label value in the target variable which is considered unfavorable (i.e. "negative").
+    threshold : float, default=0.5
+        Discrimination threshold for predicting the favorable class.
     pred_class : list, default=None
-        Predicted class labels for input 'data' applied on machine learning model object 'ml_model'.
+        Predicted class labels for input 'testing_data' applied on machine learning model 'ml_model'.
     pred_prob : list, default=None
-        Probability estimates for input 'data' applied on machine learning model object 'ml_model'.
+        Probability estimates for input 'testing_data' applied on machine learning model 'ml_model'.
     """
 
     def __init__(self,
@@ -71,7 +73,6 @@ class FAIR:
                  favorable_label=1,
                  unfavorable_label=0,
                  threshold=0.5,
-                 metric_name=None,
                  pred_class=None,
                  pred_prob=None):
 
@@ -80,8 +81,10 @@ class FAIR:
         # Check input arguments
         if target_variable not in training_data.columns:
             raise TypeError(f"Target variable {target_variable} is not part of training data")
+
         if protected_variable not in training_data.columns:
             raise TypeError(f"Protected variable {protected_variable} is not part of training data")
+
         if features is not None:
             if any([feature not in training_data.columns for feature in features]):
                 raise TypeError(f"At least one feature of {features} are not part of training data")
@@ -89,6 +92,7 @@ class FAIR:
         # Check ml_model and type of target
         if getattr(ml_model, "_estimator_type", None) != "classifier":
             raise TypeError("Model has to be a classifier")
+
         if type_of_target(training_data[target_variable]) != "binary":
             raise ValueError("Multiclass format is not supported")
 
@@ -101,7 +105,7 @@ class FAIR:
                 sorted(list(set(training_data[target_variable]))) != sorted([favorable_label, unfavorable_label]):
             raise TypeError("Invalid value of favorable/unfavorable labels")
 
-        # check if testing data is used to assess fairness metrics.
+        # Check if testing data is used to assess fairness metrics.
         if testing_data is None:
             self.testing_data = None
         else:
@@ -121,7 +125,7 @@ class FAIR:
         self.protected_variable = protected_variable
         self.privileged_class = privileged_class
         self._threshold = threshold
-        self._metric_name = metric_name
+        self._metric_name = None
 
         if unprivileged_class is None:
             _unprivileged_classes = list(set(training_data[protected_variable]).difference([privileged_class]))
@@ -178,18 +182,8 @@ class FAIR:
         """Set discrimination threshold"""
         self._threshold = value
 
-    @property
-    def metric_name(self):
-        """Get fairness metric name"""
-        return getattr(self, '_metric_name')
-
-    @metric_name.setter
-    def metric_name(self, name):
-        """Set fairness metric name"""
-        self._metric_name = name
-
     def _predict_binary_prob(self, data):
-
+        """Predict binary probabilities estimates"""
         try:
             _pred_prob = self.ml_model.predict_proba(data[self.features])
             _pred_prob = _pred_prob[:, 1]  # keep probabilities for positive outcomes only
@@ -199,7 +193,7 @@ class FAIR:
         return _pred_prob
 
     def _predict_binary_class(self, data):
-
+        """Predict binary classes"""
         try:
             _pred_class = np.asarray(list(map(lambda x: 1 if x > self._threshold else 0,
                                               self.ml_model.predict_proba(data[self.features])[:, -1])))
@@ -389,12 +383,8 @@ class FAIR:
             Returns the fairness metric score for the input fairness metric name.
         """
 
-        metrics_list = ['treatment_equality_ratio', 'treatment_equality_difference', 'balance_positive_class',
-                        'balance_negative_class', 'equal_opportunity_ratio', 'accuracy_equality_ratio',
-                        'predictive_parity_ratio', 'predictive_equality_ratio', 'statistical_parity_ratio']
-
         metric_name = metric_name.lower()
-        if metric_name not in metrics_list:
+        if metric_name not in self.fairness_metrics_list:
             raise ValueError(f"Provided invalid metric name {metric_name}")
 
         self._metric_name = metric_name
@@ -504,7 +494,9 @@ class FAIR:
 
     def update_classifier(self, ml_model, pred_class=None, pred_prob=None):
         """
-        Update Machine Learning model classifier typically after applying a bias mitigation method.
+        Update the Machine Learning model classifier.
+        After applying a bias mitigation method and retraining the ML model, it is necessary to update the model to
+        reassess the fairness metric.
 
         Parameters
         ----------
@@ -512,9 +504,9 @@ class FAIR:
             A scikit-learn estimator that should be a classifier. If the model is
             not a classifier, an exception is raised.
         pred_class : list, default=None
-            Predicted class labels for input 'data' applied on machine learning model 'ml_model'.
+            Predicted class labels for input 'testing_data' applied on machine learning model 'ml_model'.
         pred_prob : list, default=None
-            Probability estimates for input 'data' applied on machine learning model 'ml_model'.
+            Probability estimates for input 'testing_data' applied on machine learning model 'ml_model'.
         """
         if getattr(ml_model, "_estimator_type", None) != "classifier":
             raise TypeError("Model has to be a classifier")
@@ -532,9 +524,9 @@ class FAIR:
 
     def model_mitigation(self, mitigation_method, alpha=1.0, repair_level=0.8):
         """
-        Apply a mitigation method to the bias in Machine Learning application to make it more balanced. After mitigating
-        the dataset or weights, based on input mitigation method, the machine learning model is properly fitted and
-        returned.
+        Apply a mitigation method to the Machine Learning model.
+        Dependent on the input mitigation method, the mitigated dataset or weights computed by 'bias_mitigation' method
+        are used to re-train the machine learning model which is then returned.
 
         Parameters
         ----------
@@ -554,9 +546,9 @@ class FAIR:
         ----------
         model : a Scikit-Learn estimator
             Mitigated Machine Learning model
-
         """
-        mitigation_result = self.bias_mitigation(mitigation_method=mitigation_method, alpha=alpha, repair_level=repair_level)
+        mitigation_result = self.bias_mitigation(mitigation_method=mitigation_method, alpha=alpha,
+                                                 repair_level=repair_level)
         if mitigation_method == "reweighing":
             mitigated_weights = mitigation_result['weights']
             X_train = self.training_data.drop(columns=self.target_variable)
@@ -574,34 +566,60 @@ class FAIR:
 
         return self.ml_model
 
-    def compare_mitigation_methods(self, scoring=None, mitigation_methods=None, show=False, save_figure=False,
-                                   fairness_threshold=0.8, **kwargs):
+    def compare_mitigation_methods(self, scoring=None, metric_name=None, mitigation_methods=None,
+                                   fairness_threshold=0.8,
+                                   show=False, save_figure=False, **kwargs):
         """
-        Compare the performance of the models
+        TODO
+        Compare the performance and fairness metric of the model mitigated by a set of bias mitigation methods.
+        A pandas DataFrame will be created with
         Parameters
         ----------
-        scoring : str, default=None
-            Score to compute the performance of the model
+        scoring : str, callable. Default=None
+            If None (default), uses 'accuracy' for sklearn classifiers
+            If str, uses a sklearn scoring metric string identifier, for example
+            {accuracy, f1, precision, recall, roc_auc}.
+            If a callable object or function is provided, it has to agree with
+            sklearn's signature 'scorer(estimator, X, y)'. Check
+            http://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html
+            for more information.
+        metric_name : str
+            Fairness metric name. Available options are:
+               1. 'treatment_equality_ratio':
+               2. 'treatment_equality_difference':
+               3. 'balance_positive_class': Balance for positive class
+               4. 'balance_negative_class': Balance for negative class
+               5. 'equal_opportunity_ratio': Equal opportunity ratio
+               6. 'accuracy_equality_ratio': Accuracy equality ratio
+               7. 'predictive_parity_ratio':  Predictive parity ratio
+               8. 'predictive_equality_ratio': Predictive equality ratio
+               9. 'statistical_parity_ratio': Statistical parity ratio
         mitigation_methods : list, default=None
-            List of possible mitigation methods to mitigate the model. If this mitigation method is not available in
-            FAIR class, it will be removed from the list. In case it's None, the default list will be used.
+            List of bias mitigation methods to mitigate the model.
+            If a bias mitigation method is not available in FAIR class, it will be removed from the list.
+            In case it's None, a default list will be computed based on the provided fairness metric.
         show : bool, default=False
             If True, plots a figure with. If False, simply computes the dataframe
         save_figure : bool, default=False
             If True, save the figure.
         fairness_threshold : float, default=0.8
-            Non-discrimination value
+            Non-discrimination value.
         kwargs : dict
             Keyword arguments passed to the bias mitigation method.
-                Returns
+        Returns
         ----------
         comparison_df : pd.DataFrame
             pd.Dataframe
-
         """
 
-        if self._metric_name is None:
-            raise AttributeError("Fairness metric is unknown.")
+        if metric_name is None:
+            if self._metric_name is None:
+                raise AttributeError("Fairness metric is unknown.")
+        else:
+            metric_name = metric_name.lower()
+            if metric_name not in self.fairness_metrics_list:
+                raise ValueError(f"Provided invalid metric name {metric_name}")
+            self._metric_name = metric_name
 
         if mitigation_methods is None:
             mitigation_methods = self.map_bias_mitigation[self._metric_name]
@@ -615,7 +633,7 @@ class FAIR:
         if scoring is None:
             if self.ml_model._estimator_type == "classifier":
                 scoring = "accuracy"
-            #elif self.ml_model._estimator_type == "regressor":
+            # elif self.ml_model._estimator_type == "regressor":
             #    scoring = "r2"
             else:
                 raise AttributeError("Model must be a Classifier.")
@@ -625,7 +643,7 @@ class FAIR:
         else:
             scorer = scoring
 
-        # Create the Dataframe for comparing models performance and fairness metrics
+        # Create the Dataframe for comparing models performance and fairness metric
         comparison_df = pd.DataFrame(columns=[str(scoring), self._metric_name])
         if self.testing_data is None:
             testing_data = self.training_data
@@ -638,7 +656,7 @@ class FAIR:
         fairness_metric = self.fairness_metric(self._metric_name)
         comparison_df.loc['reference'] = [score, fairness_metric]
 
-        # Iterate over suggested mitigation_methods and re-evaluate score and fairness metric
+        # Iterate over mitigation methods list and re-evaluate score and fairness metric
         for mitigation_method in mitigation_methods:
             self.model_mitigation(mitigation_method=mitigation_method, **kwargs)
             if self.mitigated_testing_data is not None:

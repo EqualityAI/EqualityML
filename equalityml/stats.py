@@ -28,14 +28,33 @@ def paired_ttest(model_1,
     model_2 : a Scikit-Learn estimator
         A scikit-learn estimator that should be a classifier. If the model is
         not a classifier, an exception is raised.
-    data
-    target_variable
-    method
-    discrimination_threshold
-    fair_object
-    mitigation_method
-    scoring
-    random_seed
+    data : pd.DataFrame
+        Data in the form of a pd.DataFrame, which will be used to evaluate the paired t-test.
+    target_variable : str
+        Name of the target variable column in the training data.
+    method : str, default="mcnemar"
+
+    discrimination_threshold : float, default=0.5
+        Discrimination threshold for predicting the favorable class.
+    fair_object: FAIR, default=None
+
+    mitigation_method : str
+         Name of the mitigation method. Accepted values:
+         "resampling"
+         "resampling-preferential"
+         "reweighing"
+         "disparate-impact-remover"
+         "correlation-remover"
+    scoring : str, callable. Default=None
+        If None (default), uses 'accuracy' for sklearn classifiers
+        If str, uses a sklearn scoring metric string identifier, for example
+        {accuracy, f1, precision, recall, roc_auc}.
+        If a callable object or function is provided, it has to agree with
+        sklearn's signature 'scorer(estimator, X, y)'. Check
+        http://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html
+        for more information.
+    random_seed : int, default=None
+        Random seed for creating the test/train splits.
     """
     X = data.drop(columns=target_variable)
     y = data[target_variable]
@@ -70,8 +89,8 @@ def mcnemar_table(model_1, model_2, X, y, discrimination_threshold=0.5):
         n_features is the number of features.
     y : array-like, shape = [n_samples]
         Target values.
-    discrimination_threshold: float, default=0.5
-        XXX.
+    discrimination_threshold : float, default=0.5
+        Discrimination threshold for predicting the favorable class.
     Returns
     ----------
     tb : array-like, shape=[2, 2]
@@ -118,7 +137,7 @@ def mcnemar(model_1, model_2, X, y, discrimination_threshold=0.5, corrected=True
     y : array-like, shape = [n_samples]
         Target values.
     discrimination_threshold : float, default=0.5
-        CCC
+        Discrimination threshold for predicting the favorable class.
     corrected : bool, default=True
         True to use Edward's continuity correction for chi-squared
     exact_binomial_test : bool, default=False
@@ -167,15 +186,12 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
         Target values.
     fair_object
     mitigation_method
-    scoring : str, callable, or None (default: None)
+    scoring : str, callable. Default=None
         If None (default), uses 'accuracy' for sklearn classifiers
-        and 'r2' for sklearn regressors.
         If str, uses a sklearn scoring metric string identifier, for example
-        {accuracy, f1, precision, recall, roc_auc} for classifiers,
-        {'mean_absolute_error', 'mean_squared_error'/'neg_mean_squared_error',
-        'median_absolute_error', 'r2'} for regressors.
-        If a callable object or function is provided, it has to be conform with
-        sklearn's signature ``scorer(estimator, X, y)``; see
+        {accuracy, f1, precision, recall, roc_auc}.
+        If a callable object or function is provided, it has to agree with
+        sklearn's signature 'scorer(estimator, X, y)'. Check
         http://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html
         for more information.
     random_seed : int or None (default: None)
@@ -186,10 +202,8 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
         The t-statistic
     pvalue : float
         Two-tailed p-value.
-        If the chosen significance level is larger
-        than the p-value, we reject the null hypothesis
-        and accept that there are significant differences
-        in the two compared models.
+        If the chosen significance level is larger than the p-value, we reject the null hypothesis and accept that
+        there are significant differences in the two compared models.
     """
     rng = np.random.RandomState(random_seed)
 
@@ -247,7 +261,7 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
 
     sum_variance = 0.0
     first_score_diff = None
-    for i in tqdm(range(5)):
+    for _ in tqdm(range(5)):
 
         randint = rng.randint(low=0, high=32768)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=randint)
