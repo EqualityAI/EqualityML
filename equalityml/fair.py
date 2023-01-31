@@ -78,17 +78,6 @@ class FAIR:
 
         super(FAIR, self).__init__()
 
-        # Check input arguments
-        if target_variable not in training_data.columns:
-            raise TypeError(f"Target variable {target_variable} is not part of training data")
-
-        if protected_variable not in training_data.columns:
-            raise TypeError(f"Protected variable {protected_variable} is not part of training data")
-
-        if features is not None:
-            if any([feature not in training_data.columns for feature in features]):
-                raise TypeError(f"At least one feature of {features} are not part of training data")
-
         # Check ml_model and type of target
         if getattr(ml_model, "_estimator_type", None) != "classifier":
             raise TypeError("Model has to be a classifier")
@@ -96,29 +85,43 @@ class FAIR:
         if type_of_target(training_data[target_variable]) != "binary":
             raise ValueError("Multiclass format is not supported")
 
-        privileged_class = float(privileged_class)
-        if privileged_class not in training_data[protected_variable].values:
-            raise TypeError(f"Privileged class {privileged_class} shall be on data column {protected_variable}")
-
-        if favorable_label not in training_data[target_variable] or unfavorable_label not in training_data[
-            target_variable] or \
-                sorted(list(set(training_data[target_variable]))) != sorted([favorable_label, unfavorable_label]):
-            raise TypeError("Invalid value of favorable/unfavorable labels")
+        self.ml_model = copy.deepcopy(ml_model)
+        self.training_data = training_data.copy()
+        self.training_data.reset_index(drop=True, inplace=True)
 
         # Check if testing data is used to assess fairness metrics.
         if testing_data is None:
             self.testing_data = None
         else:
             self.testing_data = testing_data.copy()
+            self.testing_data.reset_index(drop=True, inplace=True)
+
+        # Check input arguments
+        if target_variable not in self.training_data.columns:
+            raise TypeError(f"Target variable {target_variable} is not part of training data")
+
+        if protected_variable not in self.training_data.columns:
+            raise TypeError(f"Protected variable {protected_variable} is not part of training data")
+
+        if features is not None:
+            if any([feature not in self.training_data.columns for feature in features]):
+                raise TypeError(f"At least one feature of {features} are not part of training data")
+
+        privileged_class = float(privileged_class)
+        if privileged_class not in self.training_data[protected_variable].values:
+            raise TypeError(f"Privileged class {privileged_class} shall be on data column {protected_variable}")
+
+        if favorable_label not in self.training_data[target_variable] or unfavorable_label not in self.training_data[
+            target_variable] or \
+                sorted(list(set(self.training_data[target_variable]))) != sorted([favorable_label, unfavorable_label]):
+            raise TypeError("Invalid value of favorable/unfavorable labels")
 
         # Features used to train the model
         if features is None:
-            self.features = training_data.columns.drop(target_variable)
+            self.features = self.training_data.columns.drop(target_variable)
         else:
             self.features = features
 
-        self.ml_model = copy.deepcopy(ml_model)
-        self.training_data = training_data.copy()
         self.target_variable = target_variable
         self.favorable_label = favorable_label
         self.unfavorable_label = unfavorable_label
@@ -128,7 +131,7 @@ class FAIR:
         self._metric_name = None
 
         if unprivileged_class is None:
-            _unprivileged_classes = list(set(training_data[protected_variable]).difference([privileged_class]))
+            _unprivileged_classes = list(set(self.training_data[protected_variable]).difference([privileged_class]))
             if len(_unprivileged_classes) != 1:
                 raise ValueError("Use only binary classes")
             self.unprivileged_class = _unprivileged_classes[0]
@@ -551,14 +554,14 @@ class FAIR:
                                                  repair_level=repair_level)
         if mitigation_method == "reweighing":
             mitigated_weights = mitigation_result['weights']
-            X_train = self.training_data.drop(columns=self.target_variable)
+            X_train = self.training_data[self.features]
             y_train = self.training_data[self.target_variable]
 
             # ReTrain Machine Learning model based on mitigated weights
             self.ml_model.fit(X_train, y_train, sample_weight=mitigated_weights)
         else:
             mitigated_data = mitigation_result['training_data']
-            X_train = mitigated_data.drop(columns=self.target_variable)
+            X_train = mitigated_data[self.features]
             y_train = mitigated_data[self.target_variable]
 
             # ReTrain Machine Learning model based on mitigated data
@@ -567,12 +570,12 @@ class FAIR:
         return self.ml_model
 
     def compare_mitigation_methods(self, scoring=None, metric_name=None, mitigation_methods=None,
-                                   fairness_threshold=0.8,
-                                   show=False, save_figure=False, **kwargs):
+                                   fairness_threshold=0.8, show=False, save_figure=False, **kwargs):
         """
-        TODO
-        Compare the performance and fairness metric of the model mitigated by a set of bias mitigation methods.
-        A pandas DataFrame will be created with
+        Compares different bias mitigation methods and evaluates the model performance using a scoring metric and a
+        fairness metric.
+        A DataFrame is returned containing the comparison results of model performance and fairness metric for each
+        bias mitigation method.
         Parameters
         ----------
         scoring : str, callable. Default=None
@@ -599,7 +602,7 @@ class FAIR:
             If a bias mitigation method is not available in FAIR class, it will be removed from the list.
             In case it's None, a default list will be computed based on the provided fairness metric.
         show : bool, default=False
-            If True, plots a figure with. If False, simply computes the dataframe
+            If True, shows the results of model performance and fairness metric for each bias mitigation method.
         save_figure : bool, default=False
             If True, save the figure.
         fairness_threshold : float, default=0.8
@@ -609,7 +612,8 @@ class FAIR:
         Returns
         ----------
         comparison_df : pd.DataFrame
-            pd.Dataframe
+            DataFrame containing the comparison results of model performance and fairness metric for each bias
+            mitigation method.
         """
 
         if metric_name is None:
@@ -650,9 +654,7 @@ class FAIR:
         else:
             testing_data = self.testing_data
 
-        X_test = testing_data.drop(columns=self.target_variable)
-        y_test = testing_data[self.target_variable]
-        score = scorer(self.ml_model, X_test, y_test)
+        score = scorer(self.ml_model, testing_data[self.features], testing_data[self.target_variable])
         fairness_metric = self.fairness_metric(self._metric_name)
         comparison_df.loc['reference'] = [score, fairness_metric]
 
@@ -665,9 +667,7 @@ class FAIR:
                 testing_data = self.testing_data
             else:
                 testing_data = self.training_data
-            X_test = testing_data.drop(columns=self.target_variable)
-            y_test = testing_data[self.target_variable]
-            score = scorer(self.ml_model, X_test, y_test)
+            score = scorer(self.ml_model, testing_data[self.features], testing_data[self.target_variable])
             fairness_metric = self.fairness_metric(self._metric_name)
 
             comparison_df.loc[mitigation_method] = [score, fairness_metric]
