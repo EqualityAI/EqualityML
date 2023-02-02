@@ -22,7 +22,7 @@ class DiscriminationThreshold:
                  model,
                  data,
                  target_variable,
-                 fair_object,
+                 fair_object=None,
                  fairness_metric_name="",
                  decision_threshold=DECISION_THRESHOLD,
                  quantiles=QUANTILES_MEDIAN_80,
@@ -238,7 +238,8 @@ class DiscriminationThreshold:
                                                             random_state=randint)
         self.model.fit(X_train, y_train)
         predicted_prob = self.model.predict_proba(X_test)[:, 1]
-        self.fair_object.update_classifier(self.model)
+        if self.fairness_metric_name:
+            self.fair_object.update_classifier(self.model)
 
         precisions = []
         recalls = []
@@ -351,19 +352,19 @@ class DiscriminationThreshold:
 
 
 def discrimination_threshold(
-        model: BaseEstimator,
-        data: pd.DataFrame,
-        target_variable: str,
-        fair_object: None,
-        fairness_metric_name: str = "",
-        decision_threshold: Union = ('f1', 'max'),
-        utility_costs: list = None,
-        fbeta: float = 1.0,
-        show: bool = False,
-        test_size: float = 0.2,
-        num_thresholds: int = 25,
-        num_iterations: int = 10,
-        random_seed: int = None
+        model,
+        data,
+        target_variable,
+        fair_object=None,
+        fairness_metric_name="",
+        decision_threshold=('f1', 'max'),
+        utility_costs=None,
+        fbeta=1.0,
+        show=False,
+        test_size=0.2,
+        num_thresholds=25,
+        num_iterations=10,
+        random_seed=None
 ):
     """Discrimination Threshold
     TODO
@@ -377,7 +378,7 @@ def discrimination_threshold(
     Parameters
     ----------
     num_thresholds
-    estimator : estimator
+    model : estimator
         A scikit-learn estimator that should be a classifier. If the model is
         not a classifier, an exception is raised. If the internal model is not
         fitted, it is fit when the visualizer is fitted, unless otherwise specified
@@ -387,10 +388,7 @@ def discrimination_threshold(
     y : ndarray or Series of length n
         An array or series of target or class values. The target y must
         be a binary classification target.
-    ax : matplotlib Axes, default: None
-        The axes to plot the figure on. If not specified the current axes will be
-        used (or generated if required).
-    n_trials : integer, default: 50
+    num_iterations : integer, default: 50
         Number of times to shuffle and split the dataset to account for noise
         in the threshold metrics curves. Note if cv provides > 1 splits,
         the number of trials will be n_trials * cv.get_n_splits()
@@ -406,7 +404,7 @@ def discrimination_threshold(
         element is the lower bound, the second is the drawn curve, and the
         third is the upper bound. By default the curve is drawn at the median,
         and the bounds from the 10th percentile to the 90th percentile.
-    random_state : int, optional
+    random_seed : int, optional
         Used to seed the random state for shuffling the data while composing
         different train and test splits. If supplied, the random state is
         incremented in a deterministic fashion for each split.

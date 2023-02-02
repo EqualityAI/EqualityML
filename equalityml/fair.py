@@ -338,6 +338,7 @@ class FAIR:
             mitigated_training_data = self._resampling_data(self.training_data, mitigation_method)
             mitigated_dataset['training_data'] = mitigated_training_data
             self.mitigated_training_data = mitigated_training_data
+            self.mitigated_testing_data = self.testing_data
         elif mitigation_method == "correlation-remover":
             mitigated_training_data = self._cr_removing_data(self.training_data, alpha)
             mitigated_dataset['training_data'] = mitigated_training_data
@@ -350,6 +351,8 @@ class FAIR:
         elif mitigation_method == "reweighing":
             mitigated_weights = self._reweighing_model(self.training_data)
             mitigated_dataset['weights'] = mitigated_weights
+            self.mitigated_training_data = self.training_data
+            self.mitigated_testing_data = self.testing_data
         elif mitigation_method == "disparate-impact-remover":
             mitigated_training_data = self._disp_removing_data(self.training_data, repair_level)
             mitigated_dataset['training_data'] = mitigated_training_data
@@ -642,10 +645,16 @@ class FAIR:
             else:
                 raise AttributeError("Model must be a Classifier.")
 
+        from inspect import signature
         if isinstance(scoring, str):
             scorer = get_scorer(scoring)
         else:
-            scorer = scoring
+            sig = signature(scoring)
+            if 'threshold' in sig.parameters:
+                def scorer(model, X, y):
+                    return scoring(model, X, y, threshold=self.threshold)
+            else:
+                scorer = scoring
 
         # Create the Dataframe for comparing models performance and fairness metric
         comparison_df = pd.DataFrame(columns=[str(scoring), self._metric_name])
@@ -660,14 +669,14 @@ class FAIR:
 
         # Iterate over mitigation methods list and re-evaluate score and fairness metric
         for mitigation_method in mitigation_methods:
-            self.model_mitigation(mitigation_method=mitigation_method, **kwargs)
+            ml_model = self.model_mitigation(mitigation_method=mitigation_method, **kwargs)
             if self.mitigated_testing_data is not None:
                 testing_data = self.mitigated_testing_data
             elif self.testing_data is not None:
                 testing_data = self.testing_data
             else:
                 testing_data = self.training_data
-            score = scorer(self.ml_model, testing_data[self.features], testing_data[self.target_variable])
+            score = scorer(ml_model, testing_data[self.features], testing_data[self.target_variable])
             fairness_metric = self.fairness_metric(self._metric_name)
 
             comparison_df.loc[mitigation_method] = [score, fairness_metric]
