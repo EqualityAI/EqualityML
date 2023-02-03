@@ -13,22 +13,37 @@ import matplotlib.pyplot as plt
 # Quantiles for lower bound, curve, and upper bound
 QUANTILES_MEDIAN_80 = np.array([0.1, 0.5, 0.9])
 DECISION_THRESHOLD = ['f1', 'max']
-
+METRICS = ["f1", "precision", "recall", "queue_rate", "cost"]
 
 class DiscriminationThreshold:
-    """A class to build a discrimination threshold.
+    """
+    DiscriminationThreshold computes the threshold  how precision, recall, f1 score, and queue rate change as the
+    discrimination threshold increases. For probabilistic, binary classifiers,
+    the discrimination threshold is the probability at which you choose the
+    positive class over the negative.
+
+    Generally this is set to 50%, but adjusting the discrimination threshold will adjust sensitivity to false
+    positives which is described by the inverse relationship of precision and recall with respect to the threshold.
+    The visualizer also accounts for variability in the model by running
+    multiple trials with different train and test splits of the data. The
+    variability is visualized using a band such that the curve is drawn as the
+    median score of each trial and the band is from the 10th to 90th
+    percentile.
+    The visualizer is intended to help users determine an appropriate
+    threshold for decision making (e.g. at what threshold do we have a human
+    review the data), given a tolerance for precision and recall or limiting
+    the number of records to check (the queue rate).
     """
 
     def __init__(self,
                  model,
                  data,
                  target_variable,
-                 fair_object=None,
-                 fairness_metric_name="",
                  decision_threshold=DECISION_THRESHOLD,
-                 quantiles=QUANTILES_MEDIAN_80,
+                 metrics=["f1"],
+                 fair_object=None,
                  utility_costs=None,
-                 fbeta=1.0,
+                 quantiles=QUANTILES_MEDIAN_80,
                  test_size=0.2,
                  num_thresholds=25,
                  num_iterations=10,
@@ -57,13 +72,9 @@ class DiscriminationThreshold:
         """
         self.X = data.drop(columns=target_variable)
         self.y = data[target_variable]
-        self._metrics = ["precision", "recall", "f1", "queue_rate"]
 
-        # Check utility_costs
-        self.utility_costs = self._check_utility_costs(utility_costs)
-
-        # Check fairness metric
-        self.fair_object, self.fairness_metric_name = self._check_fair_inputs(fair_object, fairness_metric_name)
+        # Check metrics
+        self._check_metrics(metrics, utility_costs, fair_object)
 
         # Check model
         if getattr(model, "_estimator_type", None) != "classifier":
@@ -100,7 +111,6 @@ class DiscriminationThreshold:
 
         # Set params
         self.model = model
-        self.fbeta = fbeta
         self.test_size = test_size
         self.num_thresholds = num_thresholds
         self.num_iterations = num_iterations
@@ -115,26 +125,34 @@ class DiscriminationThreshold:
             print('Make sure that the model is trained and the input data '
                   'is properly transformed.')
 
-    def _check_fair_inputs(self, fair_object, fairness_metric_name):
-        if fair_object is None:
-            fairness_metric_name = None
-        else:
-            if fairness_metric_name not in fair_object.fairness_metrics_list:
-                raise f"Invalid metric name {fairness_metric_name}. It's not available in FAIR class"
+    def _check_metrics(self, metrics, utility_costs, fair_object):
+        self.metrics = []
+        self.fair_object = None
+        self.utility_costs = None
+        self.fairness_metric_name = None
+        for metric in metrics:
+            metric = metric.lower()
+            if metric in METRICS:
+                if metric == 'cost':
+                    if self._check_utility_costs(utility_costs):
+                        self.metrics.append(metric)
+                        self.utility_costs = utility_costs
+                    else:
+                        raise f"Invalid utility costs {utility_costs}"
+                else:
+                    self.metrics.append(metric)
+            elif fair_object is not None and metric in fair_object.fairness_metrics_list:
+                self.metrics.append(metric)
+                self.fair_object = fair_object
+                self.fairness_metric_name = metric
             else:
-                self._metrics.append(fairness_metric_name)
-
-        return fair_object, fairness_metric_name
+                raise f"Invalid metric {metric}"
 
     def _check_utility_costs(self, utility_costs):
         if utility_costs is not None:
             if len(utility_costs) == 4 and all(isinstance(x, (int, float)) for x in utility_costs):
-                self._metrics.append('cost')
-            else:
-                utility_costs = None
-                print("Invalid utility costs")
-
-        return utility_costs
+                return True
+        return False
 
     def _check_quantiles(self, quantiles):
         if len(quantiles) != 3 or not np.all(quantiles[1:] >= quantiles[:-1], axis=0) or not np.all(quantiles < 1):
@@ -142,17 +160,13 @@ class DiscriminationThreshold:
         return np.asarray(quantiles)
 
     def _check_decision_threhsold(self, decision_threshold):
-        if decision_threshold and decision_threshold[0] in self._metrics:
-            if decision_threshold[1] == 'max':
+        if decision_threshold and decision_threshold[0] in self.metrics:
+            if decision_threshold[1] == 'max' or decision_threshold[1] == 'min':
                 return decision_threshold
-            elif decision_threshold[1] == 'min':
+            elif decision_threshold[1] == 'limit' and decision_threshold[0] in ["queue_rate", "recall", "precision", "f1"]:
                 return decision_threshold
-            elif decision_threshold[1] == 'limit' and decision_threshold[0] in ["queue_rate", "recall"]:
-                return decision_threshold
-            elif decision_threshold[1] == 'limit' and decision_threshold[0] in ["precision", "f1"]:
-                return decision_threshold
-        else:
-            print(f"Invalid decision threshold. Going to use default one: {DECISION_THRESHOLD}")
+
+        print(f"Invalid decision threshold. Going to use default one: {DECISION_THRESHOLD}")
         return DECISION_THRESHOLD
 
     def fit(self):
@@ -239,54 +253,55 @@ class DiscriminationThreshold:
                                                             random_state=randint)
         self.model.fit(X_train, y_train)
         predicted_prob = self.model.predict_proba(X_test)[:, 1]
-        if self.fairness_metric_name:
+        if self.fair_object:
             self.fair_object.update_classifier(self.model)
 
         precisions = []
         recalls = []
         f1_scores = []
         queue_rates = []
+        costs = []
         if self.fairness_metric_name:
             fairness_metrics = []
 
-        if self.utility_costs:
-            costs = []
-
+        result = {}
         for threshold in self._thresholds:
-            pred_label = [1 if (prob >= threshold) else 0 for prob in predicted_prob]
-            tn, fp, fn, tp = self._confusion_matrix(y_test, pred_label)
-            pr = tp / (tp + fp) if tp + fp != 0 else 1
-            rec = tp / (tp + fn) if tp + fn != 0 else 0
-            f1 = 2 / (pr ** (-1) + rec ** (-1)) if pr * rec != 0 else 0
-            queue_rate = np.mean(predicted_prob >= threshold)
+            if any(metric in self.metrics for metric in METRICS):
+                pred_label = [1 if (prob >= threshold) else 0 for prob in predicted_prob]
+                tn, fp, fn, tp = self._confusion_matrix(y_test, pred_label)
+                pr = tp / (tp + fp) if tp + fp != 0 else 1
+                rec = tp / (tp + fn) if tp + fn != 0 else 0
+                f1 = 2 / (pr ** (-1) + rec ** (-1)) if pr * rec != 0 else 0
+                queue_rate = np.mean(predicted_prob >= threshold)
 
-            precisions.append(pr)
-            recalls.append(rec)
-            f1_scores.append(f1)
-            queue_rates.append(queue_rate)
+                precisions.append(pr)
+                recalls.append(rec)
+                f1_scores.append(f1)
+                queue_rates.append(queue_rate)
 
-            if self.utility_costs:
-                array1 = np.array(self.utility_costs)
-                array2 = np.array([tn, fp, fn, tp])
-                cost = np.sum(array1 * array2)
-                costs.append(cost)
+                if self.utility_costs:
+                    array1 = np.array(self.utility_costs)
+                    array2 = np.array([tn, fp, fn, tp])
+                    cost = np.sum(array1 * array2)
+                    costs.append(cost)
 
             if self.fairness_metric_name:
                 self.fair_object.threshold = threshold
                 fairness_metric = self.fair_object.fairness_metric(self.fairness_metric_name)
                 fairness_metrics.append(fairness_metric)
 
-        result = {
-            "precision": precisions,
-            "recall": recalls,
-            "f1": f1_scores,
-            "queue_rate": queue_rates,
-        }
+        if "precision" in self.metrics:
+            result["precision"] = precisions
+        if "recall" in self.metrics:
+            result["recall"] = recalls
+        if "f1" in self.metrics:
+            result["f1"] = f1_scores
+        if "queue_rate" in self.metrics:
+            result["queue_rate"] = queue_rates
+        if "cost" in self.metrics:
+            result['cost'] = costs
         if self.fairness_metric_name:
             result[self.fairness_metric_name] = fairness_metrics
-
-        if self.utility_costs:
-            result['cost'] = costs
 
         return result
 
@@ -305,10 +320,7 @@ class DiscriminationThreshold:
 
             # Make the label pretty
             if metric == "f1":
-                if self.fbeta == 1.0:
-                    label = "$f_1$"
-                else:
-                    label = "$f_{{\beta={:0.1f}}}".format(self.fbeta)
+                label = "$f_1$"
             else:
                 label = metric.replace("_", " ")
 
@@ -356,11 +368,10 @@ def discrimination_threshold(
         model,
         data,
         target_variable,
-        fair_object=None,
-        fairness_metric_name="",
         decision_threshold=('f1', 'max'),
+        metrics=['f1'],
+        fair_object=None,
         utility_costs=None,
-        fbeta=1.0,
         show=False,
         test_size=0.2,
         num_thresholds=25,
@@ -393,8 +404,6 @@ def discrimination_threshold(
         Number of times to shuffle and split the dataset to account for noise
         in the threshold metrics curves. Note if cv provides > 1 splits,
         the number of trials will be n_trials * cv.get_n_splits()
-    fbeta : float, 1.0 by default
-        The strength of recall versus precision in the F-score.
     argmax : str or None, default: 'fscore'
         Annotate the threshold maximized by the supplied metric (see exclude
         for the possible metrics to use). If None or passed to exclude,
@@ -415,29 +424,20 @@ def discrimination_threshold(
         If True, calls ``show()``, which in turn calls ``plt.show()`` however you cannot
         call ``plt.savefig`` from this signature, nor ``clear_figure``. If False, simply
         calls ``finalize()``
-    Examples
-    --------
-    >>> from yellowbrick.classifier.threshold import discrimination_threshold
-    >>> from sklearn.linear_model import LogisticRegression
-    >>> from yellowbrick.datasets import load_occupancy
-    >>> X, y = load_occupancy()
-    >>> model = LogisticRegression(multi_class="auto", solver="liblinear")
-    >>> discrimination_threshold(model, X, y)
     Returns
     -------
     threshold : float
-        Returns the discrimination threshold based on decision threhsold input
+        Returns the discrimination threshold based on decision threshold input
     """
 
     # Instantiate the DiscriminationThreshold
     dt = DiscriminationThreshold(model,
                                  data,
                                  target_variable,
-                                 fair_object,
-                                 fairness_metric_name,
                                  decision_threshold=decision_threshold,
+                                 metrics=metrics,
+                                 fair_object=fair_object,
                                  utility_costs=utility_costs,
-                                 fbeta=fbeta,
                                  test_size=test_size,
                                  num_thresholds=num_thresholds,
                                  num_iterations=num_iterations,
