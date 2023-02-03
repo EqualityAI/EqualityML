@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.base import ClassifierMixin, BaseEstimator
+from sklearn.metrics import get_scorer
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 from typing import Tuple, Union, Dict
@@ -450,3 +451,45 @@ def discrimination_threshold(
 
     # Return the discrimination threshold value
     return threshold
+
+
+def binary_threshold_score(scoring, ml_model, X, y, threshold=0.5):
+    """
+    Binary classification score.
+    Computes the score of the binary classification based on input discrimination threshold.
+    Parameters
+    ----------
+    scoring : str, callable. Default=None
+        If None (default), uses 'accuracy' for sklearn classifiers
+        If str, uses a sklearn scoring metric string identifier, for example
+        {accuracy, f1, precision, recall, roc_auc}.
+        If a callable object or function is provided, it has to agree with
+        sklearn's signature 'scorer(estimator, X, y)'. Check
+        http://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html
+        for more information.
+    ml_model : a Scikit-Learn estimator
+        A scikit-learn estimator that should be a classifier. If the model is
+        not a classifier, an exception is raised.
+    X : ndarray or DataFrame of shape n x m
+        A matrix of n instances with m features
+    y : ndarray or Series of length n
+        An array or series of target or class values. The target y must
+        be a binary classification target.
+    threshold : float, default=0.5
+        Discrimination threshold for predicting the favorable class.
+    Returns
+    ----------
+    score : float
+        Binary classification score
+    """
+    if ml_model._estimator_type != "classifier":
+        raise AttributeError("Model must be a Classifier.")
+
+    if isinstance(scoring, str):
+        scorer = get_scorer(scoring)
+    else:
+        scorer = scoring
+
+    _pred_class = np.asarray(list(map(lambda x: 1 if x > threshold else 0, ml_model.predict_proba(X)[:, -1])))
+    score = scorer._score_func(y, _pred_class)
+    return score

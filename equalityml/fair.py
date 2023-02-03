@@ -4,6 +4,7 @@ import numpy as np
 import logging
 import os
 import copy
+import math
 
 # Ignore aif360 warnings
 logger = logging.getLogger()
@@ -17,9 +18,9 @@ from aif360.algorithms.preprocessing import Reweighing
 from aif360.algorithms.preprocessing import DisparateImpactRemover
 from fairlearn.preprocessing import CorrelationRemover
 
-from sklearn.metrics import get_scorer
 from sklearn.utils.multiclass import type_of_target
 import matplotlib.pyplot as plt
+from equalityml.threshold import binary_threshold_score
 
 
 class FAIR:
@@ -144,6 +145,11 @@ class FAIR:
         self.privileged_groups = [{self.protected_variable: [self.privileged_class]}]
         self.mitigated_testing_data = None
         self.mitigated_training_data = None
+
+        try:
+            self.ml_model.fit(self.training_data[self.features], self.training_data[self.target_variable])
+        except ValueError:
+            print('Make sure that the model is trained and the input data is properly transformed.')
 
     @property
     def fairness_metrics_list(self):
@@ -298,8 +304,8 @@ class FAIR:
     def bias_mitigation(self, mitigation_method, alpha=1.0, repair_level=0.8):
         """
         Apply a mitigation method to the bias in Machine Learning application to make it more balanced.
-        A set of mitigation method is available which mitigates the dataset or calculates mitigated weights to be used in
-        the machine learning model.
+        A set of mitigation method is available which mitigates the dataset or calculates mitigated weights to be used
+        in the machine learning model.
 
         Parameters
         ----------
@@ -397,13 +403,10 @@ class FAIR:
 
         fairness_metric = {}
 
-        if self.mitigated_testing_data is None:
-            if self.testing_data is None:
-                testing_data = self.training_data
-            else:
-                testing_data = self.testing_data
-        else:
+        if self.mitigated_testing_data is not None:
             testing_data = self.mitigated_testing_data
+        else:
+            testing_data = self.testing_data if self.testing_data is not None else self.training_data
 
         # create a dataset according to structure required by the package AIF360
         aif_data = BinaryLabelDataset(favorable_label=self.favorable_label,
@@ -631,6 +634,7 @@ class FAIR:
         if mitigation_methods is None:
             mitigation_methods = self.map_bias_mitigation[self._metric_name]
         else:
+            mitigation_methods = list(mitigation_methods)
             for mitigation_method in mitigation_methods:
                 if mitigation_method not in self.bias_mitigations_list:
                     print(f"Bias mitigation method {mitigation_method} is not available")
@@ -645,25 +649,14 @@ class FAIR:
             else:
                 raise AttributeError("Model must be a Classifier.")
 
-        from inspect import signature
-        if isinstance(scoring, str):
-            scorer = get_scorer(scoring)
-        else:
-            sig = signature(scoring)
-            if 'threshold' in sig.parameters:
-                def scorer(model, X, y):
-                    return scoring(model, X, y, threshold=self.threshold)
-            else:
-                scorer = scoring
-
         # Create the Dataframe for comparing models performance and fairness metric
         comparison_df = pd.DataFrame(columns=[str(scoring), self._metric_name])
-        if self.testing_data is None:
-            testing_data = self.training_data
-        else:
-            testing_data = self.testing_data
+        testing_data = self.testing_data if self.testing_data is not None else self.training_data
 
-        score = scorer(self.ml_model, testing_data[self.features], testing_data[self.target_variable])
+        # Reference score and fairness metric
+        self.ml_model.fit(self.training_data[self.features], self.training_data[self.target_variable])
+        score = binary_threshold_score(scoring, self.ml_model, testing_data[self.features],
+                                       testing_data[self.target_variable], threshold=self.threshold)
         fairness_metric = self.fairness_metric(self._metric_name)
         comparison_df.loc['reference'] = [score, fairness_metric]
 
@@ -672,13 +665,12 @@ class FAIR:
             ml_model = self.model_mitigation(mitigation_method=mitigation_method, **kwargs)
             if self.mitigated_testing_data is not None:
                 testing_data = self.mitigated_testing_data
-            elif self.testing_data is not None:
-                testing_data = self.testing_data
             else:
-                testing_data = self.training_data
-            score = scorer(ml_model, testing_data[self.features], testing_data[self.target_variable])
-            fairness_metric = self.fairness_metric(self._metric_name)
+                testing_data = self.testing_data if self.testing_data is not None else self.training_data
 
+            score = binary_threshold_score(scoring, ml_model, testing_data[self.features],
+                                           testing_data[self.target_variable], threshold=self.threshold)
+            fairness_metric = self.fairness_metric(self._metric_name)
             comparison_df.loc[mitigation_method] = [score, fairness_metric]
 
         if show:
@@ -707,6 +699,9 @@ class FAIR:
             ax.set_title(f"{str(scoring)} vs {str(self._metric_name)}")
             ax.set_xlabel(str(scoring))
             ax.set_ylabel(str(self._metric_name))
+            _x_min = math.floor(min(comparison_df[str(scoring)]) * 100) / 100.0
+            _x_max = math.ceil(max(comparison_df[str(scoring)]) * 100) / 100.0
+            ax.set_xlim(_x_min, _x_max)
             ax.set_ylim(0.0, 1.0)
             plt.show()
 
