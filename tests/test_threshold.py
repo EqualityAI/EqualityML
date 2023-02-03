@@ -4,9 +4,10 @@ from sklearn.linear_model import LogisticRegression
 import pytest
 
 from equalityml.fair import FAIR
-from equalityml.threshold import discrimination_threshold
+from equalityml.threshold import discrimination_threshold, binary_threshold_score
 
-_DECISION_THRESHOLD = [['f1', 'max'], ['recall', 'max'], ['precision', 'max'], ['queue_rate', 'limit', '0.1'], ['something']]
+_DECISION_THRESHOLD = [['f1', 'max'], ['recall', 'max'], ['precision', 'max'], ['queue_rate', 'limit', '0.1'],
+                       ['statistical_parity_ratio', 'max'], ['precision']]
 
 @pytest.fixture()
 def dataset():
@@ -43,8 +44,29 @@ def test_discrimination_threshold(dataset, decision_threshold):
                                   dataset["training_data"],
                                   dataset["target_variable"],
                                   fair_object=fair_object,
-                                  fairness_metric_name='statistical_parity_ratio',
+                                  metrics=[decision_threshold[0]],
                                   decision_threshold=decision_threshold)
 
     assert 0 <= dt <= 1
 
+
+@pytest.mark.parametrize("threshold", [0.25, 0.5, 0.75])
+def test_binary_threshold_score(dataset, threshold):
+    np.random.seed(0)
+
+    X_train = dataset["training_data"].drop(columns=dataset["target_variable"])
+    y_train = dataset["training_data"][dataset["target_variable"]]
+
+    # Train a machine learning model
+    _estimator = LogisticRegression()
+    _estimator.fit(X_train, y_train)
+
+    # F1 score
+    f1_score = binary_threshold_score("f1", _estimator, X_train, y_train, threshold=threshold)
+
+    assert 0 <= f1_score <= 1
+
+    # Accuracy
+    accuracy = binary_threshold_score("accuracy", _estimator, X_train, y_train, threshold=threshold)
+
+    assert 0 <= accuracy <= 1

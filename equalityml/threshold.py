@@ -145,8 +145,9 @@ class DiscriminationThreshold:
                 self.metrics.append(metric)
                 self.fair_object = fair_object
                 self.fairness_metric_name = metric
-            else:
-                raise f"Invalid metric {metric}"
+
+        if len(self.metrics) == 0:
+            raise f"Invalid input metrics {metrics}"
 
     def _check_utility_costs(self, utility_costs):
         if utility_costs is not None:
@@ -160,13 +161,15 @@ class DiscriminationThreshold:
         return np.asarray(quantiles)
 
     def _check_decision_threhsold(self, decision_threshold):
-        if decision_threshold and decision_threshold[0] in self.metrics:
+        if decision_threshold and decision_threshold[0] in self.metrics and len(decision_threshold) >= 2:
             if decision_threshold[1] == 'max' or decision_threshold[1] == 'min':
                 return decision_threshold
             elif decision_threshold[1] == 'limit' and decision_threshold[0] in ["queue_rate", "recall", "precision", "f1"]:
                 return decision_threshold
 
         print(f"Invalid decision threshold. Going to use default one: {DECISION_THRESHOLD}")
+        if 'f1' not in self.metrics:
+            self.metrics.append('f1')
         return DECISION_THRESHOLD
 
     def fit(self):
