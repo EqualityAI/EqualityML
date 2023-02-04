@@ -18,6 +18,7 @@ from aif360.algorithms.preprocessing import Reweighing
 from aif360.algorithms.preprocessing import DisparateImpactRemover
 from fairlearn.preprocessing import CorrelationRemover
 
+from sklearn.base import clone
 from sklearn.utils.multiclass import type_of_target
 import matplotlib.pyplot as plt
 from equalityml.threshold import binary_threshold_score
@@ -86,6 +87,7 @@ class FAIR:
         if type_of_target(training_data[target_variable]) != "binary":
             raise ValueError("Multiclass format is not supported")
 
+        self.orig_ml_model = copy.deepcopy(ml_model)
         self.ml_model = copy.deepcopy(ml_model)
         self.training_data = training_data.copy()
         self.training_data.reset_index(drop=True, inplace=True)
@@ -146,11 +148,6 @@ class FAIR:
         self.mitigated_testing_data = None
         self.mitigated_training_data = None
 
-        try:
-            self.ml_model.fit(self.training_data[self.features], self.training_data[self.target_variable])
-        except ValueError:
-            print('Make sure that the model is trained and the input data is properly transformed.')
-
     @property
     def fairness_metrics_list(self):
         return ['treatment_equality_ratio',
@@ -191,21 +188,21 @@ class FAIR:
         """Set discrimination threshold"""
         self._threshold = value
 
-    def _predict_binary_prob(self, data):
+    def _predict_binary_prob(self, ml_model, data):
         """Predict binary probabilities estimates"""
         try:
-            _pred_prob = self.ml_model.predict_proba(data[self.features])
+            _pred_prob = ml_model.predict_proba(data[self.features])
             _pred_prob = _pred_prob[:, 1]  # keep probabilities for positive outcomes only
         except Exception:
             raise Exception("Not possible to predict estimates using the input machine learning model")
 
         return _pred_prob
 
-    def _predict_binary_class(self, data):
+    def _predict_binary_class(self, ml_model, data):
         """Predict binary classes"""
         try:
             _pred_class = np.asarray(list(map(lambda x: 1 if x > self._threshold else 0,
-                                              self.ml_model.predict_proba(data[self.features])[:, -1])))
+                                              ml_model.predict_proba(data[self.features])[:, -1])))
         except Exception:
             raise Exception("Not possible to predict classes using the input machine learning model")
 
@@ -272,7 +269,7 @@ class FAIR:
                                     verbose=False)
         # Preferential resampling
         elif mitigation_method == "resampling-preferential":
-            _pred_prob = self._predict_binary_prob(data)
+            _pred_prob = self._predict_binary_prob(self.orig_ml_model, data)
             idx_resample = resample(data[self.protected_variable],
                                     data[self.target_variable],
                                     type='preferential', verbose=False,
@@ -422,13 +419,13 @@ class FAIR:
 
         # Get predicted classes in case input argument 'pred_class' is None
         if self.pred_class is None:
-            aif_data_pred.labels = self._predict_binary_class(testing_data)
+            aif_data_pred.labels = self._predict_binary_class(self.ml_model, testing_data)
         else:
             aif_data_pred.labels = self.pred_class
 
         # Get probability estimates in case input argument 'pred_prob' is None
         if self.pred_prob is None:
-            aif_data_pred.scores = self._predict_binary_prob(testing_data)
+            aif_data_pred.scores = self._predict_binary_prob(self.ml_model, testing_data)
         else:
             aif_data_pred.scores = self.pred_prob
 
@@ -493,13 +490,23 @@ class FAIR:
               "8. 'predictive_equality_ratio': Predictive equality ratio\n"
               "9. 'statistical_parity_ratio': Statistical parity ratio")
 
-    def print_bias_mitigation_methods(self):
-        print("Available bias mitigation methods are: \n"
-              "1. 'resampling' or 'resampling-uniform'\n"
-              "2. 'resampling-preferential'\n"
-              "3. 'reweighing'\n"
-              "4. 'disparate-impact-remover'\n"
-              "5. 'correlation-remover'")
+    def print_bias_mitigation_methods(self, metric_name=None):
+        if metric_name == None:
+            print("Available bias mitigation methods are: \n"
+                  "1. 'resampling' or 'resampling-uniform'\n"
+                  "2. 'resampling-preferential'\n"
+                  "3. 'reweighing'\n"
+                  "4. 'disparate-impact-remover'\n"
+                  "5. 'correlation-remover'")
+        else:
+            metric_name = metric_name.lower()
+            if metric_name not in self.fairness_metrics_list:
+                raise ValueError(f"Provided invalid metric name {metric_name}")
+
+            print(f"Available bias mitigation methods for '{metric_name}' are:")
+            mitigation_methods = self.map_bias_mitigation[metric_name]
+            for idx, mitigation_method in enumerate(mitigation_methods):
+                print(f"{idx+1} '{mitigation_method}'")
 
     def update_classifier(self, ml_model, pred_class=None, pred_prob=None):
         """
@@ -519,7 +526,7 @@ class FAIR:
         """
         if getattr(ml_model, "_estimator_type", None) != "classifier":
             raise TypeError("Model has to be a classifier")
-        self.ml_model = ml_model
+        self.ml_model = copy.deepcopy(ml_model)
 
         if pred_class is not None and len(set(pred_class)) != 2:
             raise TypeError("Only binary classes are available")
@@ -564,16 +571,19 @@ class FAIR:
             y_train = self.training_data[self.target_variable]
 
             # ReTrain Machine Learning model based on mitigated weights
-            self.ml_model.fit(X_train, y_train, sample_weight=mitigated_weights)
+            ml_model = clone(self.orig_ml_model)
+            ml_model.fit(X_train, y_train, sample_weight=mitigated_weights)
         else:
             mitigated_data = mitigation_result['training_data']
             X_train = mitigated_data[self.features]
             y_train = mitigated_data[self.target_variable]
 
             # ReTrain Machine Learning model based on mitigated data
-            self.ml_model.fit(X_train, y_train)
+            ml_model = clone(self.orig_ml_model)
+            ml_model.fit(X_train, y_train)
 
-        return self.ml_model
+        self.update_classifier(ml_model)
+        return ml_model
 
     def compare_mitigation_methods(self, scoring=None, metric_name=None, mitigation_methods=None,
                                    fairness_threshold=0.8, show=False, save_figure=False, **kwargs):
@@ -654,8 +664,7 @@ class FAIR:
         testing_data = self.testing_data if self.testing_data is not None else self.training_data
 
         # Reference score and fairness metric
-        self.ml_model.fit(self.training_data[self.features], self.training_data[self.target_variable])
-        score = binary_threshold_score(scoring, self.ml_model, testing_data[self.features],
+        score = binary_threshold_score(scoring, self.orig_ml_model, testing_data[self.features],
                                        testing_data[self.target_variable], threshold=self.threshold)
         fairness_metric = self.fairness_metric(self._metric_name)
         comparison_df.loc['reference'] = [score, fairness_metric]

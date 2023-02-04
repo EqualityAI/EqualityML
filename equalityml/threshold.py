@@ -1,19 +1,17 @@
 import numpy as np
-import pandas as pd
-from sklearn.base import ClassifierMixin, BaseEstimator
-from sklearn.metrics import get_scorer
-from sklearn.model_selection import train_test_split
 from tqdm import tqdm
-from typing import Tuple, Union, Dict
 from scipy.stats import mstats
-from sklearn.utils.multiclass import type_of_target
 from collections import defaultdict
 import matplotlib.pyplot as plt
+
+from sklearn.metrics import get_scorer
+from sklearn.model_selection import train_test_split
+from sklearn.utils.multiclass import type_of_target
 
 # Quantiles for lower bound, curve, and upper bound
 QUANTILES_MEDIAN_80 = np.array([0.1, 0.5, 0.9])
 DECISION_THRESHOLD = ['f1', 'max']
-METRICS = ["f1", "precision", "recall", "queue_rate", "cost"]
+METRICS = ["accuracy", "f1", "precision", "recall", "queue_rate", "cost"]
 
 class DiscriminationThreshold:
     """
@@ -45,7 +43,7 @@ class DiscriminationThreshold:
                  utility_costs=None,
                  quantiles=QUANTILES_MEDIAN_80,
                  test_size=0.2,
-                 num_thresholds=25,
+                 num_thresholds=50,
                  num_iterations=10,
                  random_seed=None):
         """Constructs and checks the values of all the necessary attributes for
@@ -198,9 +196,6 @@ class DiscriminationThreshold:
 
         for metric, values in metrics.items():
 
-            if metric == 'cost':
-                values = (values - np.min(values)) / (np.max(values) - np.min(values))
-
             # Compute the lower, median, and upper plots
             lower, median, upper = mstats.mquantiles(values, prob=quantiles, axis=0)
 
@@ -214,20 +209,20 @@ class DiscriminationThreshold:
             if self.decision_threshold and self.decision_threshold[0] == metric:
                 if self.decision_threshold[1] == 'max':
                     idx = median.argmax()
-                    self.discrimination_threshold = self._thresholds[idx]
+                    self.discrimination_threshold = [self._thresholds[idx], median.max()]
                 elif self.decision_threshold[1] == 'min':
                     idx = median.argmin()
-                    self.discrimination_threshold = self._thresholds[idx]
+                    self.discrimination_threshold = [self._thresholds[idx], median.min()]
                 elif self.decision_threshold[1] == 'limit' and metric in ["queue_rate", "recall"]:
-                    idx = next(x[0] for x in enumerate(median) if x[1] <= float(self.decision_threshold[2]))
-                    if 0 <= idx < self.num_thresholds:
-                        self.discrimination_threshold = self._thresholds[idx]
+                    x = next(x for x in enumerate(median) if x[1] <= float(self.decision_threshold[2]))
+                    if 0 <= x[0] < self.num_thresholds:
+                        self.discrimination_threshold = [self._thresholds[x[0]], x[1]]
                 elif self.decision_threshold[1] == 'limit' and metric in ["precision", "f1"]:
-                    idx = next(x[0] for x in enumerate(median) if x[1] >= float(self.decision_threshold[2]))
-                    if 0 <= idx < self.num_thresholds:
-                        self.discrimination_threshold = self._thresholds[idx]
+                    x = next(x for x in enumerate(median) if x[1] >= float(self.decision_threshold[2]))
+                    if 0 <= x[0] < self.num_thresholds:
+                        self.discrimination_threshold = [self._thresholds[x[0]], x[1]]
 
-        return self.discrimination_threshold
+        return self.discrimination_threshold[0]
 
     def _confusion_matrix(self, y_test, pred_label):
 
@@ -259,6 +254,7 @@ class DiscriminationThreshold:
         if self.fair_object:
             self.fair_object.update_classifier(self.model)
 
+        accuracies = []
         precisions = []
         recalls = []
         f1_scores = []
@@ -272,11 +268,13 @@ class DiscriminationThreshold:
             if any(metric in self.metrics for metric in METRICS):
                 pred_label = [1 if (prob >= threshold) else 0 for prob in predicted_prob]
                 tn, fp, fn, tp = self._confusion_matrix(y_test, pred_label)
+                acc = (tp + tn) / (tn + fp + fn + tp)
                 pr = tp / (tp + fp) if tp + fp != 0 else 1
                 rec = tp / (tp + fn) if tp + fn != 0 else 0
                 f1 = 2 / (pr ** (-1) + rec ** (-1)) if pr * rec != 0 else 0
                 queue_rate = np.mean(predicted_prob >= threshold)
 
+                accuracies.append(acc)
                 precisions.append(pr)
                 recalls.append(rec)
                 f1_scores.append(f1)
@@ -284,8 +282,8 @@ class DiscriminationThreshold:
 
                 if self.utility_costs:
                     array1 = np.array(self.utility_costs)
-                    array2 = np.array([tn, fp, fn, tp])
-                    cost = np.sum(array1 * array2)
+                    array2 = np.array([tp, fn, fp, tn])
+                    cost = np.sum(array1 * array2)/len(X_test)
                     costs.append(cost)
 
             if self.fairness_metric_name:
@@ -293,6 +291,8 @@ class DiscriminationThreshold:
                 fairness_metric = self.fair_object.fairness_metric(self.fairness_metric_name)
                 fairness_metrics.append(fairness_metric)
 
+        if "accuracy" in self.metrics:
+            result["accuracy"] = accuracies
         if "precision" in self.metrics:
             result["precision"] = precisions
         if "recall" in self.metrics:
@@ -322,12 +322,11 @@ class DiscriminationThreshold:
             color = cmap(idx)
 
             # Make the label pretty
-            if metric == "f1":
-                label = "$f_1$"
-            else:
-                label = metric.replace("_", " ")
+            label = metric.replace("_", "-")
 
             # Draw the metric values
+            if self.decision_threshold[0] == metric:
+                label = "${}={:0.3f}$".format(label, self.discrimination_threshold[1])
             ax.plot(
                 self._thresholds, self._metrics_quantiles[metric]["median"], color=color, label=label
             )
@@ -341,11 +340,11 @@ class DiscriminationThreshold:
             # Annotate the graph with the maximizing value
             if self.discrimination_threshold and self.decision_threshold[0] == metric:
                 ax.axvline(
-                    self.discrimination_threshold,
+                    self.discrimination_threshold[0],
                     ls="--",
                     c="k",
                     lw=1,
-                    label="$t_{}={:0.2f}$".format(metric[0], self.discrimination_threshold),
+                    label="$t_{}={:0.3f}$".format(metric[0], self.discrimination_threshold[0]),
                 )
         # Set the title of the threshold visualization
         ax.set_title("Threshold Plot for {}".format(self.model.__class__.__name__))
@@ -354,7 +353,7 @@ class DiscriminationThreshold:
         ax.set_xlabel("discrimination threshold")
         ax.set_ylabel("score")
         ax.set_xlim(0.0, 1.0)
-        ax.set_ylim(0.0, 1.0)
+        #ax.set_ylim(0.0, 1.0)
 
         savefig = False
         if savefig:
