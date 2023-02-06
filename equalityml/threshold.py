@@ -7,11 +7,54 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import train_test_split
 from sklearn.utils.multiclass import type_of_target
+from sklearn import preprocessing
 
 # Quantiles for lower bound, curve, and upper bound
 QUANTILES_MEDIAN_80 = np.array([0.1, 0.5, 0.9])
-DECISION_THRESHOLD = ['f1', 'max']
-METRICS = ["accuracy", "f1", "precision", "recall", "queue_rate", "cost"]
+# Default decision threshold
+DECISION_THRESHOLD = ('f1', 'max')
+# Available metrics
+METRICS = ("accuracy", "f1", "precision", "recall", "queue_rate", "cost")
+
+
+# Utilities functions
+def _check_utility_costs(utility_costs):
+    if utility_costs is not None:
+        if len(utility_costs) == 4 and all(isinstance(x, (int, float)) for x in utility_costs):
+            return utility_costs
+    raise ValueError(f"Invalid utility costs {utility_costs}. It must be a list of 4 values for [TP FN FP TN]")
+
+
+def _check_quantiles(quantiles):
+    if len(quantiles) != 3 or not np.all(quantiles[1:] >= quantiles[:-1], axis=0) or not np.all(quantiles < 1):
+        raise ValueError("Quantiles must be a sequence of three monotonically increasing values less than 1")
+    return np.asarray(quantiles)
+
+
+def _confusion_matrix(y_test, pred_label):
+    """
+    Compute confusion matrix to evaluate the accuracy of a binary classification.
+    Returns TN, FP, FN, TP
+    """
+    y_test = list(y_test)
+    pred_label = list(pred_label)
+    if len(set(y_test)) > 2 or len(set(pred_label)) > 2:
+        raise AttributeError("Inputs should be binary.")
+
+    tn, fp, fn, tp = 0, 0, 0, 0
+    for i in range(len(pred_label)):  # the confusion matrix is for 2 classes
+        # 1=positive, 0=negative
+        if int(pred_label[i]) == 1 and int(y_test[i]) == 1:
+            tp += 1  # True Positives
+        elif int(pred_label[i]) == 1 and int(y_test[i]) == 0:
+            fp += 1  # False Positives
+        elif int(pred_label[i]) == 0 and int(y_test[i]) == 1:
+            fn += 1  # False Negatives
+        elif int(pred_label[i]) == 0 and int(y_test[i]) == 0:
+            tn += 1  # True Negatives
+
+    return tn, fp, fn, tp
+
 
 class DiscriminationThreshold:
     """
@@ -38,7 +81,7 @@ class DiscriminationThreshold:
                  data,
                  target_variable,
                  decision_threshold=DECISION_THRESHOLD,
-                 metrics=["f1"],
+                 metrics=("f1"),
                  fair_object=None,
                  utility_costs=None,
                  quantiles=QUANTILES_MEDIAN_80,
@@ -87,10 +130,10 @@ class DiscriminationThreshold:
                              'different dimensions.')
 
         # Check quantiles
-        self.quantiles = self._check_quantiles(quantiles)
+        self.quantiles = _check_quantiles(quantiles)
 
         # Check decision threshold
-        self.decision_threshold = self._check_decision_threhsold(decision_threshold)
+        self.decision_threshold = self._check_decision_threshold(decision_threshold)
 
         # Check test size
         if not 0 < test_size < 1:
@@ -114,7 +157,7 @@ class DiscriminationThreshold:
         self.num_iterations = num_iterations
         self.random_seed = random_seed
         self.discrimination_threshold = None
-        self._metrics_quantiles = {}
+        self._metrics_quantiles = defaultdict(dict)
         self._thresholds = np.linspace(0.0, 1.0, num=self.num_thresholds)
 
         try:
@@ -124,6 +167,11 @@ class DiscriminationThreshold:
                   'is properly transformed.')
 
     def _check_metrics(self, metrics, utility_costs, fair_object):
+        """
+        Verify input metrics which shall exist in METRICS or be a fairness metric.
+        If the metric 'cost' is passed, a valid utility cost is required.
+        If a fairness metric is passed, a FAIR object is required.
+        """
         self.metrics = []
         self.fair_object = None
         self.utility_costs = None
@@ -132,7 +180,7 @@ class DiscriminationThreshold:
             metric = metric.lower()
             if metric in METRICS:
                 if metric == 'cost':
-                    if self._check_utility_costs(utility_costs):
+                    if _check_utility_costs(utility_costs):
                         self.metrics.append(metric)
                         self.utility_costs = utility_costs
                     else:
@@ -147,18 +195,7 @@ class DiscriminationThreshold:
         if len(self.metrics) == 0:
             raise f"Invalid input metrics {metrics}"
 
-    def _check_utility_costs(self, utility_costs):
-        if utility_costs is not None:
-            if len(utility_costs) == 4 and all(isinstance(x, (int, float)) for x in utility_costs):
-                return True
-        return False
-
-    def _check_quantiles(self, quantiles):
-        if len(quantiles) != 3 or not np.all(quantiles[1:] >= quantiles[:-1], axis=0) or not np.all(quantiles < 1):
-            raise ValueError("quantiles must be a sequence of three monotonically increasing values less than 1")
-        return np.asarray(quantiles)
-
-    def _check_decision_threhsold(self, decision_threshold):
+    def _check_decision_threshold(self, decision_threshold):
         if decision_threshold and decision_threshold[0] in self.metrics and len(decision_threshold) >= 2:
             if decision_threshold[1] == 'max' or decision_threshold[1] == 'min':
                 return decision_threshold
@@ -170,83 +207,12 @@ class DiscriminationThreshold:
             self.metrics.append('f1')
         return DECISION_THRESHOLD
 
-    def fit(self):
-        """
-        Fit
-        Parameters
-        ----------
-        Returns
-        -------
-        """
-        rng = np.random.RandomState(self.random_seed)
-        metrics = defaultdict(list)
-        for _ in tqdm(range(self.num_iterations)):
-            randint = rng.randint(low=0, high=32768)
-            trial = self._get_metrics(randint)
-            for metric, values in trial.items():
-                metrics[metric].append(values)
-
-        # Convert metrics to metric arrays
-        metrics = {
-            metric: np.array(values) for metric, values in metrics.items()
-        }
-
-        # Perform aggregation and store cv_scores_
-        quantiles = QUANTILES_MEDIAN_80
-
-        for metric, values in metrics.items():
-
-            # Compute the lower, median, and upper plots
-            lower, median, upper = mstats.mquantiles(values, prob=quantiles, axis=0)
-
-            # Store the aggregates in cv scores
-            self._metrics_quantiles[metric] = {}
-            self._metrics_quantiles[metric]["median"] = median
-            self._metrics_quantiles[metric]["lower"] = lower
-            self._metrics_quantiles[metric]["upper"] = upper
-
-            # Compute discrimination threshold for metric to maximize
-            if self.decision_threshold and self.decision_threshold[0] == metric:
-                if self.decision_threshold[1] == 'max':
-                    idx = median.argmax()
-                    self.discrimination_threshold = [self._thresholds[idx], median.max()]
-                elif self.decision_threshold[1] == 'min':
-                    idx = median.argmin()
-                    self.discrimination_threshold = [self._thresholds[idx], median.min()]
-                elif self.decision_threshold[1] == 'limit' and metric in ["queue_rate", "recall"]:
-                    x = next(x for x in enumerate(median) if x[1] <= float(self.decision_threshold[2]))
-                    if 0 <= x[0] < self.num_thresholds:
-                        self.discrimination_threshold = [self._thresholds[x[0]], x[1]]
-                elif self.decision_threshold[1] == 'limit' and metric in ["precision", "f1"]:
-                    x = next(x for x in enumerate(median) if x[1] >= float(self.decision_threshold[2]))
-                    if 0 <= x[0] < self.num_thresholds:
-                        self.discrimination_threshold = [self._thresholds[x[0]], x[1]]
-
-        return self.discrimination_threshold[0]
-
-    def _confusion_matrix(self, y_test, pred_label):
-
-        y_test = list(y_test)
-        pred_label = list(pred_label)
-        if len(set(y_test)) > 2 or len(set(pred_label)) > 2:
-            raise AttributeError("Inputs should be binary.")
-
-        tn, fp, fn, tp = 0, 0, 0, 0
-        for i in range(len(pred_label)):  # the confusion matrix is for 2 classes
-            # 1=positive, 0=negative
-            if int(pred_label[i]) == 1 and int(y_test[i]) == 1:
-                tp += 1  # True Positives
-            elif int(pred_label[i]) == 1 and int(y_test[i]) == 0:
-                fp += 1  # False Positives
-            elif int(pred_label[i]) == 0 and int(y_test[i]) == 1:
-                fn += 1  # False Negatives
-            elif int(pred_label[i]) == 0 and int(y_test[i]) == 0:
-                tn += 1  # True Negatives
-
-        return tn, fp, fn, tp
-
     def _get_metrics(self, randint):
-
+        """
+        Helper function for the internal method fit() which
+        performs row-wise calculation of accuracy, precision, recall, F1 score and
+        queue rate, utility cost and fairness metric.
+        """
         X_train, X_test, y_train, y_test = train_test_split(self.X, self.y, test_size=self.test_size,
                                                             random_state=randint)
         self.model.fit(X_train, y_train)
@@ -267,7 +233,7 @@ class DiscriminationThreshold:
         for threshold in self._thresholds:
             if any(metric in self.metrics for metric in METRICS):
                 pred_label = [1 if (prob >= threshold) else 0 for prob in predicted_prob]
-                tn, fp, fn, tp = self._confusion_matrix(y_test, pred_label)
+                tn, fp, fn, tp = _confusion_matrix(y_test, pred_label)
                 acc = (tp + tn) / (tn + fp + fn + tp)
                 pr = tp / (tp + fp) if tp + fp != 0 else 1
                 rec = tp / (tp + fn) if tp + fn != 0 else 0
@@ -283,7 +249,7 @@ class DiscriminationThreshold:
                 if self.utility_costs:
                     array1 = np.array(self.utility_costs)
                     array2 = np.array([tp, fn, fp, tn])
-                    cost = np.sum(array1 * array2)/len(X_test)
+                    cost = np.sum(array1 * array2)
                     costs.append(cost)
 
             if self.fairness_metric_name:
@@ -302,15 +268,68 @@ class DiscriminationThreshold:
         if "queue_rate" in self.metrics:
             result["queue_rate"] = queue_rates
         if "cost" in self.metrics:
-            result['cost'] = costs
+            result['cost'] = [(float(cost)-min(costs))/(max(costs)-min(costs)) for cost in costs]
         if self.fairness_metric_name:
             result[self.fairness_metric_name] = fairness_metrics
 
         return result
 
+    def fit(self):
+        """
+        Fit method performs 'num_iterations' trials by splitting the dataset into training and testing datasets.
+        Then computes all required metrics like: accuracy, precision, recall, f1, queue rate, utility cost, and fairness
+        metric scores for each trial. The scores are aggregated by the quantiles expressed. Finally, the discrimination
+        threshold value is calculated based on provided decision threshold rule.
+        """
+        rng = np.random.RandomState(self.random_seed)
+        metrics = defaultdict(list)
+
+        # Iterate over num_iterations and compute the metrics for each iteration
+        for _ in tqdm(range(self.num_iterations)):
+            randint = rng.randint(low=0, high=32768)
+            trial = self._get_metrics(randint)
+            for metric, values in trial.items():
+                metrics[metric].append(values)
+
+        # Convert metrics to metric arrays
+        metrics = {
+            metric: np.array(values) for metric, values in metrics.items()
+        }
+
+        # Perform aggregation and store _metrics_quantiles
+        for metric, values in metrics.items():
+
+            # Compute the lower, median, and upper plots
+            lower, median, upper = mstats.mquantiles(values, prob=self.quantiles, axis=0)
+
+            # Store the aggregates in _metrics_quantiles
+            self._metrics_quantiles[metric] = {}
+            self._metrics_quantiles[metric]["median"] = median
+            self._metrics_quantiles[metric]["lower"] = lower
+            self._metrics_quantiles[metric]["upper"] = upper
+
+            # Compute discrimination threshold
+            if self.decision_threshold and self.decision_threshold[0] == metric:
+                if self.decision_threshold[1] == 'max':
+                    idx = median.argmax()
+                    self.discrimination_threshold = [self._thresholds[idx], median.max()]
+                elif self.decision_threshold[1] == 'min':
+                    idx = median.argmin()
+                    self.discrimination_threshold = [self._thresholds[idx], median.min()]
+                elif self.decision_threshold[1] == 'limit' and metric in ["queue_rate", "recall"]:
+                    x = next(x for x in enumerate(median) if x[1] <= float(self.decision_threshold[2]))
+                    if 0 <= x[0] < self.num_thresholds:
+                        self.discrimination_threshold = [self._thresholds[x[0]], x[1]]
+                elif self.decision_threshold[1] == 'limit' and metric in ["precision", "f1"]:
+                    x = next(x for x in enumerate(median) if x[1] >= float(self.decision_threshold[2]))
+                    if 0 <= x[0] < self.num_thresholds:
+                        self.discrimination_threshold = [self._thresholds[x[0]], x[1]]
+
+        return self.discrimination_threshold[0]
+
     def show(self):
         """
-        Draws the scores as a line chart on the current axes.
+        Draws the metrics scores as a line chart and annotate the graph with the discrimination threshold value.
         """
         # Set the colors from the supplied values or reasonable defaults
         cmap = plt.get_cmap("tab10")
@@ -337,7 +356,7 @@ class DiscriminationThreshold:
                 alpha=0.35, linewidth=0, color=color
             )
 
-            # Annotate the graph with the maximizing value
+            # Annotate the graph with the discrimination threshold value
             if self.discrimination_threshold and self.decision_threshold[0] == metric:
                 ax.axvline(
                     self.discrimination_threshold[0],
@@ -370,15 +389,16 @@ def discrimination_threshold(
         model,
         data,
         target_variable,
-        decision_threshold=('f1', 'max'),
-        metrics=['f1'],
+        decision_threshold=DECISION_THRESHOLD,
+        metrics=("f1"),
         fair_object=None,
         utility_costs=None,
-        show=False,
+        quantiles=QUANTILES_MEDIAN_80,
         test_size=0.2,
-        num_thresholds=25,
+        num_thresholds=50,
         num_iterations=10,
-        random_seed=None
+        random_seed=None,
+        show=False
 ):
     """Discrimination Threshold
     TODO
@@ -391,25 +411,23 @@ def discrimination_threshold(
     recall with respect to the threshold.
     Parameters
     ----------
+    test_size
+    utility_costs
+    fair_object
+    metrics
+    decision_threshold
+    target_variable
+    data
     num_thresholds
     model : estimator
         A scikit-learn estimator that should be a classifier. If the model is
         not a classifier, an exception is raised. If the internal model is not
         fitted, it is fit when the visualizer is fitted, unless otherwise specified
         by ``is_fitted``.
-    X : ndarray or DataFrame of shape n x m
-        A matrix of n instances with m features
-    y : ndarray or Series of length n
-        An array or series of target or class values. The target y must
-        be a binary classification target.
     num_iterations : integer, default: 50
         Number of times to shuffle and split the dataset to account for noise
         in the threshold metrics curves. Note if cv provides > 1 splits,
         the number of trials will be n_trials * cv.get_n_splits()
-    argmax : str or None, default: 'fscore'
-        Annotate the threshold maximized by the supplied metric (see exclude
-        for the possible metrics to use). If None or passed to exclude,
-        will not annotate the graph.
     quantiles : sequence, default: np.array([0.1, 0.5, 0.9])
         Specify the quantiles to view model variability across a number of
         trials. Must be monotonic and have three elements such that the first
@@ -423,9 +441,7 @@ def discrimination_threshold(
         Note that if a splitter is provided, it's random state will also be
         updated with this random state, even if it was previously set.
     show : bool, default: True
-        If True, calls ``show()``, which in turn calls ``plt.show()`` however you cannot
-        call ``plt.savefig`` from this signature, nor ``clear_figure``. If False, simply
-        calls ``finalize()``
+        If True, calls ``show()``, which in turn calls ``plt.show()``.
     Returns
     -------
     threshold : float
@@ -440,6 +456,7 @@ def discrimination_threshold(
                                  metrics=metrics,
                                  fair_object=fair_object,
                                  utility_costs=utility_costs,
+                                 quantiles=quantiles,
                                  test_size=test_size,
                                  num_thresholds=num_thresholds,
                                  num_iterations=num_iterations,
