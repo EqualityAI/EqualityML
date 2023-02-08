@@ -27,8 +27,8 @@ def dataset():
     return dataset
 
 
-@pytest.mark.parametrize("decision_threshold", _DECISION_THRESHOLD)
-def test_discrimination_threshold(dataset, decision_threshold):
+@pytest.mark.parametrize("decision_maker", _DECISION_THRESHOLD)
+def test_discrimination_threshold(dataset, decision_maker):
     np.random.seed(0)
 
     # Machine learning model
@@ -39,13 +39,13 @@ def test_discrimination_threshold(dataset, decision_threshold):
                        target_variable=dataset["target_variable"],
                        protected_variable=dataset["protected_variable"], privileged_class=1)
 
-    # Compute the best discrimination_threshold
+    # Compute the optimal discrimination_threshold
     dt = discrimination_threshold(model,
                                   dataset["training_data"],
                                   dataset["target_variable"],
                                   fair_object=fair_object,
-                                  metrics=[decision_threshold[0]],
-                                  decision_threshold=decision_threshold)
+                                  metrics=[decision_maker[0]],
+                                  decision_maker=decision_maker)
 
     assert 0 <= dt <= 1
 
