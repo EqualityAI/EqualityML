@@ -1,3 +1,4 @@
+import matplotlib
 import pandas as pd
 import numpy as np
 import logging
@@ -146,6 +147,9 @@ class FAIR:
         self.privileged_groups = [{self.protected_variable: [self.privileged_class]}]
         self.mitigated_testing_data = None
         self.mitigated_training_data = None
+
+        # dalex sets matplotlib to use agg. Save current matplotlib backend status to revert it.
+        self.matplotlib_backend = matplotlib.get_backend()
 
     @property
     def fairness_metrics_list(self):
@@ -364,6 +368,9 @@ class FAIR:
                 mitigated_testing_data = self._disp_removing_data(self.testing_data, repair_level)
                 mitigated_dataset['testing_data'] = mitigated_testing_data
                 self.mitigated_testing_data = mitigated_testing_data
+
+        # dalex sets matplotlib to use agg. Revert it to previous matplotlib backend
+        matplotlib.use(self.matplotlib_backend)
 
         return mitigated_dataset
 
@@ -682,8 +689,6 @@ class FAIR:
             comparison_df.loc[mitigation_method] = [score, fairness_metric]
 
         if show:
-            # aif360 sets matplotlib to use agg. Revert it to use Tkinter agg (a GUI backend)
-            #plt.switch_backend('TkAgg')
             cmap = plt.get_cmap("tab10")
             score = comparison_df.loc['reference'][str(scoring)]
             fairness_metric = comparison_df.loc['reference'][str(self._metric_name)]
