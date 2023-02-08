@@ -1,5 +1,6 @@
 import numpy as np
 from tqdm import tqdm
+import copy
 from scipy.stats import mstats
 from collections import defaultdict
 import matplotlib.pyplot as plt
@@ -169,7 +170,7 @@ class DiscriminationThreshold:
                              "strictly larger that 2 and smaller than 100")
 
         # Set params
-        self.ml_model = ml_model
+        self.ml_model = copy.deepcopy(ml_model)
         self.test_size = test_size
         self.num_thresholds = num_thresholds
         self.num_iterations = num_iterations
@@ -218,7 +219,7 @@ class DiscriminationThreshold:
             if decision_maker[1] in ['max', 'min']:
                 return decision_maker
             elif decision_maker[1] == 'limit':
-                if len(decision_maker) == 3 and 0 < decision_maker[2] < 1:
+                if len(decision_maker) == 3 and 0 < float(decision_maker[2]) < 1:
                     return decision_maker
 
         print(f"Invalid decision maker. Going to use default one: {DECISION_MAKER}")
@@ -232,7 +233,7 @@ class DiscriminationThreshold:
         recall, F1 score and queue rate, utility cost and fairness metric.
         """
         X_train, X_test, y_train, y_test = train_test_split(self.X, self.y, test_size=self.test_size,
-                                                            random_state=randint, stratify=self.Y)
+                                                            random_state=randint, stratify=self.y)
         self.ml_model.fit(X_train, y_train)
         predicted_prob = self.ml_model.predict_proba(X_test)[:, 1]
         if self.fair_object:

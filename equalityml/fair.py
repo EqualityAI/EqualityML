@@ -1,4 +1,3 @@
-import matplotlib
 import pandas as pd
 import numpy as np
 import logging
@@ -684,7 +683,7 @@ class FAIR:
 
         if show:
             # aif360 sets matplotlib to use agg. Revert it to use Tkinter agg (a GUI backend)
-            matplotlib.use('TkAgg')
+            #plt.switch_backend('TkAgg')
             cmap = plt.get_cmap("tab10")
             score = comparison_df.loc['reference'][str(scoring)]
             fairness_metric = comparison_df.loc['reference'][str(self._metric_name)]

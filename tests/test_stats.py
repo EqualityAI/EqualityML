@@ -101,6 +101,9 @@ def test_5x2cv(dataset, estimator, threshold, mitigation_method):
     # Reference machine learning model
     model_1 = LogisticRegression()
 
+    model_1.fit(dataset["training_data"].drop(columns=dataset["target_variable"]),
+                dataset["training_data"][dataset["target_variable"]])
+
     # Second machine learning model
     if estimator == SVC:
         model_2 = estimator(probability=True)

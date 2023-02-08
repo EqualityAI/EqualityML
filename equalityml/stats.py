@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
+import copy
 from scipy import stats
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import train_test_split
-from tqdm import tqdm
 
 
 def paired_ttest(model_1,
@@ -278,13 +279,17 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
 
     sum_variance = 0.0
     first_score_diff = None
+
+    _model_1 = copy.deepcopy(model_1)
+    _model_2 = copy.deepcopy(model_2)
+
     for _ in tqdm(range(5)):
 
         randint = rng.randint(low=0, high=32768)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=randint)
 
-        score_diff_A = _score_diff(model_1, model_2, X_train, y_train, X_test, y_test)
-        score_diff_B = _score_diff(model_1, model_2, X_test, y_test, X_train, y_train)
+        score_diff_A = _score_diff(_model_1, _model_2, X_train, y_train, X_test, y_test)
+        score_diff_B = _score_diff(_model_1, _model_2, X_test, y_test, X_train, y_train)
         mean_diff = (score_diff_A + score_diff_B) / 2.0
         var_diff = (score_diff_A - mean_diff) ** 2 + (score_diff_B - mean_diff) ** 2
         sum_variance += var_diff
