@@ -104,7 +104,7 @@ class DiscriminationThreshold:
     test_size : float, default=0.2
         Proportion of data to be used for testing. The data split is performed using the 'train_test_split' function
         from sklearn package, in a stratified fashion.
-    num_thresholds : int, default=50
+    num_thresholds : int, default=100
         Number of thresholds to consider which are evenly spaced over the interval [0.0,1.0].
     num_iterations : int, default=10
         Number of times to shuffle and split the dataset to account for noise in the threshold metrics curves.
@@ -124,7 +124,7 @@ class DiscriminationThreshold:
                  utility_costs=None,
                  quantiles=QUANTILES_MEDIAN_80,
                  test_size=0.2,
-                 num_thresholds=50,
+                 num_thresholds=100,
                  num_iterations=10,
                  random_seed=None):
 
@@ -339,12 +339,10 @@ class DiscriminationThreshold:
                     self.discrimination_threshold = [self._thresholds[idx], median.min()]
                 elif self.decision_maker[1] == 'limit' and metric in ["queue_rate", "recall", "costs"]:
                     x = next(x for x in enumerate(median) if x[1] <= float(self.decision_maker[2]))
-                    if 0 <= x[0] < self.num_thresholds:
-                        self.discrimination_threshold = [self._thresholds[x[0]], x[1]]
+                    self.discrimination_threshold = [self._thresholds[x[0]], x[1]]
                 elif self.decision_maker[1] == 'limit' and metric in ["precision", "f1"]:
                     x = next(x for x in enumerate(median) if x[1] >= float(self.decision_maker[2]))
-                    if 0 <= x[0] < self.num_thresholds:
-                        self.discrimination_threshold = [self._thresholds[x[0]], x[1]]
+                    self.discrimination_threshold = [self._thresholds[x[0]], x[1]]
 
         return self.discrimination_threshold[0]
 
@@ -416,7 +414,7 @@ def discrimination_threshold(
         utility_costs=None,
         quantiles=QUANTILES_MEDIAN_80,
         test_size=0.2,
-        num_thresholds=50,
+        num_thresholds=100,
         num_iterations=10,
         random_seed=None,
         show=False
@@ -463,7 +461,7 @@ def discrimination_threshold(
     test_size : float, default=0.2
         Proportion of data to be used for testing. The data split is performed using the 'train_test_split' function
         from sklearn package, in a stratified fashion.
-    num_thresholds : int, default=50
+    num_thresholds : int, default=100
         Number of thresholds to consider which are evenly spaced over the interval [0.0,1.0].
     num_iterations : int, default=10
         Number of times to shuffle and split the dataset to account for noise in the threshold metrics curves.
