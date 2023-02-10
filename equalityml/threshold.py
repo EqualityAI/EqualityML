@@ -185,7 +185,10 @@ class DiscriminationThreshold:
             print('Make sure that the model is trained and the input data '
                   'is properly transformed.')
 
-    def _check_metrics(self, metrics, utility_costs, fair_object):
+    def _check_metrics(self,
+                       metrics,
+                       utility_costs,
+                       fair_object):
         """
         Verify input metrics which shall exist in METRICS or be a fairness metric.
         If the metric 'cost' is passed, a valid utility cost is required.
@@ -214,7 +217,8 @@ class DiscriminationThreshold:
         if len(self.metrics) == 0:
             raise f"Invalid input metrics {metrics}"
 
-    def _check_decision_maker(self, decision_maker):
+    def _check_decision_maker(self,
+                              decision_maker):
         if decision_maker and decision_maker[0] in self.metrics and len(decision_maker) >= 2:
             if decision_maker[1] in ['max', 'min']:
                 return decision_maker
@@ -227,7 +231,8 @@ class DiscriminationThreshold:
             self.metrics.append('f1')
         return DECISION_MAKER
 
-    def _get_metrics(self, randint):
+    def _get_metrics(self,
+                     randint):
         """
         Helper function for the internal method fit() which performs row-wise calculation of accuracy, precision,
         recall, F1 score and queue rate, utility cost and fairness metric.
@@ -500,25 +505,34 @@ def discrimination_threshold(
     return threshold
 
 
-def binary_threshold_score(scoring, ml_model, X, y, threshold=0.5):
+def binary_threshold_score(ml_model,
+                           X,
+                           y,
+                           scoring=None,
+                           threshold=0.5,
+                           utility_costs=None):
     """
     Binary classification score.
     Computes the score of the binary classification based on input discrimination threshold.
     Parameters
     ----------
-    scoring : str, callable. Default=None
-        If None (default), uses 'accuracy' for sklearn classifiers
-        If str, uses a sklearn scoring metric string identifier, for example {accuracy, f1, precision, recall, roc_auc}.
-        If a callable object or function is provided, it has to agree with sklearn's signature 'scorer(estimator, X, y)'.
-        Check http://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html for more information.
     ml_model : a Scikit-Learn estimator
         A scikit-learn estimator that should be a classifier. If the model is not a classifier, an exception is raised.
     X : ndarray or DataFrame of shape n x m
         A matrix of n instances with m features
     y : ndarray or Series of length n
         An array or series of target or class values. The target y must be a binary classification target.
+    scoring : str, callable. Default=None
+        If None (default), uses 'accuracy' for sklearn classifiers
+        If 'cost', uses utility_costs parameter to calculate the score
+        If str, uses a sklearn scoring metric string identifier, for example {accuracy, f1, precision, recall, roc_auc}.
+        If a callable object or function is provided, it has to agree with sklearn's signature 'scorer(estimator, X, y)'.
+        Check http://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html for more information.
     threshold : float, default=0.5
         Discrimination threshold at which the model predicts the target as positive over the negative.
+    utility_costs : list, default=None
+        Utility costs for cost-sensitive learning. It has to be a 4 element list where the cost values correspond to the
+        following cost sequence: [TP, FN, FP, TN]
     Returns
     ----------
     score : float
@@ -527,11 +541,25 @@ def binary_threshold_score(scoring, ml_model, X, y, threshold=0.5):
     if ml_model._estimator_type != "classifier":
         raise AttributeError("Model must be a Classifier.")
 
-    if isinstance(scoring, str):
-        scorer = get_scorer(scoring)
-    else:
-        scorer = scoring
+    # Get scoring when is None
+    if scoring is None:
+        if ml_model._estimator_type == "classifier":
+            scoring = "accuracy"
+        elif ml_model._estimator_type == "regressor":
+            scoring = "r2"
+        else:
+            raise AttributeError("Model must be a Classifier or Regressor.")
 
     _pred_class = np.asarray(list(map(lambda x: 1 if x > threshold else 0, ml_model.predict_proba(X)[:, -1])))
-    score = scorer._score_func(y, _pred_class)
+    if scoring.lower() == 'cost':
+        utility_costs = _check_utility_costs(utility_costs)
+        tn, fp, fn, tp = _confusion_matrix(y, _pred_class)
+        score = np.sum(np.array(utility_costs) * np.array([tp, fn, fp, tn]))
+    else:
+        if isinstance(scoring, str):
+            scorer = get_scorer(scoring)
+        else:
+            scorer = scoring
+
+        score = scorer._score_func(y, _pred_class)
     return score

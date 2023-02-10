@@ -3,8 +3,8 @@ import pandas as pd
 from tqdm import tqdm
 import copy
 from scipy import stats
-from sklearn.metrics import get_scorer
 from sklearn.model_selection import train_test_split
+from equalityml.threshold import binary_threshold_score
 
 
 def paired_ttest(model_1,
@@ -12,10 +12,11 @@ def paired_ttest(model_1,
                  data,
                  target_variable,
                  method="mcnemar",
-                 discrimination_threshold=0.5,
+                 threshold=0.5,
                  fair_object=None,
                  mitigation_method=None,
                  scoring=None,
+                 utility_costs=None,
                  random_seed=None):
     """
     Statistical paired t test for classifier comparisons. 2 methods are provided: McNemar's test and paired ttest 5x2cv.
@@ -32,7 +33,7 @@ def paired_ttest(model_1,
         Name of the target variable column in the training data.
     method : str, default="mcnemar"
         If `mcnemar` uses McNemar's test, if "5x2cv" uses paired ttest 5x2cv.
-    discrimination_threshold : float, default=0.5
+    threshold : float, default=0.5
         Discrimination threshold for predicting the favorable class.
     fair_object: FAIR, default=None
         FAIR object with methods to apply bias mitigation and evaluate fairness metric.
@@ -46,12 +47,13 @@ def paired_ttest(model_1,
          "correlation-remover"
     scoring : str, callable. Default=None
         If None (default), uses 'accuracy' for sklearn classifiers
-        If str, uses a sklearn scoring metric string identifier, for example
-        {accuracy, f1, precision, recall, roc_auc}.
-        If a callable object or function is provided, it has to agree with
-        sklearn's signature 'scorer(estimator, X, y)'. Check
-        http://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html
-        for more information.
+        If 'cost', uses utility_costs parameter to calculate the score
+        If str, uses a sklearn scoring metric string identifier, for example {accuracy, f1, precision, recall, roc_auc}.
+        If a callable object or function is provided, it has to agree with sklearn's signature 'scorer(estimator, X, y)'.
+        Check http://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html for more information.
+    utility_costs : list, default=None
+        Utility costs for cost-sensitive learning. It has to be a 4 element list where the cost values correspond to the
+        following cost sequence: [TP, FN, FP, TN]
     random_seed : int, default=None
         Random seed for creating the test/train splits.
     Returns
@@ -67,11 +69,21 @@ def paired_ttest(model_1,
     y = data[target_variable]
 
     if method == "mcnemar":
-        chi2, p = mcnemar(model_1, model_2, X, y, discrimination_threshold=discrimination_threshold)
+        chi2, p = mcnemar(model_1,
+                          model_2,
+                          X,
+                          y,
+                          threshold=threshold)
     elif method == "5x2cv":
-        # Set Threshold
-        fair_object.threshold = discrimination_threshold
-        chi2, p = paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, scoring=scoring,
+        chi2, p = paired_ttest_5x2cv(model_1,
+                                     model_2,
+                                     X,
+                                     y,
+                                     threshold=threshold,
+                                     fair_object=fair_object,
+                                     mitigation_method=mitigation_method,
+                                     scoring=scoring,
+                                     utility_costs=utility_costs,
                                      random_seed=random_seed)
     else:
         print(f"Invalid method {method}")
@@ -80,7 +92,11 @@ def paired_ttest(model_1,
     return chi2, p
 
 
-def mcnemar_table(model_1, model_2, X, y, discrimination_threshold=0.5):
+def mcnemar_table(model_1,
+                  model_2,
+                  X,
+                  y,
+                  threshold=0.5):
     """
     Compute a 2x2 contigency table for McNemar's test.
     Parameters
@@ -94,7 +110,7 @@ def mcnemar_table(model_1, model_2, X, y, discrimination_threshold=0.5):
         n_features is the number of features.
     y : array-like, shape = [n_samples]
         Target values.
-    discrimination_threshold : float, default=0.5
+    threshold : float, default=0.5
         Discrimination threshold for predicting the favorable class.
     Returns
     ----------
@@ -113,8 +129,8 @@ def mcnemar_table(model_1, model_2, X, y, discrimination_threshold=0.5):
         raise TypeError("Model has to be a classifier")
 
     # Compute predictions for model 1 and 2
-    y_model1 = list(map(lambda x: 1 if x > discrimination_threshold else 0, model_1.predict_proba(X)[:, -1]))
-    y_model2 = list(map(lambda x: 1 if x > discrimination_threshold else 0, model_2.predict_proba(X)[:, -1]))
+    y_model1 = list(map(lambda x: 1 if x > threshold else 0, model_1.predict_proba(X)[:, -1]))
+    y_model2 = list(map(lambda x: 1 if x > threshold else 0, model_2.predict_proba(X)[:, -1]))
     model1_true = (y == y_model1)
     model2_true = (y == y_model2)
 
@@ -127,7 +143,13 @@ def mcnemar_table(model_1, model_2, X, y, discrimination_threshold=0.5):
     return tb
 
 
-def mcnemar(model_1, model_2, X, y, discrimination_threshold=0.5, corrected=True, exact_binomial_test=False):
+def mcnemar(model_1,
+            model_2,
+            X,
+            y,
+            threshold=0.5,
+            corrected=True,
+            exact_binomial_test=False):
     """
     McNemar's test used on paired nominal data.
     Parameters
@@ -141,7 +163,7 @@ def mcnemar(model_1, model_2, X, y, discrimination_threshold=0.5, corrected=True
         n_features is the number of features.
     y : array-like, shape = [n_samples]
         Target values.
-    discrimination_threshold : float, default=0.5
+    threshold : float, default=0.5
         Discrimination threshold for predicting the favorable class.
     corrected : bool, default=True
         If `True`, uses Edward's continuity correction for chi-squared
@@ -160,7 +182,7 @@ def mcnemar(model_1, model_2, X, y, discrimination_threshold=0.5, corrected=True
         there are significant differences in the two compared models.
     """
 
-    tb = mcnemar_table(model_1, model_2, X, y, discrimination_threshold=discrimination_threshold)
+    tb = mcnemar_table(model_1, model_2, X, y, threshold=threshold)
 
     b = tb[0, 1]
     c = tb[1, 0]
@@ -179,7 +201,16 @@ def mcnemar(model_1, model_2, X, y, discrimination_threshold=0.5, corrected=True
     return chi2, p
 
 
-def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, scoring=None, random_seed=None):
+def paired_ttest_5x2cv(model_1,
+                       model_2,
+                       X,
+                       y,
+                       threshold=0.5,
+                       fair_object=None,
+                       mitigation_method=None,
+                       scoring=None,
+                       utility_costs=None,
+                       random_seed=None):
     """
     Implements the 5x2cv paired t test for comparing the performance of two models (classifier or regressors).
     This test was proposed by Dieterrich (1998).
@@ -194,6 +225,8 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
         n_features is the number of features.
     y : array-like, shape = [n_samples]
         Target values.
+    threshold : float, default=0.5
+        Discrimination threshold for predicting the favorable class.
     fair_object: FAIR, default=None
         FAIR object with methods to apply bias mitigation and evaluate fairness metric.
     mitigation_method : str, default=None
@@ -206,12 +239,13 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
          "correlation-remover"
     scoring : str, callable. Default=None
         If None (default), uses 'accuracy' for sklearn classifiers
-        If str, uses a sklearn scoring metric string identifier, for example
-        {accuracy, f1, precision, recall, roc_auc}.
-        If a callable object or function is provided, it has to agree with
-        sklearn's signature 'scorer(estimator, X, y)'. Check
-        http://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html
-        for more information.
+        If 'cost', uses utility_costs parameter to calculate the score
+        If str, uses a sklearn scoring metric string identifier, for example {accuracy, f1, precision, recall, roc_auc}.
+        If a callable object or function is provided, it has to agree with sklearn's signature 'scorer(estimator, X, y)'.
+        Check http://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html for more information.
+    utility_costs : list, default=None
+        Utility costs for cost-sensitive learning. It has to be a 4 element list where the cost values correspond to the
+        following cost sequence: [TP, FN, FP, TN]
     random_seed : int or None (default: None)
         Random seed for creating the test/train splits.
     Returns
@@ -241,14 +275,19 @@ def paired_ttest_5x2cv(model_1, model_2, X, y, fair_object, mitigation_method, s
     # Get scorer call function
     if scoring in fair_object.fairness_metrics_list:
         def scorer(model, x, y):
+            # Set Threshold
+            fair_object.threshold = threshold
             fair_object.mitigated_testing_data = pd.concat([x, y], axis=1)
             fair_object.ml_model = model
             return fair_object.fairness_metric(scoring)
     else:
-        if isinstance(scoring, str):
-            scorer = get_scorer(scoring)
-        else:
-            scorer = scoring
+        def scorer(model, x, y):
+            return binary_threshold_score(model,
+                                          x,
+                                          y,
+                                          scoring=scoring,
+                                          threshold=threshold,
+                                          utility_costs=utility_costs)
 
     def _score_diff(_model_1, _model_2, _X_train, _y_train, _X_test, _y_test):
         """ Compute score difference between model 1 and model 2"""

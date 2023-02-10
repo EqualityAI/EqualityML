@@ -187,11 +187,14 @@ class FAIR:
         return getattr(self, '_threshold', 0.5)
 
     @threshold.setter
-    def threshold(self, value):
+    def threshold(self,
+                  value):
         """Set discrimination threshold"""
         self._threshold = value
 
-    def _predict_binary_prob(self, ml_model, data):
+    def _predict_binary_prob(self,
+                             ml_model,
+                             data):
         """Predict binary probabilities estimates"""
         try:
             _pred_prob = ml_model.predict_proba(data[self.features])
@@ -201,7 +204,9 @@ class FAIR:
 
         return _pred_prob
 
-    def _predict_binary_class(self, ml_model, data):
+    def _predict_binary_class(self,
+                              ml_model,
+                              data):
         """Predict binary classes"""
         try:
             _pred_class = np.asarray(list(map(lambda x: 1 if x > self._threshold else 0,
@@ -211,7 +216,9 @@ class FAIR:
 
         return _pred_class
 
-    def _cr_removing_data(self, data, alpha=1.0):
+    def _cr_removing_data(self,
+                          data,
+                          alpha=1.0):
         """
         Filters out sensitive correlations in a dataset using 'CorrelationRemover' function from fairlearn package.
         """
@@ -236,7 +243,9 @@ class FAIR:
         mitigated_data = mitigated_data[data.columns]
         return mitigated_data
 
-    def _disp_removing_data(self, data, repair_level=0.8):
+    def _disp_removing_data(self,
+                            data,
+                            repair_level=0.8):
         """
         Transforming input data using 'DisparateImpactRemover' from aif360 pacakge.
         """
@@ -258,7 +267,9 @@ class FAIR:
         mitigated_data = mitigated_data[data.columns]
         return mitigated_data
 
-    def _resampling_data(self, data, mitigation_method):
+    def _resampling_data(self,
+                         data,
+                         mitigation_method):
         """
         Resample the input data using 'resample' function from dalex package.
         """
@@ -282,7 +293,8 @@ class FAIR:
 
         return mitigated_data
 
-    def _reweighing_model(self, data):
+    def _reweighing_model(self,
+                          data):
         """
         Obtain weights for model training using 'Reweighing' function from aif360 package.
         """
@@ -301,7 +313,10 @@ class FAIR:
 
         return dataset_transf_train.instance_weights
 
-    def bias_mitigation(self, mitigation_method, alpha=1.0, repair_level=0.8):
+    def bias_mitigation(self,
+                        mitigation_method,
+                        alpha=1.0,
+                        repair_level=0.8):
         """
         Apply a mitigation method to the bias in Machine Learning application to make it more balanced.
         A set of mitigation method is available which mitigates the dataset or calculates mitigated weights to be used
@@ -374,7 +389,8 @@ class FAIR:
 
         return mitigated_dataset
 
-    def fairness_metric(self, metric_name):
+    def fairness_metric(self,
+                        metric_name):
         """
         Fairness metric assessment based on privileged/unprivileged classes.
 
@@ -496,7 +512,8 @@ class FAIR:
               "8. 'predictive_equality_ratio': Predictive equality ratio\n"
               "9. 'statistical_parity_ratio': Statistical parity ratio")
 
-    def print_bias_mitigation_methods(self, metric_name=None):
+    def print_bias_mitigation_methods(self,
+                                      metric_name=None):
         if metric_name == None:
             print("Available bias mitigation methods are: \n"
                   "1. 'resampling' or 'resampling-uniform'\n"
@@ -514,7 +531,10 @@ class FAIR:
             for idx, mitigation_method in enumerate(mitigation_methods):
                 print(f"{idx+1} '{mitigation_method}'")
 
-    def update_classifier(self, ml_model, pred_class=None, pred_prob=None):
+    def update_classifier(self,
+                          ml_model,
+                          pred_class=None,
+                          pred_prob=None):
         """
         Update the Machine Learning model classifier.
         After applying a bias mitigation method and retraining the ML model, it is necessary to update the model to
@@ -544,7 +564,10 @@ class FAIR:
 
         self.pred_prob = pred_prob
 
-    def model_mitigation(self, mitigation_method, alpha=1.0, repair_level=0.8):
+    def model_mitigation(self,
+                         mitigation_method,
+                         alpha=1.0,
+                         repair_level=0.8):
         """
         Apply a mitigation method to the Machine Learning model.
         Dependent on the input mitigation method, the mitigated dataset or weights computed by 'bias_mitigation' method
@@ -591,8 +614,15 @@ class FAIR:
         self.update_classifier(ml_model)
         return ml_model
 
-    def compare_mitigation_methods(self, scoring=None, metric_name=None, mitigation_methods=None,
-                                   fairness_threshold=0.8, show=False, save_figure=False, **kwargs):
+    def compare_mitigation_methods(self,
+                                   scoring=None,
+                                   utility_costs=None,
+                                   metric_name=None,
+                                   mitigation_methods=None,
+                                   fairness_threshold=0.8,
+                                   show=False,
+                                   save_figure=False,
+                                   **kwargs):
         """
         Compares different bias mitigation methods and evaluates the model performance using a scoring metric and a
         fairness metric.
@@ -602,12 +632,13 @@ class FAIR:
         ----------
         scoring : str, callable. Default=None
             If None (default), uses 'accuracy' for sklearn classifiers
-            If str, uses a sklearn scoring metric string identifier, for example
-            {accuracy, f1, precision, recall, roc_auc}.
-            If a callable object or function is provided, it has to agree with
-            sklearn's signature 'scorer(estimator, X, y)'. Check
-            http://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html
-            for more information.
+            If 'cost', uses utility_costs parameter to calculate the score
+            If str, uses a sklearn scoring metric string identifier, for example {accuracy, f1, precision, recall, roc_auc}.
+            If a callable object or function is provided, it has to agree with sklearn's signature 'scorer(estimator, X, y)'.
+            Check http://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html for more information.
+        utility_costs : list, default=None
+            Utility costs for cost-sensitive learning. It has to be a 4 element list where the cost values correspond to the
+            following cost sequence: [TP, FN, FP, TN]
         metric_name : str
             Fairness metric name. Available options are:
                1. 'treatment_equality_ratio':
@@ -670,8 +701,12 @@ class FAIR:
         testing_data = self.testing_data if self.testing_data is not None else self.training_data
 
         # Reference score and fairness metric
-        score = binary_threshold_score(scoring, self.orig_ml_model, testing_data[self.features],
-                                       testing_data[self.target_variable], threshold=self.threshold)
+        score = binary_threshold_score(self.orig_ml_model,
+                                       testing_data[self.features],
+                                       testing_data[self.target_variable],
+                                       scoring=scoring,
+                                       threshold=self.threshold,
+                                       utility_costs=utility_costs)
         fairness_metric = self.fairness_metric(self._metric_name)
         comparison_df.loc['reference'] = [score, fairness_metric]
 
@@ -683,8 +718,12 @@ class FAIR:
             else:
                 testing_data = self.testing_data if self.testing_data is not None else self.training_data
 
-            score = binary_threshold_score(scoring, ml_model, testing_data[self.features],
-                                           testing_data[self.target_variable], threshold=self.threshold)
+            score = binary_threshold_score(ml_model,
+                                           testing_data[self.features],
+                                           testing_data[self.target_variable],
+                                           scoring=scoring,
+                                           threshold=self.threshold,
+                                           utility_costs=utility_costs)
             fairness_metric = self.fairness_metric(self._metric_name)
             comparison_df.loc[mitigation_method] = [score, fairness_metric]
 

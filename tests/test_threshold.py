@@ -62,11 +62,11 @@ def test_binary_threshold_score(dataset, threshold):
     _estimator.fit(X_train, y_train)
 
     # F1 score
-    f1_score = binary_threshold_score("f1", _estimator, X_train, y_train, threshold=threshold)
+    f1_score = binary_threshold_score(_estimator, X_train, y_train, scoring="f1", threshold=threshold)
 
     assert 0 <= f1_score <= 1
 
     # Accuracy
-    accuracy = binary_threshold_score("accuracy", _estimator, X_train, y_train, threshold=threshold)
+    accuracy = binary_threshold_score(_estimator, X_train, y_train, scoring="accuracy", threshold=threshold)
 
     assert 0 <= accuracy <= 1

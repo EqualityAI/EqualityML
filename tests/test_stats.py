@@ -12,7 +12,7 @@ from equalityml.stats import paired_ttest, mcnemar_table
 _ESTIMATORS = [SVC, DecisionTreeClassifier, RandomForestClassifier]
 _MITIGATION_METHODS = ["resampling", "resampling-preferential", "reweighing", "disparate-impact-remover",
                        "correlation-remover"]
-_DISCRIMINATION_THRESHOLDS = [(0.2, [[20, 0], [4, 6]]),
+_THRESHOLDS = [(0.2, [[20, 0], [4, 6]]),
                               (0.4, [[22, 0], [7, 1]]),
                               (0.6, [[18, 0], [12, 0]]),
                               (0.8, [[15, 0], [12, 3]])
@@ -37,7 +37,7 @@ def dataset():
     return dataset
 
 
-@pytest.mark.parametrize("threshold, tb", _DISCRIMINATION_THRESHOLDS)
+@pytest.mark.parametrize("threshold, tb", _THRESHOLDS)
 def test_mcnemar_table(dataset, threshold, tb):
     np.random.seed(0)
 
@@ -56,7 +56,7 @@ def test_mcnemar_table(dataset, threshold, tb):
                           model_2,
                           dataset["training_data"].drop(columns=dataset["target_variable"]),
                           dataset["training_data"][dataset["target_variable"]],
-                          discrimination_threshold=threshold)
+                          threshold=threshold)
 
     assert (table == tb).all()
 
@@ -86,7 +86,7 @@ def test_mcnemar(dataset, estimator, threshold):
                            dataset["training_data"],
                            dataset["target_variable"],
                            method="mcnemar",
-                           discrimination_threshold=threshold)
+                           threshold=threshold)
 
     assert len(results) == 2
     assert 0 <= results[1] <= 1.
@@ -121,7 +121,7 @@ def test_5x2cv(dataset, estimator, threshold, mitigation_method):
                            method="5x2cv",
                            fair_object=fair_object,
                            mitigation_method=mitigation_method,
-                           discrimination_threshold=threshold,
+                           threshold=threshold,
                            random_seed=0)
 
     assert len(results) == 2
