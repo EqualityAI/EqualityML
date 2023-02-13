@@ -38,9 +38,9 @@ class FAIR:
     training_data : pd.DataFrame
         Training data in the form of a pd.DataFrame, which was used to train the machine learning model.
     target_variable : str
-        Name of the target variable column in the training data.
+        Name of the target variable column in the training/testing data.
     protected_variable : str
-        Name of the protected variable column in the training data.
+        Name of the protected variable column in the training/testing data.
     privileged_class : float
         Subgroup that is suspected to have the most privilege.
         It needs to be a value present in `protected_variable` column.
@@ -101,6 +101,9 @@ class FAIR:
         else:
             self.testing_data = testing_data.copy()
             self.testing_data.reset_index(drop=True, inplace=True)
+
+            if sorted(self.testing_data.columns) != sorted(self.training_data.columns):
+                raise TypeError(f"Testing data structure is not the same as training data")
 
         # Check input arguments
         if target_variable not in self.training_data.columns:
@@ -237,13 +240,13 @@ class FAIR:
 
         cr = CorrelationRemover(sensitive_feature_ids=[self.protected_variable], alpha=alpha)
         data_std = cr.fit_transform(data.drop(columns=[self.target_variable]))
-        train_data_cr = pd.DataFrame(data_std, columns=data_rm_columns, index=data.index)
+        data_cr = pd.DataFrame(data_std, columns=data_rm_columns, index=data.index)
 
         # Concatenate data after correlation remover
         mitigated_data = pd.concat(
             [pd.DataFrame(data[self.target_variable]),
              pd.DataFrame(data[self.protected_variable]),
-             train_data_cr], axis=1)
+             data_cr], axis=1)
 
         # Keep the same columns order
         mitigated_data = mitigated_data[data.columns]
@@ -315,9 +318,9 @@ class FAIR:
 
         RW = Reweighing(unprivileged_groups=self.unprivileged_groups,
                         privileged_groups=self.privileged_groups)
-        dataset_transf_train = RW.fit_transform(aif_data)
+        dataset_transf = RW.fit_transform(aif_data)
 
-        return dataset_transf_train.instance_weights
+        return dataset_transf.instance_weights
 
     def bias_mitigation(self,
                         mitigation_method,
@@ -347,8 +350,8 @@ class FAIR:
         T : dictionary-like of shape
             Mitigated data/weights
             Notes:
-            Output shouldn't have both 'training_data' and 'weights' keys i.e. if method only changes data then
-             key is 'training_data' and if method changes machine learning model weights then 'weights' is in key
+            Output shouldn't have both 'training_data/testing_data' and 'weights' keys i.e. if method only changes data then
+             key is 'training_data/testing_data' and if method changes machine learning model weights then 'weights' is in key
 
         """
 
