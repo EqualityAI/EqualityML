@@ -418,6 +418,8 @@ class FAIR:
         ----------
         T : dictionary-like of shape
             Returns the fairness metric score for the input fairness metric name.
+            Note that the returned score will be between 0.0 and 1.0. In cases where the fairness metric is > 1.0 it
+            returns the equivalent 1/fairness metric score to allow for easy comparison.
         """
 
         metric_name = metric_name.lower()
