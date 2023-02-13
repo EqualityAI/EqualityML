@@ -35,9 +35,12 @@ def test_discrimination_threshold(dataset, decision_maker):
     model = LogisticRegression()
 
     # FAIR object
-    fair_object = FAIR(ml_model=model, training_data=dataset["training_data"],
+    fair_object = FAIR(ml_model=model,
+                       training_data=dataset["training_data"],
                        target_variable=dataset["target_variable"],
-                       protected_variable=dataset["protected_variable"], privileged_class=1)
+                       protected_variable=dataset["protected_variable"],
+                       privileged_class=1,
+                       random_seed=0)
 
     # Compute the optimal discrimination_threshold
     dt = discrimination_threshold(model,
@@ -45,7 +48,8 @@ def test_discrimination_threshold(dataset, decision_maker):
                                   dataset["target_variable"],
                                   fair_object=fair_object,
                                   metrics=[decision_maker[0]],
-                                  decision_maker=decision_maker)
+                                  decision_maker=decision_maker,
+                                  random_seed=0)
 
     assert 0 <= dt <= 1
 

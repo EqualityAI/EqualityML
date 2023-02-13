@@ -110,9 +110,12 @@ def test_5x2cv(dataset, estimator, threshold, mitigation_method):
     else:
         model_2 = estimator()
 
-    fair_object = FAIR(ml_model=model_1, training_data=dataset["training_data"],
+    fair_object = FAIR(ml_model=model_1,
+                       training_data=dataset["training_data"],
                        target_variable=dataset["target_variable"],
-                       protected_variable=dataset["protected_variable"], privileged_class=1)
+                       protected_variable=dataset["protected_variable"],
+                       privileged_class=1,
+                       random_seed=0)
 
     results = paired_ttest(model_1,
                            model_2,

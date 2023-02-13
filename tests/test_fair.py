@@ -49,9 +49,12 @@ def test_bias_mitigation(dataset, mitigation_method, estimator):
     _estimator.fit(dataset["training_data"].drop(columns=dataset["target_variable"]),
                    dataset["training_data"][dataset["target_variable"]])
 
-    fair_object = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
+    fair_object = FAIR(ml_model=_estimator,
+                       training_data=dataset["training_data"],
                        target_variable=dataset["target_variable"],
-                       protected_variable=dataset["protected_variable"], privileged_class=1)
+                       protected_variable=dataset["protected_variable"],
+                       privileged_class=1,
+                       random_seed=0)
 
     # call bias mitigation method
     mitigation_result = fair_object.bias_mitigation(mitigation_method)
@@ -73,9 +76,12 @@ def test_fairness_metric_evaluation(dataset, metric, estimated_value):
     _estimator.fit(dataset["training_data"].drop(columns=dataset["target_variable"]),
                    dataset["training_data"][dataset["target_variable"]])
 
-    fair_object = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
+    fair_object = FAIR(ml_model=_estimator,
+                       training_data=dataset["training_data"],
                        target_variable=dataset["target_variable"],
-                       protected_variable=dataset["protected_variable"], privileged_class=1)
+                       protected_variable=dataset["protected_variable"],
+                       privileged_class=1,
+                       random_seed=0)
 
     # Compute fairness metric
     fairness_metric = fair_object.fairness_metric(metric)
@@ -94,9 +100,12 @@ def test_workflow(dataset, mitigation_method):
     _estimator = LogisticRegression()
     _estimator.fit(X_train, y_train)
 
-    fair_object = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
+    fair_object = FAIR(ml_model=_estimator,
+                       training_data=dataset["training_data"],
                        target_variable=dataset["target_variable"],
-                       protected_variable=dataset["protected_variable"], privileged_class=1)
+                       protected_variable=dataset["protected_variable"],
+                       privileged_class=1,
+                       random_seed=0)
 
     # Compute fairness metric
     metric = "statistical_parity_ratio"
@@ -135,9 +144,12 @@ def test_model_mitigation(dataset, mitigation_method):
     _estimator = LogisticRegression()
     _estimator.fit(X_train, y_train)
 
-    fair_object = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
+    fair_object = FAIR(ml_model=_estimator,
+                       training_data=dataset["training_data"],
                        target_variable=dataset["target_variable"],
-                       protected_variable=dataset["protected_variable"], privileged_class=1)
+                       protected_variable=dataset["protected_variable"],
+                       privileged_class=1,
+                       random_seed=0)
 
     # Compute fairness metric
     metric = "statistical_parity_ratio"
@@ -163,9 +175,12 @@ def test_compare_mitigation_methods(dataset, metric_name):
     _estimator = LogisticRegression()
     _estimator.fit(X_train, y_train)
 
-    fair_object = FAIR(ml_model=_estimator, training_data=dataset["training_data"],
+    fair_object = FAIR(ml_model=_estimator,
+                       training_data=dataset["training_data"],
                        target_variable=dataset["target_variable"],
-                       protected_variable=dataset["protected_variable"], privileged_class=1)
+                       protected_variable=dataset["protected_variable"],
+                       privileged_class=1,
+                       random_seed=0)
 
     # Compare mitigation methods
     comparison_df = fair_object.compare_mitigation_methods(scoring='accuracy', metric_name=metric_name)
