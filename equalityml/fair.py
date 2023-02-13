@@ -61,6 +61,8 @@ class FAIR:
         Predicted class labels for input 'testing_data' applied on machine learning model 'ml_model'.
     pred_prob : list, default=None
         Probability estimates for input 'testing_data' applied on machine learning model 'ml_model'.
+    random_seed : int, default=None
+        Used to set the numpy random seed in order to make numpy calls predictable.
     """
 
     def __init__(self,
@@ -76,7 +78,8 @@ class FAIR:
                  unfavorable_label=0,
                  threshold=0.5,
                  pred_class=None,
-                 pred_prob=None):
+                 pred_prob=None,
+                 random_seed=None):
 
         super(FAIR, self).__init__()
 
@@ -150,6 +153,9 @@ class FAIR:
 
         # dalex sets matplotlib to use agg. Save current matplotlib backend status to revert it.
         self.matplotlib_backend = matplotlib.get_backend()
+
+        # Set the numpy random seed
+        np.random.seed(random_seed)
 
     @property
     def fairness_metrics_list(self):
