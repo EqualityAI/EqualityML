@@ -227,7 +227,8 @@ class FAIR:
 
     def _cr_removing_data(self,
                           data,
-                          alpha=1.0):
+                          alpha=1.0,
+                          cr=None):
         """
         Filters out sensitive correlations in a dataset using 'CorrelationRemover' function from fairlearn package.
         """
@@ -238,8 +239,11 @@ class FAIR:
         # remove the outcome variable and sensitive variable
         data_rm_columns = data.columns.drop([self.protected_variable, self.target_variable])
 
-        cr = CorrelationRemover(sensitive_feature_ids=[self.protected_variable], alpha=alpha)
-        data_std = cr.fit_transform(data.drop(columns=[self.target_variable]))
+        if cr is None:
+            cr = CorrelationRemover(sensitive_feature_ids=[self.protected_variable], alpha=alpha)
+            cr = cr.fit(data.drop(columns=[self.target_variable]))
+
+        data_std = cr.transform(data.drop(columns=[self.target_variable]))
         data_cr = pd.DataFrame(data_std, columns=data_rm_columns, index=data.index)
 
         # Concatenate data after correlation remover
@@ -250,7 +254,7 @@ class FAIR:
 
         # Keep the same columns order
         mitigated_data = mitigated_data[data.columns]
-        return mitigated_data
+        return mitigated_data, cr
 
     def _disp_removing_data(self,
                             data,
@@ -370,12 +374,12 @@ class FAIR:
             self.mitigated_training_data = mitigated_training_data
             self.mitigated_testing_data = self.testing_data
         elif mitigation_method == "correlation-remover":
-            mitigated_training_data = self._cr_removing_data(self.training_data, alpha)
+            mitigated_training_data, cr = self._cr_removing_data(self.training_data, alpha)
             mitigated_dataset['training_data'] = mitigated_training_data
             self.mitigated_training_data = mitigated_training_data
 
             if self.testing_data is not None:
-                mitigated_testing_data = self._cr_removing_data(self.testing_data, alpha)
+                mitigated_testing_data, _ = self._cr_removing_data(self.testing_data, alpha, cr)
                 mitigated_dataset['testing_data'] = mitigated_testing_data
                 self.mitigated_testing_data = mitigated_testing_data
         elif mitigation_method == "reweighing":
