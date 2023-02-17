@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 import copy
 from scipy.stats import mstats
@@ -75,10 +76,14 @@ class DiscriminationThreshold:
     ----------
     ml_model : a Scikit-Learn estimator
         A scikit-learn estimator that should be a classifier. If the model is not a classifier, an exception is raised.
-    data : pd.DataFrame
-        Data in the form of a pd.DataFrame, which will be used to train and evaluate the machine learning model.
     target_variable : str
         Name of the target variable column. The target column must be a binary classification target.
+    training_data : pd.DataFrame, default=None
+        Training data in the form of a pd.DataFrame, which was used to train the machine learning model.
+    testing_data : pd.DataFrame, default=None
+        Testing data in the form of a pd.DataFrame, which will be used to make predictions.
+        Note: when the model_training is True, the training_data and testing_data, if it's not None, will be concatenated.
+        That data will then be split randomly to train and evaluate the model.
     decision_maker : tuple, default=('f1', 'max')
         The metric and decision to optimize the discrimination threshold. The metric shall be available in input metrics
         list and 3 different decisions can be used: 'max', 'min' or 'limit' with the following behaviour:
@@ -108,6 +113,10 @@ class DiscriminationThreshold:
         Number of thresholds to consider which are evenly spaced over the interval [0.0,1.0].
     num_iterations : int, default=10
         Number of times to shuffle and split the dataset to account for noise in the threshold metrics curves.
+        If training model is not required, the model will be evaluated once.
+    model_training : bool, default=True
+        When True, the model is trained 'num_iterations' times to get the metrics variability, otherwise, the model will
+        be only evaluated once using the testing data.
     random_seed : int, default=None
         Used to seed the random state for splitting the data in different train and test splits. If supplied, the
         random state is incremented in a deterministic fashion for each split.
@@ -116,8 +125,9 @@ class DiscriminationThreshold:
 
     def __init__(self,
                  ml_model,
-                 data,
                  target_variable,
+                 training_data=None,
+                 testing_data=None,
                  decision_maker=DECISION_MAKER,
                  metrics=("f1"),
                  fair_object=None,
@@ -126,9 +136,29 @@ class DiscriminationThreshold:
                  test_size=0.2,
                  num_thresholds=100,
                  num_iterations=10,
+                 model_training=True,
                  random_seed=None):
 
         super(DiscriminationThreshold, self).__init__()
+
+        self.model_training = model_training
+        if self.model_training is False:
+            if testing_data is None:
+                raise ValueError("When model will not be trained, testing data is required to evaluate the model.")
+            if not hasattr(ml_model, "classes_"):
+                raise ValueError("When model will not be trained, it must be fitted.")
+
+        if self.model_training is True and training_data is None:
+            raise ValueError("When model will be trained, training data is required to train and evalute the model.")
+
+        if self.model_training:
+            if testing_data is not None:
+                data = pd.concat([training_data, testing_data])
+            else:
+                data = training_data
+        else:
+            num_iterations = 1
+            data = testing_data
 
         self.X = data.drop(columns=target_variable)
         self.y = data[target_variable]
@@ -165,7 +195,7 @@ class DiscriminationThreshold:
                              "strictly larger that 2 and smaller than 1000")
 
         # Check number of iterations
-        if not 2 <= num_iterations <= 100:
+        if not 1 <= num_iterations <= 100:
             raise ValueError("The value of the parameter 'num_iterations' must be "
                              "strictly larger that 2 and smaller than 100")
 
@@ -179,11 +209,12 @@ class DiscriminationThreshold:
         self._metrics_quantiles = defaultdict(dict)
         self._thresholds = np.linspace(0.0, 1.0, num=self.num_thresholds)
 
-        try:
-            self.ml_model.fit(self.X, self.y)
-        except ValueError:
-            print('Make sure that the model is trained and the input data '
-                  'is properly transformed.')
+        if self.model_training:
+            try:
+                self.ml_model.fit(self.X, self.y)
+            except ValueError:
+                print('Make sure that the model is trained and the input data '
+                      'is properly transformed.')
 
     def _check_metrics(self,
                        metrics,
@@ -237,9 +268,12 @@ class DiscriminationThreshold:
         Helper function for the internal method fit() which performs row-wise calculation of accuracy, precision,
         recall, F1 score and queue rate, utility cost and fairness metric.
         """
-        X_train, X_test, y_train, y_test = train_test_split(self.X, self.y, test_size=self.test_size,
-                                                            random_state=randint, stratify=self.y)
-        self.ml_model.fit(X_train, y_train)
+        if self.model_training:
+            X_train, X_test, y_train, y_test = train_test_split(self.X, self.y, test_size=self.test_size,
+                                                                random_state=randint, stratify=self.y)
+            self.ml_model.fit(X_train, y_train)
+        else:
+            X_test, y_test = self.X, self.y
         predicted_prob = self.ml_model.predict_proba(X_test)[:, 1]
         if self.fair_object:
             self.fair_object.update_classifier(self.ml_model)
@@ -411,8 +445,9 @@ class DiscriminationThreshold:
 
 def discrimination_threshold(
         ml_model,
-        data,
         target_variable,
+        training_data=None,
+        testing_data=None,
         decision_maker=DECISION_MAKER,
         metrics=("f1"),
         fair_object=None,
@@ -421,6 +456,7 @@ def discrimination_threshold(
         test_size=0.2,
         num_thresholds=100,
         num_iterations=10,
+        model_training=True,
         random_seed=None,
         show=False
 ):
@@ -437,10 +473,14 @@ def discrimination_threshold(
     ----------
     ml_model : a Scikit-Learn estimator
         A scikit-learn estimator that should be a classifier. If the model is not a classifier, an exception is raised.
-    data : pd.DataFrame
-        Data in the form of a pd.DataFrame, which will be used to train and evaluate the machine learning model.
     target_variable : str
         Name of the target variable column. The target column must be a binary classification target.
+    training_data : pd.DataFrame, default=None
+        Training data in the form of a pd.DataFrame, which was used to train the machine learning model.
+    testing_data : pd.DataFrame, default=None
+        Testing data in the form of a pd.DataFrame, which will be used to make predictions.
+        Note: when the model_training is True, the training_data and testing_data, if it's not None, will be concatenated.
+        That data will then be split randomly to train and evaluate the model.
     decision_maker : tuple, default=('f1', 'max')
         The metric and decision to optimize the discrimination threshold. The metric shall be available in input metrics
         list and 3 different decisions can be used: 'max', 'min' or 'limit' with the following behaviour:
@@ -470,6 +510,10 @@ def discrimination_threshold(
         Number of thresholds to consider which are evenly spaced over the interval [0.0,1.0].
     num_iterations : int, default=10
         Number of times to shuffle and split the dataset to account for noise in the threshold metrics curves.
+        If training model is not required, the model will be evaluated once.
+    model_training : bool, default=True
+        When True, the model is trained 'num_iterations' times to get the metrics variability, otherwise, the model will
+        be only evaluated once using the testing data.
     random_seed : int, default=None
         Used to seed the random state for splitting the data in different train and test splits. If supplied, the
         random state is incremented in a deterministic fashion for each split.
@@ -483,8 +527,9 @@ def discrimination_threshold(
 
     # Instantiate the DiscriminationThreshold
     dt = DiscriminationThreshold(ml_model,
-                                 data,
                                  target_variable,
+                                 training_data=training_data,
+                                 testing_data=testing_data,
                                  decision_maker=decision_maker,
                                  metrics=metrics,
                                  fair_object=fair_object,
@@ -493,6 +538,7 @@ def discrimination_threshold(
                                  test_size=test_size,
                                  num_thresholds=num_thresholds,
                                  num_iterations=num_iterations,
+                                 model_training=model_training,
                                  random_seed=random_seed)
 
     # Fit the DiscriminationThreshold
