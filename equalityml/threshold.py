@@ -110,7 +110,11 @@ class DiscriminationThreshold:
         Proportion of data to be used for testing. The data split is performed using the 'train_test_split' function
         from sklearn package, in a stratified fashion.
     num_thresholds : int, default=100
-        Number of thresholds to consider which are evenly spaced over the interval [0.0,1.0].
+        Number of thresholds to consider which are evenly spaced over the interval [min_bound, max_bound].
+    min_bound: float, default=0.0
+        Minimum threshold bound
+    max_bound: float, default=1.0
+        Minimum threshold bound
     num_iterations : int, default=10
         Number of times to shuffle and split the dataset to account for noise in the threshold metrics curves.
         If training model is not required, the model will be evaluated once.
@@ -135,6 +139,8 @@ class DiscriminationThreshold:
                  quantiles=QUANTILES_MEDIAN_80,
                  test_size=0.2,
                  num_thresholds=100,
+                 min_bound=0.0,
+                 max_bound=1.0,
                  num_iterations=10,
                  model_training=True,
                  random_seed=None):
@@ -194,10 +200,14 @@ class DiscriminationThreshold:
             raise ValueError("The value of the parameter 'num_thresholds' must be "
                              "strictly larger that 2 and smaller than 1000")
 
+        if not 0.0 <= min_bound < max_bound <= 1.0:
+            raise ValueError("Invalid min_bound/max_bound value. The condition 0.0 <= min_bound < max_bound <= 1.0 "
+                             "must comply.")
+
         # Check number of iterations
         if not 1 <= num_iterations <= 100:
             raise ValueError("The value of the parameter 'num_iterations' must be "
-                             "strictly larger that 2 and smaller than 100")
+                             "strictly larger that 1 and smaller than 100")
 
         # Set params
         self.ml_model = copy.deepcopy(ml_model)
@@ -207,7 +217,7 @@ class DiscriminationThreshold:
         self.random_seed = random_seed
         self.discrimination_threshold = None
         self._metrics_quantiles = defaultdict(dict)
-        self._thresholds = np.linspace(0.0, 1.0, num=self.num_thresholds)
+        self._thresholds = np.linspace(min_bound, max_bound, num=self.num_thresholds)
 
         if self.model_training:
             try:
@@ -455,6 +465,8 @@ def discrimination_threshold(
         quantiles=QUANTILES_MEDIAN_80,
         test_size=0.2,
         num_thresholds=100,
+        min_bound=0.0,
+        max_bound=1.0,
         num_iterations=10,
         model_training=True,
         random_seed=None,
@@ -507,7 +519,11 @@ def discrimination_threshold(
         Proportion of data to be used for testing. The data split is performed using the 'train_test_split' function
         from sklearn package, in a stratified fashion.
     num_thresholds : int, default=100
-        Number of thresholds to consider which are evenly spaced over the interval [0.0,1.0].
+        Number of thresholds to consider which are evenly spaced over the interval [min_bound, max_bound].
+    min_bound: float, default=0.0
+        Minimum threshold bound
+    max_bound: float, default=1.0
+        Minimum threshold bound
     num_iterations : int, default=10
         Number of times to shuffle and split the dataset to account for noise in the threshold metrics curves.
         If training model is not required, the model will be evaluated once.
@@ -537,6 +553,8 @@ def discrimination_threshold(
                                  quantiles=quantiles,
                                  test_size=test_size,
                                  num_thresholds=num_thresholds,
+                                 min_bound=min_bound,
+                                 max_bound=max_bound,
                                  num_iterations=num_iterations,
                                  model_training=model_training,
                                  random_seed=random_seed)

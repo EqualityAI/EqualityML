@@ -21,7 +21,7 @@ from fairlearn.preprocessing import CorrelationRemover
 from sklearn.base import clone
 from sklearn.utils.multiclass import type_of_target
 import matplotlib.pyplot as plt
-from equalityml.threshold import binary_threshold_score
+from equalityml.threshold import binary_threshold_score, discrimination_threshold, DECISION_MAKER
 
 
 class FAIR:
@@ -635,6 +635,8 @@ class FAIR:
                                    metric_name=None,
                                    mitigation_methods=None,
                                    fairness_threshold=0.8,
+                                   compute_discrimination_threshold=True,
+                                   decision_maker=DECISION_MAKER,
                                    show=False,
                                    save_figure=False,
                                    **kwargs):
@@ -669,12 +671,21 @@ class FAIR:
             List of bias mitigation methods to mitigate the model.
             If a bias mitigation method is not available in FAIR class, it will be removed from the list.
             In case it's None, a default list will be computed based on the provided fairness metric.
+        fairness_threshold : float, default=0.8
+            Non-discrimination value.
+        compute_discrimination_threshold : bool, default=True,
+            Compute the best discrimination threshold for each mitigated model based on the input decision maker.
+        decision_maker : tuple, default=('f1', 'max')
+            The metric and decision to optimize the discrimination threshold. The metric shall be available in input metrics
+            list and 3 different decisions can be used: 'max', 'min' or 'limit' with the following behaviour:
+            - 'max' computes the threshold which maximizes the selected metric
+            - 'min' computes the threshold which minimizes the selected metric
+            - 'limit' requires an extra float parameter between 0 and 1. The optimal threshold is calculated when the
+            selected metric reaches that limit.
         show : bool, default=False
             If True, shows the results of model performance and fairness metric for each bias mitigation method.
         save_figure : bool, default=False
             If True, save the figure.
-        fairness_threshold : float, default=0.8
-            Non-discrimination value.
         kwargs : dict
             Keyword arguments passed to the bias mitigation method.
         Returns
@@ -711,8 +722,14 @@ class FAIR:
             else:
                 raise AttributeError("Model must be a Classifier.")
 
+        # Dataframe columns
+        if compute_discrimination_threshold:
+            df_columns = [str(scoring), self._metric_name, "discrimination_threshold"]
+        else:
+            df_columns = [str(scoring), self._metric_name]
+
         # Create the Dataframe for comparing models performance and fairness metric
-        comparison_df = pd.DataFrame(columns=[str(scoring), self._metric_name])
+        comparison_df = pd.DataFrame(columns=df_columns)
         testing_data = self.testing_data if self.testing_data is not None else self.training_data
 
         # Reference score and fairness metric
@@ -723,7 +740,10 @@ class FAIR:
                                        threshold=self.threshold,
                                        utility_costs=utility_costs)
         fairness_metric = self.fairness_metric(self._metric_name)
-        comparison_df.loc['reference'] = [score, fairness_metric]
+        if compute_discrimination_threshold:
+            comparison_df.loc['reference'] = [score, fairness_metric, self.threshold]
+        else:
+            comparison_df.loc['reference'] = [score, fairness_metric]
 
         # Iterate over mitigation methods list and re-evaluate score and fairness metric
         for mitigation_method in mitigation_methods:
@@ -733,14 +753,29 @@ class FAIR:
             else:
                 testing_data = self.testing_data if self.testing_data is not None else self.training_data
 
+            # Compute discrimination threshold if it is True
+            if compute_discrimination_threshold:
+                dt = discrimination_threshold(ml_model,
+                                              self.target_variable,
+                                              testing_data=testing_data,
+                                              fair_object=self,
+                                              decision_maker=decision_maker,
+                                              metrics=[decision_maker[0]],
+                                              utility_costs=utility_costs,
+                                              show=False,
+                                              model_training=False)
+
             score = binary_threshold_score(ml_model,
                                            testing_data[self.features],
                                            testing_data[self.target_variable],
                                            scoring=scoring,
-                                           threshold=self.threshold,
+                                           threshold=dt,
                                            utility_costs=utility_costs)
             fairness_metric = self.fairness_metric(self._metric_name)
-            comparison_df.loc[mitigation_method] = [score, fairness_metric]
+            if compute_discrimination_threshold:
+                comparison_df.loc[mitigation_method] = [score, fairness_metric, dt]
+            else:
+                comparison_df.loc[mitigation_method] = [score, fairness_metric]
 
         if show:
             cmap = plt.get_cmap("tab10")
