@@ -635,7 +635,7 @@ class FAIR:
                                    metric_name=None,
                                    mitigation_methods=None,
                                    fairness_threshold=0.8,
-                                   compute_discrimination_threshold=True,
+                                   compute_discrimination_threshold=False,
                                    decision_maker=DECISION_MAKER,
                                    show=False,
                                    save_figure=False,
@@ -801,8 +801,8 @@ class FAIR:
             ax.set_title(f"{str(scoring)} vs {str(self._metric_name)}")
             ax.set_xlabel(str(scoring))
             ax.set_ylabel(str(self._metric_name))
-            _x_min = math.floor(min(comparison_df[str(scoring)]) * 100) / 100.0
-            _x_max = math.ceil(max(comparison_df[str(scoring)]) * 100) / 100.0
+            _x_min = math.floor(min(comparison_df[str(scoring)]) * 95) / 100.0
+            _x_max = math.ceil(max(comparison_df[str(scoring)]) * 105) / 100.0
             ax.set_xlim(_x_min, _x_max)
             ax.set_ylim(0.0, 1.0)
             plt.show()

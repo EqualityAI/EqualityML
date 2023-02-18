@@ -183,10 +183,11 @@ def test_compare_mitigation_methods(dataset, metric_name):
                        random_seed=0)
 
     # Compare mitigation methods
-    comparison_df = fair_object.compare_mitigation_methods(scoring='accuracy', metric_name=metric_name)
+    comparison_df = fair_object.compare_mitigation_methods(scoring='accuracy',
+                                                           metric_name=metric_name)
 
     # Assert dataframe columns
-    assert set(comparison_df.columns) == {metric_name, 'accuracy', 'discrimination_threshold'}
+    assert set(comparison_df.columns) == {metric_name, 'accuracy'}
 
     # Assert dataframe types
     assert comparison_df.select_dtypes(include=["float", 'int']).all().all()

@@ -336,7 +336,10 @@ class DiscriminationThreshold:
         if "queue_rate" in self.metrics:
             result["queue_rate"] = queue_rates
         if "cost" in self.metrics:
-            result['cost'] = [(float(cost)-min(costs))/(max(costs)-min(costs)) for cost in costs]
+            if len(self.metrics) == 1:
+                result['cost'] = costs
+            else:
+                result['cost'] = [(float(cost)-min(costs))/(max(costs)-min(costs)) for cost in costs]
         if self.fairness_metric_name:
             result[self.fairness_metric_name] = fairness_metrics
 
