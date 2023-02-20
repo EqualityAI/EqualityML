@@ -82,9 +82,9 @@ def test_mcnemar(dataset, estimator, threshold):
                 dataset["training_data"][dataset["target_variable"]])
 
     results = paired_ttest(model_1,
-                           model_2,
                            dataset["training_data"],
                            dataset["target_variable"],
+                           model_2=model_2,
                            method="mcnemar",
                            threshold=threshold)
 
@@ -118,12 +118,22 @@ def test_5x2cv(dataset, estimator, threshold, mitigation_method):
                        random_seed=0)
 
     results = paired_ttest(model_1,
-                           model_2,
                            dataset["training_data"],
                            dataset["target_variable"],
                            method="5x2cv",
                            fair_object=fair_object,
                            mitigation_method=mitigation_method,
+                           threshold=threshold,
+                           random_seed=0)
+
+    assert len(results) == 2
+    assert 0 <= results[1] <= 1.
+
+    results = paired_ttest(model_1,
+                           dataset["training_data"],
+                           dataset["target_variable"],
+                           model_2=model_2,
+                           method="5x2cv",
                            threshold=threshold,
                            random_seed=0)
 

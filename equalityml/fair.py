@@ -764,6 +764,8 @@ class FAIR:
                                               utility_costs=utility_costs,
                                               show=False,
                                               model_training=False)
+            else:
+                dt = self.threshold
 
             score = binary_threshold_score(ml_model,
                                            testing_data[self.features],
