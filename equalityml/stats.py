@@ -4,8 +4,8 @@ from tqdm import tqdm
 import copy
 from scipy import stats
 from sklearn.model_selection import train_test_split
-from equalityml.threshold import binary_threshold_score
 from equalityml.threshold import binary_threshold_score, discrimination_threshold, DECISION_MAKER
+
 
 def paired_ttest(model_1,
                  X,
@@ -57,6 +57,15 @@ def paired_ttest(model_1,
     utility_costs : list, default=None
         Utility costs for cost-sensitive learning. It has to be a 4 element list where the cost values correspond to the
         following cost sequence: [TP, FN, FP, TN]
+    compute_discrimination_threshold : bool, default=True,
+        Compute the best discrimination threshold for each mitigated model based on the input decision maker.
+    decision_maker : tuple, default=('f1', 'max')
+        The metric and decision to optimize the discrimination threshold. The metric shall be available in input metrics
+        list and 3 different decisions can be used: 'max', 'min' or 'limit' with the following behaviour:
+        - 'max' computes the threshold which maximizes the selected metric
+        - 'min' computes the threshold which minimizes the selected metric
+        - 'limit' requires an extra float parameter between 0 and 1. The optimal threshold is calculated when the
+        selected metric reaches that limit.
     random_seed : int, default=None
         Random seed for creating the test/train splits.
     Returns
@@ -65,7 +74,7 @@ def paired_ttest(model_1,
         Chi-squared value
     pvalue : float
         Two-tailed p-value.
-        If the chosen significance level is larger than the p-value, we reject the null hypothesis and accept that
+        If the chosen significance level (e.g 0.05) is larger than the p-value, we reject the null hypothesis and accept that
         there are significant differences in the two compared models.
     """
 
@@ -184,7 +193,7 @@ def mcnemar(model_1,
         Chi-squared value
     pvalue : float
         Two-tailed p-value.
-        If the chosen significance level is larger than the p-value, we reject the null hypothesis and accept that
+        If the chosen significance level (e.g 0.05) is larger than the p-value, we reject the null hypothesis and accept that
         there are significant differences in the two compared models.
     """
 
@@ -256,6 +265,15 @@ def paired_ttest_5x2cv(model_1,
     utility_costs : list, default=None
         Utility costs for cost-sensitive learning. It has to be a 4 element list where the cost values correspond to the
         following cost sequence: [TP, FN, FP, TN]
+    compute_discrimination_threshold : bool, default=True,
+        Compute the best discrimination threshold for each mitigated model based on the input decision maker.
+    decision_maker : tuple, default=('f1', 'max')
+        The metric and decision to optimize the discrimination threshold. The metric shall be available in input metrics
+        list and 3 different decisions can be used: 'max', 'min' or 'limit' with the following behaviour:
+        - 'max' computes the threshold which maximizes the selected metric
+        - 'min' computes the threshold which minimizes the selected metric
+        - 'limit' requires an extra float parameter between 0 and 1. The optimal threshold is calculated when the
+        selected metric reaches that limit.
     random_seed : int or None (default: None)
         Random seed for creating the test/train splits.
     Returns
@@ -264,7 +282,7 @@ def paired_ttest_5x2cv(model_1,
         Chi-squared value
     pvalue : float
         Two-tailed p-value.
-        If the chosen significance level is larger than the p-value, we reject the null hypothesis and accept that
+        If the chosen significance level (e.g 0.05) is larger than the p-value, we reject the null hypothesis and accept that
         there are significant differences in the two compared models.
     """
     rng = np.random.RandomState(random_seed)
@@ -291,35 +309,34 @@ def paired_ttest_5x2cv(model_1,
     # Get scorer call function
     if fair_object is not None and scoring in fair_object.fairness_metrics_list:
         def scorer(model, X, y):
-            # Set Threshold
+            # Compute discrimination threshold
             if compute_discrimination_threshold:
-                dt = discrimination_threshold(model,
-                                                      fair_object.target_variable,
-                                                      testing_data=pd.concat([X, y], axis=1),
-                                                      fair_object=fair_object,
-                                                      decision_maker=decision_maker,
-                                                      metrics=[decision_maker[0]],
-                                                      utility_costs=utility_costs,
-                                                      show=False,
-                                                      model_training=False)
+                fair_object.threshold = discrimination_threshold(model,
+                                                                 X,
+                                                                 y,
+                                                                 fair_object=fair_object,
+                                                                 decision_maker=decision_maker,
+                                                                 metrics=[decision_maker[0]],
+                                                                 utility_costs=utility_costs,
+                                                                 show=False,
+                                                                 model_training=False)
             else:
-                dt = threshold
-            fair_object.threshold = dt
+                fair_object.threshold = threshold
+            print("fair_object.threshold ", fair_object.threshold)
             fair_object.mitigated_testing_data = pd.concat([X, y], axis=1)
             fair_object.ml_model = model
             return fair_object.fairness_metric(scoring)
     else:
         def scorer(model, X, y):
-            # Set Threshold
+            # Compute discrimination threshold
             if compute_discrimination_threshold:
                 dt = discrimination_threshold(model,
-                                             y.name,
-                                             testing_data=pd.concat([X, y], axis=1),
-                                             decision_maker=[scoring, 'max'],
-                                             metrics=[scoring],
-                                             utility_costs=utility_costs,
-                                             show=False,
-                                             model_training=False)
+                                              X,
+                                              y,
+                                              decision_maker=[scoring, 'max'],
+                                              metrics=[scoring],
+                                              show=False,
+                                              model_training=False)
             else:
                 dt = threshold
             return binary_threshold_score(model,
@@ -335,6 +352,7 @@ def paired_ttest_5x2cv(model_1,
         # Train model 1 and get score 1
         _model_1.fit(_X_train, _y_train)
         score_1 = scorer(_model_1, _X_test, _y_test)
+        print("score_1 ", score_1)
 
         if apply_mitigation or fair_object is not None and scoring in fair_object.fairness_metrics_list:
             # Update training/testing data and reference ml model
@@ -360,6 +378,7 @@ def paired_ttest_5x2cv(model_1,
             _model_2.fit(_X_train, _y_train)
             score_2 = scorer(_model_2, _X_test, _y_test)
 
+        print("score_2 ", score_2)
         score_diff = score_1 - score_2
         return score_diff
 
@@ -383,7 +402,7 @@ def paired_ttest_5x2cv(model_1,
         if first_score_diff is None:
             first_score_diff = score_diff_A
 
-    if abs(first_score_diff) < 1e-10 or sum_variance < 1e-10:
+    if abs(first_score_diff) < 1e-100 or sum_variance < 1e-100:
         print("No relevant difference exists between model 1 and model 2")
         return 0, 1
 

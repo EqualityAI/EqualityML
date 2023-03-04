@@ -340,7 +340,13 @@ class DiscriminationThreshold:
         metrics = defaultdict(list)
 
         # Iterate over num_iterations and compute the metrics for each iteration
-        for _ in tqdm(range(self.num_iterations)):
+        if self.num_iterations > 1:
+            for _ in tqdm(range(self.num_iterations)):
+                randint = rng.randint(low=0, high=32768)
+                trial = self._get_metrics(randint)
+                for metric, values in trial.items():
+                    metrics[metric].append(values)
+        else:
             randint = rng.randint(low=0, high=32768)
             trial = self._get_metrics(randint)
             for metric, values in trial.items():
