@@ -756,8 +756,8 @@ class FAIR:
             # Compute discrimination threshold if it is True
             if compute_discrimination_threshold:
                 dt = discrimination_threshold(ml_model,
-                                              self.target_variable,
-                                              testing_data=testing_data,
+                                              testing_data[self.features],
+                                              testing_data[self.target_variable],
                                               fair_object=self,
                                               decision_maker=decision_maker,
                                               metrics=[decision_maker[0]],

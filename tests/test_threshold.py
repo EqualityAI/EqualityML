@@ -42,10 +42,13 @@ def test_discrimination_threshold(dataset, decision_maker):
                        privileged_class=1,
                        random_seed=0)
 
+    X = dataset["training_data"].drop(columns=dataset["target_variable"])
+    y = dataset["training_data"][dataset["target_variable"]]
+
     # Compute the optimal discrimination_threshold
     dt = discrimination_threshold(model,
-                                  dataset["target_variable"],
-                                  training_data=dataset["training_data"],
+                                  X,
+                                  y,
                                   fair_object=fair_object,
                                   metrics=[decision_maker[0]],
                                   decision_maker=decision_maker,
@@ -55,11 +58,10 @@ def test_discrimination_threshold(dataset, decision_maker):
 
     # Just evaluating
     model = LogisticRegression()
-    model.fit(dataset["training_data"].drop(columns=dataset["target_variable"]),
-              dataset["training_data"][dataset["target_variable"]])
+    model.fit(X, y)
     dt = discrimination_threshold(model,
-                                  dataset["target_variable"],
-                                  testing_data=dataset["training_data"],
+                                  X,
+                                  y,
                                   fair_object=fair_object,
                                   metrics=[decision_maker[0]],
                                   decision_maker=decision_maker,

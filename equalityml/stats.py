@@ -5,11 +5,11 @@ import copy
 from scipy import stats
 from sklearn.model_selection import train_test_split
 from equalityml.threshold import binary_threshold_score
-
+from equalityml.threshold import binary_threshold_score, discrimination_threshold, DECISION_MAKER
 
 def paired_ttest(model_1,
-                 data,
-                 target_variable,
+                 X,
+                 y,
                  model_2=None,
                  method="mcnemar",
                  threshold=0.5,
@@ -17,6 +17,8 @@ def paired_ttest(model_1,
                  mitigation_method=None,
                  scoring=None,
                  utility_costs=None,
+                 compute_discrimination_threshold=False,
+                 decision_maker=DECISION_MAKER,
                  random_seed=None):
     """
     Statistical paired t test for classifier comparisons. 2 methods are provided: McNemar's test and paired ttest 5x2cv.
@@ -25,10 +27,10 @@ def paired_ttest(model_1,
     ----------
     model_1 : a Scikit-Learn estimator
         A scikit-learn estimator that should be a classifier. If the model is not a classifier, an exception is raised.
-    data : pd.DataFrame
-        Data in the form of a pd.DataFrame, which will be used to evaluate the paired t-test.
-    target_variable : str
-        Name of the target variable column in the training data.
+    X : ndarray or DataFrame of shape n x m
+        A matrix of n instances with m features
+    y : ndarray or Series of length n
+        An array or series of target or class values. The target y must be a binary classification target.
     model_2 : a Scikit-Learn estimator, default=None
         A scikit-learn estimator that should be a classifier. For 5x2cv model it can be None when a mitigation method
         is provided together with a FAIR object.
@@ -66,8 +68,6 @@ def paired_ttest(model_1,
         If the chosen significance level is larger than the p-value, we reject the null hypothesis and accept that
         there are significant differences in the two compared models.
     """
-    X = data.drop(columns=target_variable)
-    y = data[target_variable]
 
     if method.lower() == "mcnemar":
         chi2, p = mcnemar(model_1,
@@ -85,6 +85,8 @@ def paired_ttest(model_1,
                                      mitigation_method=mitigation_method,
                                      scoring=scoring,
                                      utility_costs=utility_costs,
+                                     compute_discrimination_threshold=compute_discrimination_threshold,
+                                     decision_maker=decision_maker,
                                      random_seed=random_seed)
     else:
         print(f"Invalid method {method}")
@@ -214,6 +216,8 @@ def paired_ttest_5x2cv(model_1,
                        mitigation_method=None,
                        scoring=None,
                        utility_costs=None,
+                       compute_discrimination_threshold=False,
+                       decision_maker=DECISION_MAKER,
                        random_seed=None):
     """
     Implements the 5x2cv paired t test for comparing the performance of two models (classifier or regressors).
@@ -286,19 +290,43 @@ def paired_ttest_5x2cv(model_1,
 
     # Get scorer call function
     if fair_object is not None and scoring in fair_object.fairness_metrics_list:
-        def scorer(model, x, y):
+        def scorer(model, X, y):
             # Set Threshold
-            fair_object.threshold = threshold
-            fair_object.mitigated_testing_data = pd.concat([x, y], axis=1)
+            if compute_discrimination_threshold:
+                dt = discrimination_threshold(model,
+                                                      fair_object.target_variable,
+                                                      testing_data=pd.concat([X, y], axis=1),
+                                                      fair_object=fair_object,
+                                                      decision_maker=decision_maker,
+                                                      metrics=[decision_maker[0]],
+                                                      utility_costs=utility_costs,
+                                                      show=False,
+                                                      model_training=False)
+            else:
+                dt = threshold
+            fair_object.threshold = dt
+            fair_object.mitigated_testing_data = pd.concat([X, y], axis=1)
             fair_object.ml_model = model
             return fair_object.fairness_metric(scoring)
     else:
-        def scorer(model, x, y):
+        def scorer(model, X, y):
+            # Set Threshold
+            if compute_discrimination_threshold:
+                dt = discrimination_threshold(model,
+                                             y.name,
+                                             testing_data=pd.concat([X, y], axis=1),
+                                             decision_maker=[scoring, 'max'],
+                                             metrics=[scoring],
+                                             utility_costs=utility_costs,
+                                             show=False,
+                                             model_training=False)
+            else:
+                dt = threshold
             return binary_threshold_score(model,
-                                          x,
+                                          X,
                                           y,
                                           scoring=scoring,
-                                          threshold=threshold,
+                                          threshold=dt,
                                           utility_costs=utility_costs)
 
     def _score_diff(_model_1, _model_2, _X_train, _y_train, _X_test, _y_test):

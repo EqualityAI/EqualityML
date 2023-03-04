@@ -13,10 +13,10 @@ _ESTIMATORS = [SVC, DecisionTreeClassifier, RandomForestClassifier]
 _MITIGATION_METHODS = ["resampling", "resampling-preferential", "reweighing", "disparate-impact-remover",
                        "correlation-remover"]
 _THRESHOLDS = [(0.2, [[20, 0], [4, 6]]),
-                              (0.4, [[22, 0], [7, 1]]),
-                              (0.6, [[18, 0], [12, 0]]),
-                              (0.8, [[15, 0], [12, 3]])
-                              ]
+               (0.4, [[22, 0], [7, 1]]),
+               (0.6, [[18, 0], [12, 0]]),
+               (0.8, [[15, 0], [12, 3]])
+               ]
 
 
 @pytest.fixture()
@@ -31,8 +31,10 @@ def dataset():
     target_col = [1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1,
                   0, 1, 0, 1, 1, 0, 0, 1, 1, 0]
     training_data = pd.DataFrame({"random": random_col, "sex": sex_col, "weight": weight_col, "Y": target_col})
+    X = training_data.drop(columns="Y")
+    y = training_data["Y"]
 
-    dataset = {"training_data": training_data, "target_variable": "Y", "protected_variable": "sex"}
+    dataset = {"training_data": training_data, "target_variable": "Y", "X": X, "y": y, "protected_variable": "sex"}
 
     return dataset
 
@@ -43,19 +45,16 @@ def test_mcnemar_table(dataset, threshold, tb):
 
     # Train a 'reference' machine learning model
     model_1 = LogisticRegression()
-
-    model_1.fit(dataset["training_data"].drop(columns=dataset["target_variable"]),
-                dataset["training_data"][dataset["target_variable"]])
+    model_1.fit(dataset["X"], dataset["y"])
 
     # Train a second machine learning model
     model_2 = RandomForestClassifier()
-    model_2.fit(dataset["training_data"].drop(columns=dataset["target_variable"]),
-                dataset["training_data"][dataset["target_variable"]])
+    model_2.fit(dataset["X"], dataset["y"])
 
     table = mcnemar_table(model_1,
                           model_2,
-                          dataset["training_data"].drop(columns=dataset["target_variable"]),
-                          dataset["training_data"][dataset["target_variable"]],
+                          dataset["X"],
+                          dataset["y"],
                           threshold=threshold)
 
     assert (table == tb).all()
@@ -68,9 +67,7 @@ def test_mcnemar(dataset, estimator, threshold):
 
     # Train a 'reference' machine learning model
     model_1 = LogisticRegression()
-
-    model_1.fit(dataset["training_data"].drop(columns=dataset["target_variable"]),
-                dataset["training_data"][dataset["target_variable"]])
+    model_1.fit(dataset["X"], dataset["y"])
 
     # Train a second machine learning model
     if estimator == SVC:
@@ -78,12 +75,11 @@ def test_mcnemar(dataset, estimator, threshold):
     else:
         model_2 = estimator()
 
-    model_2.fit(dataset["training_data"].drop(columns=dataset["target_variable"]),
-                dataset["training_data"][dataset["target_variable"]])
+    model_2.fit(dataset["X"], dataset["y"])
 
     results = paired_ttest(model_1,
-                           dataset["training_data"],
-                           dataset["target_variable"],
+                           dataset["X"],
+                           dataset["y"],
                            model_2=model_2,
                            method="mcnemar",
                            threshold=threshold)
@@ -100,9 +96,7 @@ def test_5x2cv(dataset, estimator, threshold, mitigation_method):
 
     # Reference machine learning model
     model_1 = LogisticRegression()
-
-    model_1.fit(dataset["training_data"].drop(columns=dataset["target_variable"]),
-                dataset["training_data"][dataset["target_variable"]])
+    model_1.fit(dataset["X"], dataset["y"])
 
     # Second machine learning model
     if estimator == SVC:
@@ -118,8 +112,8 @@ def test_5x2cv(dataset, estimator, threshold, mitigation_method):
                        random_seed=0)
 
     results = paired_ttest(model_1,
-                           dataset["training_data"],
-                           dataset["target_variable"],
+                           dataset["X"],
+                           dataset["y"],
                            method="5x2cv",
                            fair_object=fair_object,
                            mitigation_method=mitigation_method,
@@ -130,8 +124,8 @@ def test_5x2cv(dataset, estimator, threshold, mitigation_method):
     assert 0 <= results[1] <= 1.
 
     results = paired_ttest(model_1,
-                           dataset["training_data"],
-                           dataset["target_variable"],
+                           dataset["X"],
+                           dataset["y"],
                            model_2=model_2,
                            method="5x2cv",
                            threshold=threshold,

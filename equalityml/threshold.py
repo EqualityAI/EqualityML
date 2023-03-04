@@ -76,14 +76,10 @@ class DiscriminationThreshold:
     ----------
     ml_model : a Scikit-Learn estimator
         A scikit-learn estimator that should be a classifier. If the model is not a classifier, an exception is raised.
-    target_variable : str
-        Name of the target variable column. The target column must be a binary classification target.
-    training_data : pd.DataFrame, default=None
-        Training data in the form of a pd.DataFrame, which was used to train the machine learning model.
-    testing_data : pd.DataFrame, default=None
-        Testing data in the form of a pd.DataFrame, which will be used to make predictions.
-        Note: when the model_training is True, the training_data and testing_data, if it's not None, will be concatenated.
-        That data will then be split randomly to train and evaluate the model.
+    X : ndarray or DataFrame of shape n x m
+        A matrix of n instances with m features
+    y : ndarray or Series of length n
+        An array or series of target or class values. The target y must be a binary classification target.
     decision_maker : tuple, default=('f1', 'max')
         The metric and decision to optimize the discrimination threshold. The metric shall be available in input metrics
         list and 3 different decisions can be used: 'max', 'min' or 'limit' with the following behaviour:
@@ -120,7 +116,7 @@ class DiscriminationThreshold:
         If training model is not required, the model will be evaluated once.
     model_training : bool, default=True
         When True, the model is trained 'num_iterations' times to get the metrics variability, otherwise, the model will
-        be only evaluated once using the testing data.
+        be only evaluated once.
     random_seed : int, default=None
         Used to seed the random state for splitting the data in different train and test splits. If supplied, the
         random state is incremented in a deterministic fashion for each split.
@@ -129,9 +125,8 @@ class DiscriminationThreshold:
 
     def __init__(self,
                  ml_model,
-                 target_variable,
-                 training_data=None,
-                 testing_data=None,
+                 X,
+                 y,
                  decision_maker=DECISION_MAKER,
                  metrics=("f1"),
                  fair_object=None,
@@ -149,25 +144,12 @@ class DiscriminationThreshold:
 
         self.model_training = model_training
         if self.model_training is False:
-            if testing_data is None:
-                raise ValueError("When model will not be trained, testing data is required to evaluate the model.")
+            num_iterations = 1
             if not hasattr(ml_model, "classes_"):
                 raise ValueError("When model will not be trained, it must be fitted.")
 
-        if self.model_training is True and training_data is None:
-            raise ValueError("When model will be trained, training data is required to train and evalute the model.")
-
-        if self.model_training:
-            if testing_data is not None:
-                data = pd.concat([training_data, testing_data])
-            else:
-                data = training_data
-        else:
-            num_iterations = 1
-            data = testing_data
-
-        self.X = data.drop(columns=target_variable)
-        self.y = data[target_variable]
+        self.X = X.copy()
+        self.y = y.copy()
 
         # Check metrics
         self._check_metrics(metrics, utility_costs, fair_object)
@@ -458,9 +440,8 @@ class DiscriminationThreshold:
 
 def discrimination_threshold(
         ml_model,
-        target_variable,
-        training_data=None,
-        testing_data=None,
+        X,
+        y,
         decision_maker=DECISION_MAKER,
         metrics=("f1"),
         fair_object=None,
@@ -488,14 +469,10 @@ def discrimination_threshold(
     ----------
     ml_model : a Scikit-Learn estimator
         A scikit-learn estimator that should be a classifier. If the model is not a classifier, an exception is raised.
-    target_variable : str
-        Name of the target variable column. The target column must be a binary classification target.
-    training_data : pd.DataFrame, default=None
-        Training data in the form of a pd.DataFrame, which was used to train the machine learning model.
-    testing_data : pd.DataFrame, default=None
-        Testing data in the form of a pd.DataFrame, which will be used to make predictions.
-        Note: when the model_training is True, the training_data and testing_data, if it's not None, will be concatenated.
-        That data will then be split randomly to train and evaluate the model.
+    X : ndarray or DataFrame of shape n x m
+        A matrix of n instances with m features
+    y : ndarray or Series of length n
+        An array or series of target or class values. The target y must be a binary classification target.
     decision_maker : tuple, default=('f1', 'max')
         The metric and decision to optimize the discrimination threshold. The metric shall be available in input metrics
         list and 3 different decisions can be used: 'max', 'min' or 'limit' with the following behaviour:
@@ -532,7 +509,7 @@ def discrimination_threshold(
         If training model is not required, the model will be evaluated once.
     model_training : bool, default=True
         When True, the model is trained 'num_iterations' times to get the metrics variability, otherwise, the model will
-        be only evaluated once using the testing data.
+        be only evaluated once.
     random_seed : int, default=None
         Used to seed the random state for splitting the data in different train and test splits. If supplied, the
         random state is incremented in a deterministic fashion for each split.
@@ -546,9 +523,8 @@ def discrimination_threshold(
 
     # Instantiate the DiscriminationThreshold
     dt = DiscriminationThreshold(ml_model,
-                                 target_variable,
-                                 training_data=training_data,
-                                 testing_data=testing_data,
+                                 X,
+                                 y,
                                  decision_maker=decision_maker,
                                  metrics=metrics,
                                  fair_object=fair_object,
