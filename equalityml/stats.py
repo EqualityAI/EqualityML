@@ -319,10 +319,10 @@ def paired_ttest_5x2cv(model_1,
                                                                  metrics=[decision_maker[0]],
                                                                  utility_costs=utility_costs,
                                                                  show=False,
-                                                                 model_training=False)
+                                                                 model_training=False,
+                                                                 random_seed=random_seed)
             else:
                 fair_object.threshold = threshold
-            print("fair_object.threshold ", fair_object.threshold)
             fair_object.mitigated_testing_data = pd.concat([X, y], axis=1)
             fair_object.ml_model = model
             return fair_object.fairness_metric(scoring)
@@ -333,10 +333,12 @@ def paired_ttest_5x2cv(model_1,
                 dt = discrimination_threshold(model,
                                               X,
                                               y,
-                                              decision_maker=[scoring, 'max'],
-                                              metrics=[scoring],
+                                              decision_maker=decision_maker,
+                                              metrics=[decision_maker[0]],
+                                              utility_costs=utility_costs,
                                               show=False,
-                                              model_training=False)
+                                              model_training=False,
+                                              random_seed=random_seed)
             else:
                 dt = threshold
             return binary_threshold_score(model,
@@ -352,7 +354,6 @@ def paired_ttest_5x2cv(model_1,
         # Train model 1 and get score 1
         _model_1.fit(_X_train, _y_train)
         score_1 = scorer(_model_1, _X_test, _y_test)
-        print("score_1 ", score_1)
 
         if apply_mitigation or fair_object is not None and scoring in fair_object.fairness_metrics_list:
             # Update training/testing data and reference ml model
@@ -378,7 +379,6 @@ def paired_ttest_5x2cv(model_1,
             _model_2.fit(_X_train, _y_train)
             score_2 = scorer(_model_2, _X_test, _y_test)
 
-        print("score_2 ", score_2)
         score_diff = score_1 - score_2
         return score_diff
 
