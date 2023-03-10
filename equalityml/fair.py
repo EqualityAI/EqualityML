@@ -13,7 +13,7 @@ logger.setLevel(logging.ERROR)
 # Import library
 from dalex.fairness import resample
 from aif360.datasets import BinaryLabelDataset
-from aif360.metrics import ClassificationMetric
+#from aif360.metrics import ClassificationMetric
 from aif360.algorithms.preprocessing import Reweighing
 from aif360.algorithms.preprocessing import DisparateImpactRemover
 from fairlearn.preprocessing import CorrelationRemover
@@ -21,8 +21,9 @@ from fairlearn.preprocessing import CorrelationRemover
 from sklearn.base import clone
 from sklearn.utils.multiclass import type_of_target
 import matplotlib.pyplot as plt
-from equalityml.threshold import binary_threshold_score, discrimination_threshold, DECISION_MAKER
 
+from equalityml.threshold import binary_threshold_score, discrimination_threshold, DECISION_MAKER
+from classification_metric import ClassificationMetric
 
 class FAIR:
     """
