@@ -40,7 +40,7 @@ jobs:
           python -m pip install flake8
           python -m pip install junit2html
           pip install poetry
-          poetry install
+          poetry install --with test
       - name: "Lint with flake8"
         run: |
           # stop the build if there are Python syntax errors or undefined names
