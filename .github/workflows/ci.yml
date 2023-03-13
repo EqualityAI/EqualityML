@@ -21,6 +21,9 @@ jobs:
 
     strategy:
       fail-fast: false
+      defaults:
+        run:
+          shell: bash
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
         os: [macOS-latest, ubuntu-latest, windows-latest]
