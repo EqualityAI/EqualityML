@@ -41,7 +41,6 @@ jobs:
           python -m pip install junit2html
           pip install poetry
           poetry install --with test
-          source .venv/bin/activate
       - name: "Lint with flake8"
         run: |
           # stop the build if there are Python syntax errors or undefined names
@@ -49,7 +48,7 @@ jobs:
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: "Test with pytest"
-        run: pytest tests --junitxml=junit/test-results.xml --cov=equalityml --cov-report term --cov-report=html
+        run: poetry run pytest tests --junitxml=junit/test-results.xml --cov=equalityml --cov-report term --cov-report=html
       - name: "Run junit2html"
         run: |
           junit2html junit/test-results.xml test-results.html
