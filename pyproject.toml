@@ -1,13 +1,25 @@
 [tool.poetry]
 name = "equalityml"
-version = "0.1.0a1"
-description = ""
-authors = []
-readme = "README.md"
+version = "0.1.9-a1"
+description = "Algorithms for evaluating fairness metrics and mitigating unfairness in supervised machine learning"
+authors = [
+    "Ben Brintz, Mark Zhang, James Ng, Janice Davis, Jared Hansen, Ji won Chang, João Granja, Rizwan Muhammad <support@equalityai.com>"
+]
+readme = ["PyPI_README.md"]
+license = "Apache-2.0"
+homepage = "https://equalityai.com"
+classifiers=[
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-aif360= {git = "https://github.com/lanterno/AIF360.git"}
+aif360 = "^0.5.0"
 BlackBoxAuditing = "^0.1.54"
 dalex = "^1.6.0"
 fairlearn = "^0.8.0"
@@ -21,3 +33,10 @@ pytest-cov = "^4.0.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry.urls]
+"Website" = "https://equalityai.com"
+"Manifesto" = "https://equalityai.com/community/#manifesto"
+"GitHub" = "https://github.com/EqualityAI/EqualityML"
+"Slack" = "https://equalityai.slack.com/ssb/redirect#/shared-invite/email"
