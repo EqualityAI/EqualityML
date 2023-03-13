@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10"]
         os: [macOS-latest, ubuntu-latest, windows-latest]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -40,6 +40,7 @@ jobs:
           python -m pip install flake8
           python -m pip install junit2html
           pip install poetry
+          poetry shell
           poetry install --with test
       - name: "Lint with flake8"
         run: |
