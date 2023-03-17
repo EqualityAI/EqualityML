@@ -22,42 +22,87 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10"]
         os: [macOS-latest, ubuntu-latest, windows-latest]
-
+    defaults:
+      run:
+        shell: bash
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: "Check out repository code"
+      #----------------------------------------------
+      #       Check-out repo and set-up python
+      #----------------------------------------------
+      - name: Check out repository code
         uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
-      - name: "Install dependencies"
+      #----------------------------------------------
+      #       Install dependencies
+      #----------------------------------------------
+      - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install flake8
-          python -m pip install junit2html
-          pip install -e '.[all, tests]'
-      - name: "Lint with flake8"
+          python -m pip install --upgrade pip
+          pip install flake8 pytest junit2html
+      #----------------------------------------------
+      #              Lint with flake8
+      #----------------------------------------------
+      - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      - name: "Test with pytest"
-        run: pytest tests --junitxml=junit/test-results.xml --cov=equalityml --cov-report term --cov-report=html
-      - name: "Run junit2html"
+      #----------------------------------------------
+      #       Install & configure poetry
+      #----------------------------------------------
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      #----------------------------------------------
+      #       load cached venv if cache exists
+      #----------------------------------------------
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      #----------------------------------------------
+      #              Install poetry dependencies
+      #----------------------------------------------
+      - name: Install poetry dependencies
+        run: |
+          poetry install --with test
+      #----------------------------------------------
+      #              Run test suite
+      #----------------------------------------------
+      - name: Run tests
+        run: |
+          poetry run python -m pytest tests --junitxml=junit/test-results.xml --cov=equalityml --cov-report term --cov-report=html
+      #----------------------------------------------
+      #              Run junit2html
+      #----------------------------------------------
+      - name: Run junit2html
         run: |
           junit2html junit/test-results.xml test-results.html
-      - name: "Upload pytest test results"
+      #----------------------------------------------
+      #              Upload pytest test results
+      #----------------------------------------------
+      - name: Upload pytest test results
         uses: actions/upload-artifact@v3
         with:
           name: pytest-results
           path: test-results.html
         if: ${{ always() }}
-      - name: "Upload pytest test coverage"
+      #----------------------------------------------
+      #              Upload pytest test coverage
+      #----------------------------------------------
+      - name: Upload pytest test coverage
         uses: actions/upload-artifact@v3
         with:
           name: test-coverage
