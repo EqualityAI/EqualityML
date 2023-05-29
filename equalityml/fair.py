@@ -179,14 +179,22 @@ class FAIR:
 
     @property
     def map_bias_mitigation(self):
-        return {'treatment_equality_ratio': [''],
-                'treatment_equality_difference': [''],
-                'balance_positive_class': [''],
-                'balance_negative_class': [''],
-                'equal_opportunity_ratio': [''],
-                'accuracy_equality_ratio': [''],
-                'predictive_parity_ratio': [''],
-                'predictive_equality_ratio': [''],
+        return {'treatment_equality_ratio': ['disparate-impact-remover', 'resampling',
+                                             'resampling-preferential', 'reweighing'],
+                'treatment_equality_difference': ['disparate-impact-remover', 'resampling',
+                                             'resampling-preferential', 'reweighing'],
+                'balance_positive_class': ['disparate-impact-remover', 'resampling',
+                                             'resampling-preferential', 'reweighing'],
+                'balance_negative_class': ['disparate-impact-remover', 'resampling',
+                                             'resampling-preferential', 'reweighing'],
+                'equal_opportunity_ratio': ['disparate-impact-remover', 'resampling',
+                                             'resampling-preferential', 'reweighing'],
+                'accuracy_equality_ratio': ['disparate-impact-remover', 'resampling',
+                                             'resampling-preferential', 'reweighing'],
+                'predictive_parity_ratio': ['disparate-impact-remover', 'resampling',
+                                             'resampling-preferential', 'reweighing'],
+                'predictive_equality_ratio': ['disparate-impact-remover', 'resampling',
+                                             'resampling-preferential', 'reweighing'],
                 'statistical_parity_ratio': ['disparate-impact-remover', 'resampling',
                                              'resampling-preferential', 'reweighing']}
 
