@@ -57,25 +57,25 @@ jobs:
       #----------------------------------------------
       #       Install & configure poetry
       #----------------------------------------------
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
+      - name: Install poetry
+        run: |
+          python -m pip install poetry==1.3.1
+          
+      - name: Configure poetry
+        run: |
+          python -m poetry config virtualenvs.in-project true
       #----------------------------------------------
       #       load cached venv if cache exists
       #----------------------------------------------
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
+      - name: Cache the virtualenv
+        uses: actions/cache@v2
         with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          path: ./.venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/poetry.lock') }}
       #----------------------------------------------
       #              Install poetry dependencies
       #----------------------------------------------
-      - name: Install poetry dependencies
+      - name: Install dependencies
         run: |
           poetry install --with test
       #----------------------------------------------
