@@ -18,7 +18,7 @@ classifiers=[
 
 [tool.poetry.dependencies]
 python = "^3.8"
-aif360 = "^0.5.0"
+aif360-fork2 = "^0.5.0"
 BlackBoxAuditing = "^0.1.54"
 dalex = "^1.5.0"
 fairlearn = "^0.7.0"
