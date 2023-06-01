@@ -132,14 +132,14 @@ https://github.com/EqualityAI/EqualityML.git
 ```
 In the root directory of the project run the command:
 ```bash
-pip install -e '.[all]'
+poetry install
 ```
 
 ### Package Testing
 To run the bunch of tests over the EqualityML package, dependencies shall be first installed before calling pytest.
 
 ```sh
-pip install -e '.[tests]'
+poetry install --with test
 pytest tests
 ```
 ### Quick Tour
