@@ -6,5 +6,5 @@ from .threshold import discrimination_threshold, binary_threshold_score
 
 
 __name__ = "equalityml"
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __all__ = ["FAIR"]

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "equalityml"
-version = "0.2.0"
+version = "0.2.1"
 description = "Algorithms for evaluating fairness metrics and mitigating unfairness in supervised machine learning"
 authors = [
     "Ben Brintz, Mark Zhang, James Ng, Janice Davis, Jared Hansen, Ji won Chang, João Granja, Rizwan Muhammad <support@equalityai.com>"
